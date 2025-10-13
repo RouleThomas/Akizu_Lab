@@ -48986,6 +48986,9 @@ pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_noSplit
 DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
 dev.off()
 
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_noSplit_labelversion2_nolegend.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4) + ggplot2::theme(legend.position = "none")
+dev.off()
 
 # All in dotplot
 DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "SCT"
@@ -49142,7 +49145,9 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50re
 FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
 
-
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-labelversion2-Kcnc1_2.pdf", width=7, height=6)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
 
 
 
@@ -49442,6 +49447,106 @@ ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
 dev.off()
 
 
+## Count table separating up and down ############
+# DEGs number in dotplot
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(  
+"L2L3_IT_immature",
+"L2_IT__Pdlim1",
+"L2L3_IT__Otof_1",
+"L2L3_IT__Otof_2",
+"L4L5_IT__Rorb",
+"L5_IT__Etv1_1",
+"L5_IT__Etv1_2",
+"L5_IT__Tshz2",
+"L5_PT__Pou3f1",
+"L6_IT__Cdh9",
+"L6__Car3",
+"L6_IT__Foxp2",
+"L6B__Pou6f2",
+"L5L6_NP__Tle4Stard5",
+
+"L5_IT_GABA__Adora2a",
+"L6_GABA__Foxp2",
+"L5L6_GABA__Reln",
+
+"GABA_immature_1",
+"GABA_immature_2",
+"GABA__Vipr2",
+"GABA__SstCalb2",
+"GABA__Vip",
+"GABA__NdnfLamp5",
+"GABA__Sst",
+"GABA__Pvalb",
+"GABA__Baiap3",
+"GABA__PvalbSt18",
+"GABA__NdnfKlhl1",
+
+"Microglia",
+"Astrocyte",
+"OPC",
+"Oligodendrocyte",
+"Meningeal",
+"Endothelial"
+)
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) { 
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  Up <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 ))
+  Down = sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC < -0.25))
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Up_DEGs = Up, Down_DEGs = Down))  ## Append to the summary table
+}
+## Dotplot
+DEG_count= DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = c( 
+"L2L3_IT_immature",
+"L2_IT__Pdlim1",
+"L2L3_IT__Otof_1",
+"L2L3_IT__Otof_2",
+"L4L5_IT__Rorb",
+"L5_IT__Etv1_1",
+"L5_IT__Etv1_2",
+"L5_IT__Tshz2",
+"L5_PT__Pou3f1",
+"L6_IT__Cdh9",
+"L6__Car3",
+"L6_IT__Foxp2",
+"L6B__Pou6f2",
+"L5L6_NP__Tle4Stard5",
+
+"L5_IT_GABA__Adora2a",
+"L6_GABA__Foxp2",
+"L5L6_GABA__Reln",
+
+"GABA_immature_1",
+"GABA_immature_2",
+"GABA__Vipr2",
+"GABA__SstCalb2",
+"GABA__Vip",
+"GABA__NdnfLamp5",
+"GABA__Sst",
+"GABA__Pvalb",
+"GABA__Baiap3",
+"GABA__PvalbSt18",
+"GABA__NdnfKlhl1",
+
+"Microglia",
+"Astrocyte",
+"OPC",
+"Oligodendrocyte",
+"Meningeal",
+"Endothelial") ) ) 
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
+
+total_up   <- sum(DEG_count$Up_DEGs, na.rm = TRUE)
+total_down <- sum(DEG_count$Down_DEGs, na.rm = TRUE)
+
+cat("Total Upregulated genes:", total_up, "\n")
+cat("Total Downregulated genes:", total_down, "\n")
+cat("Grand total DEGs:", total_up + total_down, "\n")
+####################################################
 
 
 
@@ -49908,9 +50013,26 @@ fgsea_sets <- list(
   REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
 )
 
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
 
 ## Rank genes based on FC
-genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Microglia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -49926,9 +50048,9 @@ fgseaResTidy %>%
   arrange(padj) %>% 
   head()
 ## plot GSEA
-#pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
-plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
-               ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
+pdf("output/Pathway/GSEA_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-DAM_microglia_v3_top390FCOver1-Microglia.pdf", width=5, height=3)
+plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
+               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-Microglia") +
                theme_bw()
 dev.off()
 
@@ -50007,10 +50129,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List9gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List4.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List9.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -50028,7 +50150,7 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
   ) +
   scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
   geom_text(aes(label=sprintf("%.2f", NES)), 
-            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
@@ -51881,47 +52003,37 @@ dev.off()
 
 
 
+XXXXY UP NOT CHANGE! But below is up to date!
 
 
 ###############################################################
 # VLN PLOTS with STATISTICS #####################
 ###############################################################
-# Subset seurat object to keep cell tye of interest
 
-WT_Kcnc1_p35_CB_1step_subset <- subset(WT_Kcnc1_p35_CB_1step.sct, 
-                                       subset = cluster.annot %in% c(  "Granule",
-  "UBC",
-  "CerebellarNuclei",
-  "MixNeurons",
-  "Purkinje",
-  "MLI1",
-  "MLI2",
-  "PLI",
-  "Golgi"))
+
+
+
+# Kcnc1 gene in cell type of interest ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CX_1step_subset <- subset(WT_Kcnc1_p14_CX_1step.sct, 
+                                       subset = cluster.annot %in% c( "GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Baiap3", "GABA__Vipr2", "GABA__NdnfLamp5"))
 
 
 # Check some genes
-DefaultAssay(WT_Kcnc1_p35_CB_1step_subset) <- "RNA"
+DefaultAssay(WT_Kcnc1_p14_CX_1step_subset) <- "RNA"
 
 
 
 #### import all clsuter DEGs output :
-cluster_types <- c("Granule",
-  "UBC",
-  "CerebellarNuclei",
-  "MixNeurons",
-  "Purkinje",
-  "MLI1",
-  "MLI2",
-  "PLI",
-  "Golgi")
+cluster_types <- c("GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Baiap3", "GABA__Vipr2", "GABA__NdnfLamp5")
 ##### Initialize empty list to store data
 deg_list <- list()
 
 ##### Read all DEG files and add cluster column
 for (i in seq_along(cluster_types)) {
   cluster <- cluster_types[i]
-  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
   if (file.exists(file_path)) {
     data <- read.delim(file_path, header = TRUE, row.names = 1)
     data$cluster <- cluster 
@@ -51944,16 +52056,16 @@ combined_deg <- combined_deg %>%
 
 # Generate the violin plot
 ###### Define genes of interest
-genes_of_interest <- c("Kcnc1", "Kcnc2", "Kcnc3", "Kcnc4") 
+genes_of_interest <- "Kcnc1" # gene.down gene.up 
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
 ###### Convert gene names to factor (to match Violin plot features)
 sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
 ###### Fetch expression data from Seurat object
-expr_data <- FetchData(WT_Kcnc1_p35_CB_1step_subset, vars = genes_of_interest, slot = "data")
+expr_data <- FetchData(WT_Kcnc1_p14_CX_1step_subset, vars = genes_of_interest, slot = "data")
 ###### Add cluster identity for correct mapping
-expr_data$Identity <- as.character(Idents(WT_Kcnc1_p35_CB_1step_subset))  # Convert to character to match
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CX_1step_subset))  # Convert to character to match
 ###### Convert expression data into long format
 expr_data_long <- expr_data %>%
   pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
@@ -51967,13 +52079,13 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
-pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-gene.down-STAT.pdf", width=5, height=3)
-
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CX_1step_subset-version2dim30kparam50res07labelversion2-Kcnc1-filterKCNC1celltypes-STAT.pdf", width=3.5, height=3)
 ###### Generate separate plots per gene
+Idents(WT_Kcnc1_p14_CX_1step_subset) <- factor(Idents(WT_Kcnc1_p14_CX_1step_subset), levels = c("GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Baiap3", "GABA__Vipr2", "GABA__NdnfLamp5"))
 for (gene in genes_of_interest) {
   print(paste("Generating plot for:", gene))
   # Generate violin plot for a single gene
-  p <- VlnPlot(WT_Kcnc1_p35_CB_1step_subset, 
+  p <- VlnPlot(WT_Kcnc1_p14_CX_1step_subset, 
                features = gene, 
                pt.size = 0, 
                split.by = "condition", cols = c("black", "red")) +
@@ -51990,6 +52102,11 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
+
+
+
 
 
 
@@ -53276,6 +53393,377 @@ dev.off()
 
 
 
+##### GO all clusters
+
+
+Let's do GO analysis for all cluster, separating up and down reg genes
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+# Cell types
+cell_types <- c(
+"L2L3_IT_immature",
+"L2_IT__Pdlim1",
+"L2L3_IT__Otof_1",
+"L2L3_IT__Otof_2",
+"L4L5_IT__Rorb",
+"L5_IT__Etv1_1",
+"L5_IT__Etv1_2",
+"L5_IT__Tshz2",
+"L5_PT__Pou3f1",
+"L6_IT__Cdh9",
+"L6__Car3",
+"L6_IT__Foxp2",
+"L6B__Pou6f2",
+"L5L6_NP__Tle4Stard5",
+
+"L5_IT_GABA__Adora2a",
+"L6_GABA__Foxp2",
+"L5L6_GABA__Reln",
+
+"GABA_immature_1",
+"GABA_immature_2",
+"GABA__Vipr2",
+"GABA__SstCalb2",
+"GABA__Vip",
+"GABA__NdnfLamp5",
+"GABA__Sst",
+"GABA__Pvalb",
+"GABA__Baiap3",
+"GABA__PvalbSt18",
+"GABA__NdnfKlhl1",
+
+"Microglia",
+"Astrocyte",
+"OPC",
+"Oligodendrocyte",
+"Meningeal",
+"Endothelial"
+)
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)  # progress tracking
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment only if gene list is non-empty
+  ego_up <- if (length(up_genes) > 0) {
+    enrichGO(gene = up_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  ego_down <- if (length(down_genes) > 0) {
+    enrichGO(gene = down_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplots if not NULL and has rows
+  p1 <- if (!is.null(ego_down) && nrow(ego_down) > 0) {
+    dotplot(ego_down, showCategory = 20) + ggtitle(paste(cell_type, "DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ego_up) && nrow(ego_up) > 0) {
+    dotplot(ego_up, showCategory = 20) + ggtitle(paste(cell_type, "UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+# GO BP  - NOT sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 20) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Extract gene names
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOL to ENTREZ ID with safety check
+  entrez_up <- if (length(up_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = up_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  entrez_down <- if (length(down_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = down_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment with robust checks
+  ekegg_up <- if (length(entrez_up) > 0) {
+    enrichKEGG(gene = entrez_up, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  ekegg_down <- if (length(entrez_down) > 0) {
+    enrichKEGG(gene = entrez_down, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Dotplots
+  p1 <- if (!is.null(ekegg_down) && nrow(ekegg_down) > 0) {
+    dotplot(ekegg_down, showCategory = 20) + ggtitle(paste(cell_type, "KEGG DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ekegg_up) && nrow(ekegg_up) > 0) {
+    dotplot(ekegg_up, showCategory = 20) + ggtitle(paste(cell_type, "KEGG UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+
+
+# KEGG - NOT sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top20_UpandDown.pdf", width = 8, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 20) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+######## Specific case ################
+cell_types <- c("GABA__Pvalb")
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top10_UpandDown-GABA__Pvalb.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+cell_types <- c("GABA__Pvalb")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Up-GABA__Pvalb.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Down-GABA__Pvalb.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+######## Specific case GO BP ################
+cell_types <- c("GABA__Pvalb")
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Up-GABA__Pvalb.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Down-GABA__Pvalb.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+```
+
+
+
+
+
 
 
 
@@ -54387,7 +54875,6 @@ pdf("output/seurat/UMAP_WT_Kcnc1_p35_CX-1stepIntegrationRegressNotRepeatedregMtR
 DimPlot(WT_Kcnc1_p35_CX_1step.sct, reduction = "umap", label=TRUE)
 dev.off()
 
-XXXY HERE WORK ON NAMING!
 
 DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "SCT"
 
@@ -54430,9 +54917,6 @@ FeaturePlot(WT_Kcnc1_p35_CX_1step.sct, features = c(     "Satb2", "Cux1",  # "Cu
   ), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
-
-
-XXXY 
 
 
 
@@ -54687,6 +55171,11 @@ DimPlot(WT_Kcnc1_p35_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TR
 dev.off()
 
 
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CX_1step_version2dim35kparam15res065_noSplit_label_nolegend.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p35_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4) + ggplot2::theme(legend.position = "none")
+dev.off()
+
+
 
 # All in dotplot
 DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "SCT"
@@ -54857,6 +55346,10 @@ dev.off()
 
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065-Kcnc1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p35_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065-Kcnc1_2.pdf", width=7, height=6)
 FeaturePlot(WT_Kcnc1_p35_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
 
@@ -55172,6 +55665,129 @@ ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
 dev.off()
 
 
+
+
+
+
+
+## Count table separating up and down ############
+# DEGs number in dotplot
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(  
+"L2L3_IT__Otof_1",
+  "L2L3_IT__Otof_2",
+  "L2L3_IT__Reln",
+  "L2L3_IT__Tfap2d_1",
+  "L2L3_IT__Tfap2d_2",
+  "L2L3_IT__Cdhr1Ms4a15",
+  "L4L5_IT__Rorb_1",
+  "L4L5_IT__Rorb_2",
+  "L5_IT__Lypd1",
+  "L5_PT__Bcl11b",
+  "L5_IT__Tshz2",
+  "L5L6_IT__Tshz2",
+  "L5L6_IT",
+  "L5L6_NP__Slc17a8",
+  "L6_CT__Foxp2",
+  "L6B__Pou6f2",
+  "L6__Car3",
+  "L6_IT__Foxp2Gpr149_1",
+  "L6_IT__Foxp2Gpr149_2",
+  "L5_IT__Etv1_1",
+  "L6_IT__Synpo2Shox2",
+  "L6_IT__Gabra5",
+
+  "GABA_immature",
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5Ndnf",
+  "GABA__Calb2",
+  "GABA__Vcan",
+  "GABA__NdnfKlhl1",
+  "GABA_ThPax6",
+  "GABA__Igfbp4Pthlh",
+  "GABA__PvalbEgfl6",
+  "GABA__PvalbSix3",
+
+  "L5_IT_GABA__Adora2a",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Meningeal",
+  "Endothelial"
+)
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) { 
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  Up <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 ))
+  Down = sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC < -0.25))
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Up_DEGs = Up, Down_DEGs = Down))  ## Append to the summary table
+}
+## Dotplot
+DEG_count= DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = c( 
+"L2L3_IT__Otof_1",
+  "L2L3_IT__Otof_2",
+  "L2L3_IT__Reln",
+  "L2L3_IT__Tfap2d_1",
+  "L2L3_IT__Tfap2d_2",
+  "L2L3_IT__Cdhr1Ms4a15",
+  "L4L5_IT__Rorb_1",
+  "L4L5_IT__Rorb_2",
+  "L5_IT__Lypd1",
+  "L5_PT__Bcl11b",
+  "L5_IT__Tshz2",
+  "L5L6_IT__Tshz2",
+  "L5L6_IT",
+  "L5L6_NP__Slc17a8",
+  "L6_CT__Foxp2",
+  "L6B__Pou6f2",
+  "L6__Car3",
+  "L6_IT__Foxp2Gpr149_1",
+  "L6_IT__Foxp2Gpr149_2",
+  "L5_IT__Etv1_1",
+  "L6_IT__Synpo2Shox2",
+  "L6_IT__Gabra5",
+
+  "GABA_immature",
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5Ndnf",
+  "GABA__Calb2",
+  "GABA__Vcan",
+  "GABA__NdnfKlhl1",
+  "GABA_ThPax6",
+  "GABA__Igfbp4Pthlh",
+  "GABA__PvalbEgfl6",
+  "GABA__PvalbSix3",
+
+  "L5_IT_GABA__Adora2a",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Meningeal",
+  "Endothelial") ) ) 
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
+
+total_up   <- sum(DEG_count$Up_DEGs, na.rm = TRUE)
+total_down <- sum(DEG_count$Down_DEGs, na.rm = TRUE)
+
+cat("Total Upregulated genes:", total_up, "\n")
+cat("Total Downregulated genes:", total_down, "\n")
+cat("Grand total DEGs:", total_up + total_down, "\n")
+####################################################
 
 
 
@@ -55631,10 +56247,27 @@ fgsea_sets <- list(
   GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
   REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
 )
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
 
 
 ## Rank genes based on FC
-genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Microglia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -55654,9 +56287,9 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-#pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
-plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
-               ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
+pdf("output/Pathway/GSEA_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-DAM_microglia_v3_top390FCOver1-Microglia.pdf", width=5, height=3)
+plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
+               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-Microglia") +
                theme_bw()
 dev.off()
 
@@ -55743,10 +56376,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List10gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List10.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -57354,45 +57987,36 @@ dev.off()
 
 
 
+
+
+
 ###############################################################
 # VLN PLOTS with STATISTICS #####################
 ###############################################################
-# Subset seurat object to keep cell tye of interest
 
-WT_Kcnc1_p35_CB_1step_subset <- subset(WT_Kcnc1_p35_CB_1step.sct, 
-                                       subset = cluster.annot %in% c(  "Granule",
-  "UBC",
-  "CerebellarNuclei",
-  "MixNeurons",
-  "Purkinje",
-  "MLI1",
-  "MLI2",
-  "PLI",
-  "Golgi"))
+
+# Kcnc1 gene in cell type of interest ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p35_CX_1step_subset <- subset(WT_Kcnc1_p35_CX_1step.sct, 
+                                       subset = cluster.annot %in% c("GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Baiap3", "GABA__Vipr2", "GABA__Lamp5Ndnf"
+                                       ))
 
 
 # Check some genes
-DefaultAssay(WT_Kcnc1_p35_CB_1step_subset) <- "RNA"
+DefaultAssay(WT_Kcnc1_p35_CX_1step_subset) <- "RNA"
 
 
 
 #### import all clsuter DEGs output :
-cluster_types <- c("Granule",
-  "UBC",
-  "CerebellarNuclei",
-  "MixNeurons",
-  "Purkinje",
-  "MLI1",
-  "MLI2",
-  "PLI",
-  "Golgi")
+cluster_types <- c("GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Baiap3", "GABA__Vipr2", "GABA__Lamp5Ndnf")
 ##### Initialize empty list to store data
 deg_list <- list()
 
 ##### Read all DEG files and add cluster column
 for (i in seq_along(cluster_types)) {
   cluster <- cluster_types[i]
-  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
   if (file.exists(file_path)) {
     data <- read.delim(file_path, header = TRUE, row.names = 1)
     data$cluster <- cluster 
@@ -57415,16 +58039,16 @@ combined_deg <- combined_deg %>%
 
 # Generate the violin plot
 ###### Define genes of interest
-genes_of_interest <- c("Kcnc1", "Kcnc2", "Kcnc3", "Kcnc4") 
+genes_of_interest <- "Kcnc1" # gene.down gene.up 
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
 ###### Convert gene names to factor (to match Violin plot features)
 sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
 ###### Fetch expression data from Seurat object
-expr_data <- FetchData(WT_Kcnc1_p35_CB_1step_subset, vars = genes_of_interest, slot = "data")
+expr_data <- FetchData(WT_Kcnc1_p35_CX_1step_subset, vars = genes_of_interest, slot = "data")
 ###### Add cluster identity for correct mapping
-expr_data$Identity <- as.character(Idents(WT_Kcnc1_p35_CB_1step_subset))  # Convert to character to match
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p35_CX_1step_subset))  # Convert to character to match
 ###### Convert expression data into long format
 expr_data_long <- expr_data %>%
   pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
@@ -57438,13 +58062,13 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
-pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-gene.down-STAT.pdf", width=5, height=3)
-
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CX_1step_subset-version2dim35kparam15res065-Kcnc1-filterKCNC1celltypes-STAT.pdf", width=3.5, height=3)
 ###### Generate separate plots per gene
+Idents(WT_Kcnc1_p35_CX_1step_subset) <- factor(Idents(WT_Kcnc1_p35_CX_1step_subset), levels = c("GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Baiap3", "GABA__Vipr2", "GABA__Lamp5Ndnf"))
 for (gene in genes_of_interest) {
   print(paste("Generating plot for:", gene))
   # Generate violin plot for a single gene
-  p <- VlnPlot(WT_Kcnc1_p35_CB_1step_subset, 
+  p <- VlnPlot(WT_Kcnc1_p35_CX_1step_subset, 
                features = gene, 
                pt.size = 0, 
                split.by = "condition", cols = c("black", "red")) +
@@ -57461,6 +58085,10 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
+
+
 
 
 
@@ -60169,6 +60797,11 @@ pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04_noSpli
 DimPlot(WT_Kcnc1_p180_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 3)
 dev.off()
 
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04_noSplit_label_nolegend.pdf", width=7, height=6)
+DimPlot(WT_Kcnc1_p180_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4) + ggplot2::theme(legend.position = "none")
+dev.off()
+
+
 
 # All in dotplot
 DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "SCT"
@@ -60307,7 +60940,9 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04-Kcnc1.pdf", width=6, height=6)
 FeaturePlot(WT_Kcnc1_p180_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
-
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04-Kcnc1_2.pdf", width=7, height=6)
+FeaturePlot(WT_Kcnc1_p180_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
 
 
 # WT vs Kcnc1
@@ -60577,6 +61212,104 @@ ggplot(DEG_count, aes(x = 1, y = Cell_Type, color = Cell_Type)) +
     size = "Number of DEGs"
   )
 dev.off()
+
+
+
+
+## Count table separating up and down ############
+# DEGs number in dotplot
+DEG_count <- data.frame(Cell_Type = character(), Num_DEGs = integer())
+## List of cell types
+cell_types <- c(  
+  "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+#  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal"
+)
+## Loop through each cell type to count the number of significant DEGs
+for (cell_type in cell_types) { 
+  file_name <- paste("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt", sep = "")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t") ## Read the DEGs data
+  Up <- sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC > 0.25 ))
+  Down = sum(deg_data$p_val_adj < 0.05 & (deg_data$avg_log2FC < -0.25))
+  DEG_count <- rbind(DEG_count, data.frame(Cell_Type = cell_type, Up_DEGs = Up, Down_DEGs = Down))  ## Append to the summary table
+}
+## Dotplot
+DEG_count= DEG_count %>%
+  mutate(Cell_Type = factor(Cell_Type, levels = c( 
+  "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+#  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal") ) ) 
+DEG_count$Cell_Type <- factor(DEG_count$Cell_Type, levels = rev(levels(DEG_count$Cell_Type)))
+
+total_up   <- sum(DEG_count$Up_DEGs, na.rm = TRUE)
+total_down <- sum(DEG_count$Down_DEGs, na.rm = TRUE)
+
+cat("Total Upregulated genes:", total_up, "\n")
+cat("Total Downregulated genes:", total_down, "\n")
+cat("Grand total DEGs:", total_up + total_down, "\n")
+####################################################
+
+
 
 
 
@@ -60997,10 +61730,29 @@ fgsea_sets <- list(
   GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
   REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
 )
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+
 
 
 ## Rank genes based on FC
-genes <- MLI2 %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Microglia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -61020,9 +61772,9 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-pdf("output/Pathway/GSEA_Kcnc1_response_p180_CX_QCV3dim30kparam50res035_allGenes_MAST-REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2.pdf", width=5, height=3)
-plotEnrichment(fgsea_sets[["REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION"]],
-               ranks) + labs(title="REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION-MLI2") +
+pdf("output/Pathway/GSEA_Kcnc1_response_p180_CX_QCV3dim30kparam50res035_allGenes_MAST-DAM_microglia_v3_top390FCOver1-Microglia.pdf", width=5, height=3)
+plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
+               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-Microglia") +
                theme_bw()
 dev.off()
 
@@ -61096,10 +61848,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CX_vversion2dim30kparam30res04_allGenes_MAST-List4gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CX_vversion2dim30kparam30res04_allGenes_MAST-List10gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-List4.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-List10.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -62709,6 +63461,111 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
+XXXXY UP NOT CHANGE! But below is up to date!
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+
+
+# Kcnc1 gene in cell type of interest ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p180_CX_1step_subset <- subset(WT_Kcnc1_p180_CX_1step.sct, 
+                                       subset = cluster.annot %in% c("GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Baiap3", "GABA__Vipr2", "GABA__Lamp5"
+                                       
+                                       ))
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p180_CX_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Baiap3", "GABA__Vipr2", "GABA__Lamp5")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- "Kcnc1" # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p180_CX_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p180_CX_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p180_CX_1step_subset-version2dim30kparam30res04-Kcnc1-filterKCNC1celltypes-STAT.pdf", width=3.5, height=3)
+###### Generate separate plots per gene
+Idents(WT_Kcnc1_p180_CX_1step_subset) <- factor(Idents(WT_Kcnc1_p180_CX_1step_subset), levels = c("GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Baiap3", "GABA__Vipr2", "GABA__Lamp5"))
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p180_CX_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
 
 
 
