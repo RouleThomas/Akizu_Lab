@@ -454,3 +454,91 @@ Issue from `## Annotation summary plot` scripts; when computing the stop; I incl
 
 
 
+
+
+
+
+
+
+# Score distribution 
+
+Instead of relying on the error-bar average for each annotation score; lets check specifically their dispersion: is there some extremes or most mutations fall within the error bar?
+
+--> we displayed the average, and the average score is low for most, but how is the distribution? Maybe there is many mutation with a high score that are mask with the average
+
+## SBS
+
+Let's now check for each SBS signature the profile/distribution of each scores for 4k mutations (ie. 4k is where variance stabilizes)
+
+For each SBS signature:
+- Loop through `results/*/*/` (All folders: all SBS and Flat)
+- Generates one 6-panel page per replicate (6 scores annotations)
+
+```bash
+conda activate mutsim
+
+# light testing on one signature
+python scripts/plot_distributions_per_replicate-SBS2_4k.py
+#--> Works!
+
+# Run all SBS signatures and Flat
+python scripts/plot_distributions_per_replicate-SBS.py
+
+
+
+```
+--> Plot produced at `results/*/*/*_replicate_score_distributions.pdf`
+
+
+Some mutations with extreme score are masked with average.
+  --> Average score can be biased and contain mutations with extreme csq
+
+
+
+## Experimental
+
+
+Same for Experimental signatures
+
+
+XXXY RUN THE TWO BELOW, code ready!
+
+```bash
+conda activate mutsim
+
+# Run all Experimental signatures
+python scripts/plot_distributions_per_replicate-experimental.py
+
+
+```
+--> Plot produced at `results_experimental/*/*/*_replicate_score_distributions.pdf`
+
+
+
+
+
+
+
+## Context
+
+
+Same for Experimental signatures
+
+
+```bash
+conda activate mutsim
+
+# Run all contexts signatures
+python scripts/plot_distributions_per_replicate-contexts.py
+
+
+```
+--> Plot produced at `results_contexts/*/*/*_replicate_score_distributions.pdf`
+
+
+
+
+
+
+
+
