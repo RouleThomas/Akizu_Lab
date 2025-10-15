@@ -501,7 +501,6 @@ Some mutations with extreme score are masked with average.
 Same for Experimental signatures
 
 
-XXXY RUN THE TWO BELOW, code ready!
 
 ```bash
 conda activate mutsim
@@ -516,6 +515,7 @@ python scripts/plot_distributions_per_replicate-experimental.py
 
 
 
+XXXY RUN THE TWO BELOW, code ready!
 
 
 
