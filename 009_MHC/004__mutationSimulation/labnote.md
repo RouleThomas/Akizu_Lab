@@ -196,6 +196,53 @@ sbatch scripts/run_filtered_experimental_v2.slurm # 50365053 ok --> results_expe
 
 
 
+# Simulate mutation  - SBS, Exp, context
+## version3 .json corrected and apth. score corrected
+
+I noticed that CADD Phred score used the raw version; not the normalized one that goes from 0-99... The wrong column might be picked in the `scripts/annotate_damage3.py`.
+
+Below code provide cell name and ID of all dbNSFP5 db:
+
+```python
+import gzip
+
+with gzip.open("ref/dbNSFP5.2a_grch38.gz", "rt") as f:
+    header = f.readline().strip().split("\t")
+
+for i, col in enumerate(header, 1):
+    print(f"{i}: {col}")
+```
+
+--> Double check we are good (by checking `scripts/annotate_damage3.py`):
+  -  IDX_TRANSCRIPTID     = 15 - 1 --> OK
+  -  IDX_VEP_CANONICAL    = 26 - 1 --> OK
+  -  IDX_SIFT4G_SCORE     = 50 - 1 --> OK
+  -  IDX_SIFT4G_PRED      = 52 - 1 --> OK
+  -  IDX_PP2_HDIV_SCORE   = 53 - 1 --> OK
+  -  IDX_PP2_HDIV_PRED    = 55 - 1 --> OK
+  -  IDX_CADD_PHRED       = 145 - 1 --> NOT OK!!! Correct is 144!!!
+
+
+--> `scripts/annotate_damage4.py` now updated with the correct CADD_PHRED!
+
+
+
+```bash
+conda activate mutsim
+
+XXXY HERE !!! JOB READY TO BE LAUNCHED!!!
+
+# Generate plot for all (script updated to use `scripts/simulate_array_v3.py` and `scripts/annotate_damage4.py`)
+sbatch scripts/run_filtered_contexts_v3.slurm # xxx  --> results_contexts_v3/
+sbatch scripts/run_filtered_cosmic_v3.slurm # xxx  --> results_v3/
+sbatch scripts/run_filtered_experimental_v3.slurm # xxx  --> results_experimental_v3/
+```
+
+
+
+
+
+
 
 
 
@@ -474,17 +521,27 @@ For each SBS signature:
 - Loop through `results/*/*/` (All folders: all SBS and Flat)
 - Generates one 6-panel page per replicate (6 scores annotations)
 
+--> `*scoreUpdate` is by translating path. score to consequences:
+  - SIFT4G: < 0.05 = damaging; > 0.05 = benign
+  - PolyPhen2: 0-0.15= benign; 0.15-0.85 = possibly damaging; >0.85 = damaging
+  - CADD: 
+
 ```bash
 conda activate mutsim
 
 # light testing on one signature
 python scripts/plot_distributions_per_replicate-SBS2_4k.py
 #--> Works!
+python scripts/plot_distributions_per_replicate-SBS2_4k-scoreUpdate.py
+
+
+
 
 # Run all SBS signatures and Flat
 python scripts/plot_distributions_per_replicate-SBS.py
 
 
+# Run 
 
 ```
 --> Plot produced at `results/*/*/*_replicate_score_distributions.pdf`

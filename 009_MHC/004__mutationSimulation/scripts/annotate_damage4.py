@@ -61,7 +61,7 @@ class DBNSFP:
     IDX_SIFT4G_PRED      = 52 - 1
     IDX_PP2_HDIV_SCORE   = 53 - 1
     IDX_PP2_HDIV_PRED    = 55 - 1
-    IDX_CADD_PHRED       = 145 - 1 # correct is 144
+    IDX_CADD_PHRED       = 144 - 1 # here updated!
 
     def __init__(self, path: Path):
         self.path = path
