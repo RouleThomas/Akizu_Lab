@@ -35181,6 +35181,37 @@ write.table(all_markers, file = "output/seurat/srat_GASTRU_24h_merge-dim20kparam
 
 
 
+
+# Check some genes
+
+
+
+
+# WT vs Kcnc1
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+DefaultAssay(GASTRU_24h_merge) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_GASTRU_24h_merge-dim20kparam30res03-CDX2-split.pdf", width=10, height=5)
+FeaturePlot(GASTRU_24h_merge, features = c("CDX2"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_GASTRU_24h_merge-dim20kparam30res03-GATA6-split.pdf", width=10, height=5)
+FeaturePlot(GASTRU_24h_merge, features = c("GATA6"), max.cutoff = 5, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
+
+
+
+
+
 ```
 
 
@@ -35257,8 +35288,15 @@ all.genes <- rownames(GASTRU_24h_merge_UNTREATED)
 GASTRU_24h_merge_UNTREATED <- ScaleData(GASTRU_24h_merge_UNTREATED, features = all.genes) # zero-centres and scales it
 
 all_markers_CDX2_UNTREATED <- FindAllMarkers(GASTRU_24h_merge_UNTREATED, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers_CDX2_UNTREATED, file = "output/seurat/srat_GASTRU_24h_merge_UNTREATED-dim20kparam30res03-all_markers_CDX2_detected.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-
+#write.table(all_markers_CDX2_UNTREATED, file = "output/seurat/srat_GASTRU_24h_merge_UNTREATED-dim20kparam30res03-all_markers_CDX2_detected.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers_CDX2_UNTREATED <- read.table(
+  "output/seurat/srat_GASTRU_24h_merge_UNTREATED-dim20kparam30res03-all_markers_CDX2_detected.txt",
+  sep = "\t",
+  header = TRUE,
+  quote = "",
+  row.names = 1,
+  stringsAsFactors = FALSE
+)
 #--> 311 marker genes
 
 
@@ -35293,8 +35331,15 @@ all.genes <- rownames(GASTRU_24h_merge_UNTREATED)
 GASTRU_24h_merge_UNTREATED <- ScaleData(GASTRU_24h_merge_UNTREATED, features = all.genes) # zero-centres and scales it
 
 all_markers_GATA6_UNTREATED <- FindAllMarkers(GASTRU_24h_merge_UNTREATED, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(all_markers_GATA6_UNTREATED, file = "output/seurat/srat_GASTRU_24h_merge_UNTREATED-dim20kparam30res03-all_markers_GATA6_detected.txt", sep = "\t", quote = FALSE, row.names = TRUE)
-
+#write.table(all_markers_GATA6_UNTREATED, file = "output/seurat/srat_GASTRU_24h_merge_UNTREATED-dim20kparam30res03-all_markers_GATA6_detected.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers_GATA6_UNTREATED <- read.table(
+  "output/seurat/srat_GASTRU_24h_merge_UNTREATED-dim20kparam30res03-all_markers_GATA6_detected.txt",
+  sep = "\t",
+  header = TRUE,
+  quote = "",
+  row.names = 1,
+  stringsAsFactors = FALSE
+)
 
 
 ########################################################
@@ -35510,7 +35555,19 @@ pheatmap(
 )
 dev.off()
 
-
+pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-data-scale0_10.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white",  "red" ,"red"))(100),
+  breaks = seq(0, 10, length.out = 101)
+)
+dev.off()
 
 
 
@@ -35603,6 +35660,19 @@ pheatmap(
 )
 dev.off()
 
+pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-data-scale0_10.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red", "red"))(100),
+  breaks = seq(0, 10, length.out = 101)
+)
+dev.off()
 
 
 
@@ -35725,7 +35795,19 @@ pheatmap(
 dev.off()
 
 
-
+pdf("output/seurat/heatmap-markers_gata6-GATA6cells-data-scale0_10.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white",  "red" ,"red"))(100),
+  breaks = seq(0, 10, length.out = 101)
+)
+dev.off()
 
 
 
@@ -35817,6 +35899,20 @@ pheatmap(
 )
 dev.off()
 
+
+pdf("output/seurat/heatmap-markers_gata6-CDX2cells-data-scale0_10.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red", "red"))(100),
+  breaks = seq(0, 10, length.out = 101)
+)
+dev.off()
 
 
 ```
@@ -36120,6 +36216,698 @@ dev.off()
 
 
 ```
+
+
+
+
+#### CDX2 GATA6 coexpression - 3D gastrulation paper
+
+--> Exact same version as for 24hr
+
+
+```bash
+conda activate scRNAseqV2
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+library("pheatmap")
+
+# import seurat obj
+GASTRU_72h_merge <- readRDS(file = "output/seurat/GASTRU_72h_merge-dim20kparam30res03.rds")
+## filter untreated
+GASTRU_72h_merge_UNTREATED <- subset(GASTRU_72h_merge, condition == "UNTREATED")
+
+####################################################################
+# ISOLATE CDX2 cells and identify marker genes #####################
+####################################################################
+
+cdx2_detected <- GetAssayData(GASTRU_72h_merge_UNTREATED, assay = "RNA", slot = "data")["CDX2", ] > 0
+# Add this as a new metadata column labeled "yes"/"no"
+GASTRU_72h_merge_UNTREATED$CDX2_detected <- ifelse(cdx2_detected, "yes", "no")
+
+Idents(GASTRU_72h_merge_UNTREATED) <- GASTRU_72h_merge_UNTREATED$CDX2_detected
+table(GASTRU_72h_merge_UNTREATED$CDX2_detected)
+
+
+pdf("output/seurat/UMAP_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-CDX2_detected.pdf", width=6, height=6)
+DimPlot(GASTRU_72h_merge_UNTREATED, reduction = "umap", label=TRUE, group.by = "CDX2_detected", split.by= "condition", cols = c("grey", "green"))
+dev.off()
+
+
+# Unbiased cell type marker genes
+Idents(GASTRU_72h_merge_UNTREATED) <- "CDX2_detected"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(GASTRU_72h_merge_UNTREATED) <- "RNA"
+GASTRU_72h_merge_UNTREATED <- NormalizeData(GASTRU_72h_merge_UNTREATED, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge_UNTREATED)
+GASTRU_72h_merge_UNTREATED <- ScaleData(GASTRU_72h_merge_UNTREATED, features = all.genes) # zero-centres and scales it
+
+all_markers_CDX2_UNTREATED <- FindAllMarkers(GASTRU_72h_merge_UNTREATED, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25) # treshold reduce here otherwise not enough genes!
+#write.table(all_markers_CDX2_UNTREATED, file = "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_CDX2_detected.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers_CDX2_UNTREATED <- read.table(
+  "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_CDX2_detected.txt",
+  sep = "\t",
+  header = TRUE,
+  quote = "",
+  row.names = 1,
+  stringsAsFactors = FALSE
+)
+#--> 311 marker genes
+
+
+
+
+
+
+####################################################################
+# ISOLATE GATA6 cells and identify marker genes #####################
+####################################################################
+
+
+gata6_detected <- GetAssayData(GASTRU_72h_merge_UNTREATED, assay = "RNA", slot = "data")["GATA6", ] > 0
+# Add this as a new metadata column labeled "yes"/"no"
+GASTRU_72h_merge_UNTREATED$GATA6_detected <- ifelse(gata6_detected, "yes", "no")
+
+Idents(GASTRU_72h_merge_UNTREATED) <- GASTRU_72h_merge_UNTREATED$GATA6_detected
+table(GASTRU_72h_merge_UNTREATED$GATA6_detected)
+
+
+pdf("output/seurat/UMAP_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-GATA6_detected.pdf", width=6, height=6)
+DimPlot(GASTRU_72h_merge_UNTREATED, reduction = "umap", label=TRUE, group.by = "GATA6_detected", split.by= "condition", cols = c("grey", "red"))
+dev.off()
+
+
+# Unbiased cell type marker genes
+Idents(GASTRU_72h_merge_UNTREATED) <- "GATA6_detected"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(GASTRU_72h_merge_UNTREATED) <- "RNA"
+GASTRU_72h_merge_UNTREATED <- NormalizeData(GASTRU_72h_merge_UNTREATED, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge_UNTREATED)
+GASTRU_72h_merge_UNTREATED <- ScaleData(GASTRU_72h_merge_UNTREATED, features = all.genes) # zero-centres and scales it
+
+all_markers_GATA6_UNTREATED <- FindAllMarkers(GASTRU_72h_merge_UNTREATED, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+#write.table(all_markers_GATA6_UNTREATED, file = "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_GATA6_detected.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers_GATA6_UNTREATED <- read.table(
+  "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_GATA6_detected.txt",
+  sep = "\t",
+  header = TRUE,
+  quote = "",
+  row.names = 1,
+  stringsAsFactors = FALSE
+)
+
+
+########################################################
+# Isolate top specific marker genes for CDX2 and GATA6 ############################
+########################################################
+
+# 1) Keep only the CDX2+ ("yes") markers from your FindAllMarkers output
+markers_cdx2_yes <- all_markers_CDX2_UNTREATED %>%
+  mutate(gene = rownames(.)) %>%     # ensure we have a gene column
+  filter(cluster == "yes") %>%
+  as_tibble
+
+# 2) Identify which genes are detected (>0 in RNA/data) in ANY GATA6+ cell
+gata6_yes_cells <- colnames(GASTRU_72h_merge_UNTREATED)[GASTRU_72h_merge_UNTREATED$GATA6_detected == "yes"]
+
+E_gata6_yes <- GetAssayData(GASTRU_72h_merge_UNTREATED, assay = "RNA", slot = "data")[, gata6_yes_cells, drop = FALSE]
+detected_in_any_gata6_yes <- rowSums(E_gata6_yes > 0) > 0
+genes_detected_in_gata6_yes <- names(detected_in_any_gata6_yes)[detected_in_any_gata6_yes]
+
+# 3) Filter OUT any CDX2+ marker that is detected in GATA6+ cells
+cdx2_yes_specific <- markers_cdx2_yes %>%
+  filter(!(gene %in% genes_detected_in_gata6_yes)) %>%
+  arrange(desc(avg_log2FC))  # rank by effect size (you can choose p_val_adj, pct.1, etc.)
+
+
+#--> This is too strict: no more genes; marker genes of CDX2 are detected in GATA6 cells; so instead remove a gene if it is also a marker genes of GATA6+
+
+markers_cdx2_yes <- all_markers_CDX2_UNTREATED %>%
+  mutate(gene = rownames(.)) %>%     # ensure we have a gene column
+  filter(cluster == "yes") %>%
+  as_tibble
+markers_gata6_yes <- all_markers_GATA6_UNTREATED %>%
+  mutate(gene = rownames(.)) %>%     # ensure we have a gene column
+  filter(cluster == "yes") %>%
+  as_tibble
+
+markers_cdx2_yes_NOTinGATA6 <- markers_cdx2_yes %>%
+  filter(!(gene %in% markers_gata6_yes$gene)) %>%
+  arrange(desc(avg_log2FC))  
+
+markers_gata6_yes_NOTinCDX2 <- markers_gata6_yes %>%
+  filter(!(gene %in% markers_cdx2_yes$gene)) %>%
+  arrange(desc(avg_log2FC))
+
+#--> Only remove one gene in CDX2+...
+
+
+
+
+################################################################
+# Isolate the top 100 CDX2 and GATA6 marker genes #################
+################################################################
+markers_cdx2_yes_NOTinGATA6_TOP100 =markers_cdx2_yes_NOTinGATA6 %>%
+  arrange(desc(avg_log2FC)) %>%
+  pull(gene) %>%
+  unique() %>%
+  head(100)
+
+markers_gata6_yes_NOTinCDX2_TOP100 =markers_gata6_yes_NOTinCDX2 %>%
+  arrange(desc(avg_log2FC)) %>%
+  pull(gene) %>%
+  unique() %>%
+  head(100)
+
+
+################################################################
+# Heatmap of expression of these genes #########################
+################################################################
+
+# ISOLATE CDX2/GATA6 cells in all conditions
+
+cdx2_detected_all <- GetAssayData(GASTRU_72h_merge, assay = "RNA", slot = "data")["CDX2", ] > 0
+# Add this as a new metadata column labeled "yes"/"no"
+GASTRU_72h_merge$CDX2_detected_all <- ifelse(cdx2_detected_all, "yes", "no")
+
+Idents(GASTRU_72h_merge) <- GASTRU_72h_merge$CDX2_detected_all
+table(GASTRU_72h_merge$CDX2_detected_all)
+
+
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03-CDX2_detected.pdf", width=12, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, group.by = "CDX2_detected_all", split.by= "condition", cols = c("grey", "green"))
+dev.off()
+
+
+gata6_detected_all <- GetAssayData(GASTRU_72h_merge, assay = "RNA", slot = "data")["GATA6", ] > 0
+# Add this as a new metadata column labeled "yes"/"no"
+GASTRU_72h_merge$GATA6_detected_all <- ifelse(gata6_detected_all, "yes", "no")
+
+Idents(GASTRU_72h_merge) <- GASTRU_72h_merge$GATA6_detected_all
+table(GASTRU_72h_merge$GATA6_detected_all)
+
+
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03-GATA6_detected.pdf", width=12, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, group.by = "GATA6_detected_all", split.by= "condition", cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
+
+
+
+########################################
+# EXPRESSION CDX2 markers in CDX2 cells - scale data #############
+########################################
+
+GASTRU_72h_merge_CDX2cells <- subset(GASTRU_72h_merge, subset = CDX2_detected_all == "yes")
+
+DefaultAssay(GASTRU_72h_merge_CDX2cells) <- "RNA"
+GASTRU_72h_merge_CDX2cells <- NormalizeData(GASTRU_72h_merge_CDX2cells, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge_CDX2cells)
+GASTRU_72h_merge_CDX2cells <- ScaleData(GASTRU_72h_merge_CDX2cells, features = all.genes) # zero-centres and scales it
+
+
+# gene order ref based on CDX2 expr in UNTREATED
+# --- CDX2+ reference averages (log-normalized)
+avg_CDX2_data <- AverageExpression(
+  GASTRU_72h_merge_CDX2cells,
+  assays   = "RNA",
+  features = markers_cdx2_yes_NOTinGATA6_TOP100,
+  group.by = "condition",
+  slot     = "scale.data"
+)$RNA
+# keep columns & compute ONE row order (UNTREATED high→low)
+col_order <- c("UNTREATED","XMU","DASATINIB")
+avg_CDX2_data <- avg_CDX2_data[, intersect(col_order, colnames(avg_CDX2_data)), drop = FALSE]
+genes_ordered_scaleData <- rownames(avg_CDX2_data)[ order(avg_CDX2_data[,"UNTREATED"], decreasing = TRUE) ]
+
+
+
+avg_list <- AverageExpression(
+  GASTRU_72h_merge_CDX2cells,
+  assays   = "RNA",
+  features = markers_cdx2_yes_NOTinGATA6_TOP100,
+  group.by = "condition",
+  slot     = "scale.data"
+)
+avg_mat <- avg_list$RNA   # rows = genes, cols = conditions
+
+# Order columns  (UNTREATED, XMU, DASATINIB)
+keep_cols <- intersect(c("UNTREATED", "XMU", "DASATINIB"), colnames(avg_mat))
+avg_mat   <- avg_mat[, keep_cols, drop = FALSE]
+
+expr_mat <- avg_mat
+expr_mat_ordered <- avg_mat[genes_ordered_scaleData[genes_ordered_scaleData %in% rownames(avg_mat)], , drop = FALSE]
+
+
+pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-scaleData.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red"))(100),
+)
+dev.off()
+
+
+
+########################################
+# EXPRESSION CDX2 markers in CDX2 cells - data (log norm) #############
+########################################
+
+
+
+# gene order ref based on CDX2 expr in UNTREATED
+# --- CDX2+ reference averages (log-normalized)
+avg_CDX2_data <- AverageExpression(
+  GASTRU_72h_merge_CDX2cells,
+  assays   = "RNA",
+  features = markers_cdx2_yes_NOTinGATA6_TOP100,
+  group.by = "condition",
+  slot     = "data"
+)$RNA
+# keep columns & compute ONE row order (UNTREATED high→low)
+col_order <- c("UNTREATED","XMU","DASATINIB")
+avg_CDX2_data <- avg_CDX2_data[, intersect(col_order, colnames(avg_CDX2_data)), drop = FALSE]
+genes_ordered_data <- rownames(avg_CDX2_data)[ order(avg_CDX2_data[,"UNTREATED"], decreasing = TRUE) ]
+
+
+
+avg_list <- AverageExpression(
+  GASTRU_72h_merge_CDX2cells,
+  assays   = "RNA",
+  features = markers_cdx2_yes_NOTinGATA6_TOP100,
+  group.by = "condition",
+  slot     = "data"
+)
+avg_mat <- avg_list$RNA   # rows = genes, cols = conditions
+
+# Order columns  (UNTREATED, XMU, DASATINIB)
+keep_cols <- intersect(c("UNTREATED", "XMU", "DASATINIB"), colnames(avg_mat))
+avg_mat   <- avg_mat[, keep_cols, drop = FALSE]
+
+expr_mat <- avg_mat
+expr_mat_ordered <- avg_mat[genes_ordered_data[genes_ordered_data %in% rownames(avg_mat)], , drop = FALSE]
+
+
+pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-data.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white",  "red" ,"red"))(100),
+)
+dev.off()
+
+pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-data-scale0_10.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white",  "red" ,"red"))(100),
+  breaks = seq(0, 10, length.out = 101)
+)
+dev.off()
+
+
+
+
+
+########################################
+# EXPRESSION CDX2 markers in GATA6 cells - scale data #############
+########################################
+
+
+GASTRU_72h_merge_GATA6cells <- subset(GASTRU_72h_merge, subset = GATA6_detected_all == "yes")
+
+DefaultAssay(GASTRU_72h_merge_GATA6cells) <- "RNA"
+GASTRU_72h_merge_GATA6cells <- NormalizeData(GASTRU_72h_merge_GATA6cells, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge_GATA6cells)
+GASTRU_72h_merge_GATA6cells <- ScaleData(GASTRU_72h_merge_GATA6cells, features = all.genes) # zero-centres and scales it
+
+
+avg_list <- AverageExpression(
+  GASTRU_72h_merge_GATA6cells,
+  assays   = "RNA",
+  features = markers_cdx2_yes_NOTinGATA6_TOP100,
+  group.by = "condition",
+  slot     = "scale.data"
+)
+avg_mat <- avg_list$RNA   # rows = genes, cols = conditions
+
+
+# Order columns  (UNTREATED, XMU, DASATINIB)
+keep_cols <- intersect(c("UNTREATED", "XMU", "DASATINIB"), colnames(avg_mat))
+avg_mat   <- avg_mat[, keep_cols, drop = FALSE]
+
+expr_mat <- avg_mat
+expr_mat_ordered <- avg_mat[genes_ordered_scaleData[genes_ordered_scaleData %in% rownames(avg_mat)], , drop = FALSE]
+
+
+pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-scaleData.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red"))(100),
+)
+dev.off()
+
+
+
+
+
+
+
+
+########################################
+# EXPRESSION CDX2 markers in GATA6 cells - data (log norm) #############
+########################################
+
+
+avg_list <- AverageExpression(
+  GASTRU_72h_merge_GATA6cells,
+  assays   = "RNA",
+  features = markers_cdx2_yes_NOTinGATA6_TOP100,
+  group.by = "condition",
+  slot     = "data"
+)
+avg_mat <- avg_list$RNA   # rows = genes, cols = conditions
+
+
+# Order columns  (UNTREATED, XMU, DASATINIB)
+keep_cols <- intersect(c("UNTREATED", "XMU", "DASATINIB"), colnames(avg_mat))
+avg_mat   <- avg_mat[, keep_cols, drop = FALSE]
+
+expr_mat <- avg_mat
+expr_mat_ordered <- avg_mat[genes_ordered_data[genes_ordered_data %in% rownames(avg_mat)], , drop = FALSE]
+
+
+pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-data.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red"))(100),
+)
+dev.off()
+
+pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-data-scale0_10.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red", "red"))(100),
+  breaks = seq(0, 10, length.out = 101)
+)
+dev.off()
+
+
+
+
+######### NOW SWITCH TO GATA6 markers ############
+
+
+
+########################################
+# EXPRESSION GATA6 markers in GATA6 cells - scale data #############
+########################################
+
+
+GASTRU_72h_merge_GATA6cells <- subset(GASTRU_72h_merge, subset = GATA6_detected_all == "yes")
+
+DefaultAssay(GASTRU_72h_merge_GATA6cells) <- "RNA"
+GASTRU_72h_merge_GATA6cells <- NormalizeData(GASTRU_72h_merge_GATA6cells, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge_GATA6cells)
+GASTRU_72h_merge_GATA6cells <- ScaleData(GASTRU_72h_merge_GATA6cells, features = all.genes) # zero-centres and scales it
+
+
+# gene order ref based on GATA6 expr in UNTREATED
+# --- CDX2+ reference averages (log-normalized)
+avg_GATA6_data <- AverageExpression(
+  GASTRU_72h_merge_GATA6cells,
+  assays   = "RNA",
+  features = markers_gata6_yes_NOTinCDX2_TOP100,
+  group.by = "condition",
+  slot     = "scale.data"
+)$RNA
+# keep columns & compute ONE row order (UNTREATED high→low)
+col_order <- c("UNTREATED","XMU","DASATINIB")
+avg_GATA6_data <- avg_GATA6_data[, intersect(col_order, colnames(avg_GATA6_data)), drop = FALSE]
+genes_ordered_scaleData <- rownames(avg_GATA6_data)[ order(avg_GATA6_data[,"UNTREATED"], decreasing = TRUE) ]
+
+
+
+avg_list <- AverageExpression(
+  GASTRU_72h_merge_GATA6cells,
+  assays   = "RNA",
+  features = markers_gata6_yes_NOTinCDX2_TOP100,
+  group.by = "condition",
+  slot     = "scale.data"
+)
+avg_mat <- avg_list$RNA   # rows = genes, cols = conditions
+
+# Order columns  (UNTREATED, XMU, DASATINIB)
+keep_cols <- intersect(c("UNTREATED", "XMU", "DASATINIB"), colnames(avg_mat))
+avg_mat   <- avg_mat[, keep_cols, drop = FALSE]
+
+expr_mat <- avg_mat
+expr_mat_ordered <- avg_mat[genes_ordered_scaleData[genes_ordered_scaleData %in% rownames(avg_mat)], , drop = FALSE]
+
+
+pdf("output/seurat/heatmap-markers_gata6-GATA6cells-scaleData.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red"))(100),
+)
+dev.off()
+
+
+
+########################################
+# EXPRESSION GATA6 markers in GATA6 cells - data (log norm) #############
+########################################
+
+
+
+# gene order ref based on CDX2 expr in UNTREATED
+# --- CDX2+ reference averages (log-normalized)
+avg_GATA6_data <- AverageExpression(
+  GASTRU_72h_merge_GATA6cells,
+  assays   = "RNA",
+  features = markers_gata6_yes_NOTinCDX2_TOP100,
+  group.by = "condition",
+  slot     = "data"
+)$RNA
+# keep columns & compute ONE row order (UNTREATED high→low)
+col_order <- c("UNTREATED","XMU","DASATINIB")
+avg_GATA6_data <- avg_GATA6_data[, intersect(col_order, colnames(avg_GATA6_data)), drop = FALSE]
+genes_ordered_data <- rownames(avg_GATA6_data)[ order(avg_GATA6_data[,"UNTREATED"], decreasing = TRUE) ]
+
+
+
+avg_list <- AverageExpression(
+  GASTRU_72h_merge_GATA6cells,
+  assays   = "RNA",
+  features = markers_gata6_yes_NOTinCDX2_TOP100,
+  group.by = "condition",
+  slot     = "data"
+)
+avg_mat <- avg_list$RNA   # rows = genes, cols = conditions
+
+# Order columns  (UNTREATED, XMU, DASATINIB)
+keep_cols <- intersect(c("UNTREATED", "XMU", "DASATINIB"), colnames(avg_mat))
+avg_mat   <- avg_mat[, keep_cols, drop = FALSE]
+
+expr_mat <- avg_mat
+expr_mat_ordered <- avg_mat[genes_ordered_data[genes_ordered_data %in% rownames(avg_mat)], , drop = FALSE]
+
+
+pdf("output/seurat/heatmap-markers_gata6-GATA6cells-data.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white",  "red" ,"red"))(100),
+)
+dev.off()
+
+
+pdf("output/seurat/heatmap-markers_gata6-GATA6cells-data-scale0_10.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white",  "red" ,"red"))(100),
+  breaks = seq(0, 10, length.out = 101)
+)
+dev.off()
+
+
+
+
+########################################
+# EXPRESSION GATA6 markers in CDX2 cells - scale data #############
+########################################
+
+
+GASTRU_72h_merge_CDX2cells <- subset(GASTRU_72h_merge, subset = CDX2_detected_all == "yes")
+
+DefaultAssay(GASTRU_72h_merge_CDX2cells) <- "RNA"
+GASTRU_72h_merge_CDX2cells <- NormalizeData(GASTRU_72h_merge_CDX2cells, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge_CDX2cells)
+GASTRU_72h_merge_CDX2cells <- ScaleData(GASTRU_72h_merge_CDX2cells, features = all.genes) # zero-centres and scales it
+
+
+avg_list <- AverageExpression(
+  GASTRU_72h_merge_CDX2cells,
+  assays   = "RNA",
+  features = markers_gata6_yes_NOTinCDX2_TOP100,
+  group.by = "condition",
+  slot     = "scale.data"
+)
+avg_mat <- avg_list$RNA   # rows = genes, cols = conditions
+
+
+# Order columns  (UNTREATED, XMU, DASATINIB)
+keep_cols <- intersect(c("UNTREATED", "XMU", "DASATINIB"), colnames(avg_mat))
+avg_mat   <- avg_mat[, keep_cols, drop = FALSE]
+
+expr_mat <- avg_mat
+expr_mat_ordered <- avg_mat[genes_ordered_scaleData[genes_ordered_scaleData %in% rownames(avg_mat)], , drop = FALSE]
+
+
+pdf("output/seurat/heatmap-markers_gata6-CDX2cells-scaleData.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red"))(100),
+)
+dev.off()
+
+
+
+
+
+
+
+
+########################################
+# EXPRESSION GATA6 markers in CDX2 cells - data (log norm) #############
+########################################
+
+
+avg_list <- AverageExpression(
+  GASTRU_72h_merge_CDX2cells,
+  assays   = "RNA",
+  features = markers_gata6_yes_NOTinCDX2_TOP100,
+  group.by = "condition",
+  slot     = "data"
+)
+avg_mat <- avg_list$RNA   # rows = genes, cols = conditions
+
+
+# Order columns  (UNTREATED, XMU, DASATINIB)
+keep_cols <- intersect(c("UNTREATED", "XMU", "DASATINIB"), colnames(avg_mat))
+avg_mat   <- avg_mat[, keep_cols, drop = FALSE]
+
+expr_mat <- avg_mat
+expr_mat_ordered <- avg_mat[genes_ordered_data[genes_ordered_data %in% rownames(avg_mat)], , drop = FALSE]
+
+
+pdf("output/seurat/heatmap-markers_gata6-CDX2cells-data.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red", "red"))(100),
+)
+dev.off()
+
+
+pdf("output/seurat/heatmap-markers_gata6-CDX2cells-data-scale0_10.pdf", width = 2, height = 10)
+pheatmap(
+  expr_mat_ordered,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 10,
+  color = colorRampPalette(c("white", "red", "red"))(100),
+  breaks = seq(0, 10, length.out = 101)
+)
+dev.off()
+
+
+```
+
+
+
 
 
 

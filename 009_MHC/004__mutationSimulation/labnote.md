@@ -197,7 +197,7 @@ sbatch scripts/run_filtered_experimental_v2.slurm # 50365053 ok --> results_expe
 
 
 # Simulate mutation  - SBS, Exp, context
-## version3 .json corrected and apth. score corrected
+## version3 .json corrected and path. score corrected
 
 I noticed that CADD Phred score used the raw version; not the normalized one that goes from 0-99... The wrong column might be picked in the `scripts/annotate_damage3.py`.
 

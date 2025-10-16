@@ -48990,6 +48990,25 @@ pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_noSplit
 DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4) + ggplot2::theme(legend.position = "none")
 dev.off()
 
+
+# label specific cluster ####################
+WT_Kcnc1_p14_CX_1step.sct$highlight <- ifelse(
+  WT_Kcnc1_p14_CX_1step.sct$cluster.annot == "Microglia",
+  "Microglia",
+  "Other"
+)
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07-highlight-Microglia.pdf", width = 7, height = 6)
+DimPlot(
+  WT_Kcnc1_p14_CX_1step.sct,
+  reduction = "umap",
+  group.by = "highlight",
+  cols = c("Other" = "grey80", "Microglia" = "black")
+)  + ggplot2::theme(legend.position = "none")
+dev.off()
+#############################################
+
+
+
 # All in dotplot
 DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "SCT"
 
@@ -55176,6 +55195,24 @@ DimPlot(WT_Kcnc1_p35_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TR
 dev.off()
 
 
+# label specific cluster ####################
+WT_Kcnc1_p35_CX_1step.sct$highlight <- ifelse(
+  WT_Kcnc1_p35_CX_1step.sct$cluster.annot == "Microglia",
+  "Microglia",
+  "Other"
+)
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CX_1step_version2dim35kparam15res065-highlight-Microglia.pdf", width = 7, height = 6)
+DimPlot(
+  WT_Kcnc1_p35_CX_1step.sct,
+  reduction = "umap",
+  group.by = "highlight",
+  cols = c("Other" = "grey80", "Microglia" = "black")
+)  + ggplot2::theme(legend.position = "none")
+dev.off()
+#############################################
+
+
+
 
 # All in dotplot
 DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "SCT"
@@ -60800,6 +60837,22 @@ dev.off()
 pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04_noSplit_label_nolegend.pdf", width=7, height=6)
 DimPlot(WT_Kcnc1_p180_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4) + ggplot2::theme(legend.position = "none")
 dev.off()
+
+# label specific cluster ####################
+WT_Kcnc1_p180_CX_1step.sct$highlight <- ifelse(
+  WT_Kcnc1_p180_CX_1step.sct$cluster.annot == "Microglia",
+  "Microglia",
+  "Other"
+)
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04-highlight-Microglia.pdf", width = 7, height = 6)
+DimPlot(
+  WT_Kcnc1_p180_CX_1step.sct,
+  reduction = "umap",
+  group.by = "highlight",
+  cols = c("Other" = "grey80", "Microglia" = "black")
+)  + ggplot2::theme(legend.position = "none")
+dev.off()
+#############################################
 
 
 
