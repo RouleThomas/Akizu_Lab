@@ -230,12 +230,11 @@ for i, col in enumerate(header, 1):
 ```bash
 conda activate mutsim
 
-XXXY HERE !!! JOB READY TO BE LAUNCHED!!!
 
 # Generate plot for all (script updated to use `scripts/simulate_array_v3.py` and `scripts/annotate_damage4.py`)
-sbatch scripts/run_filtered_contexts_v3.slurm # xxx  --> results_contexts_v3/
-sbatch scripts/run_filtered_cosmic_v3.slurm # xxx  --> results_v3/
-sbatch scripts/run_filtered_experimental_v3.slurm # xxx  --> results_experimental_v3/
+sbatch scripts/run_filtered_contexts_v3.slurm # 55881483 xxx  --> results_contexts_v3/
+sbatch scripts/run_filtered_cosmic_v3.slurm # 55881484 xxx  --> results_v3/
+sbatch scripts/run_filtered_experimental_v3.slurm # 55881533 xxx  --> results_experimental_v3/
 ```
 
 
@@ -249,7 +248,7 @@ sbatch scripts/run_filtered_experimental_v3.slurm # xxx  --> results_experimenta
 
 
 
-## Generate profile plots
+# Generate profile plots
 
 
 Let's generate profile plots of my simulation to see if these are in agreement with the known profile.

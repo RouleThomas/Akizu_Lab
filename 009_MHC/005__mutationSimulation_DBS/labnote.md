@@ -166,12 +166,10 @@ python scripts/simulate_array_DBS.py \
 
 
 
-sbatch scripts/run_filtered_cosmic_DBS.slurm # 55679243 xxx   --> results_DBS
+sbatch scripts/run_filtered_cosmic_DBS.slurm # 55679243 ok   --> results_DBS
 
 
-XXXY HER E BELOW TO RUN!!!
-
-sbatch scripts/run_filtered_contexts_DBS.slurm # xxx   --> results_contexts_DBS
+sbatch scripts/run_filtered_contexts_DBS.slurm # 55881584 xxx   --> results_contexts_DBS
 
 
 
@@ -179,7 +177,76 @@ sbatch scripts/run_filtered_contexts_DBS.slurm # xxx   --> results_contexts_DBS
 
 
 
-XXX DO PLOT CHECK WE ARE GGOO!
+
+
+
+# Generate profile plots
+
+
+Let's generate profile plots of my simulation to see if these are in agreement with the known profile.
+
+- Custom script `scripts/plot_dbs78_from_parquet.py` adapted from `scripts/plot_sbs96_from_parquet.py` (`004*`) to make these plot from the `*.parquet`
+
+
+```bash
+
+plot_dbs78_from_parquet.py
+
+# Check a few samples
+
+python scripts/plot_dbs78_from_parquet.py \
+  --parquet results_DBS/DBS19/n_4000/rep_05.sim.parquet \
+  --fasta ref/GRCh38.primary_assembly.genome.fa \
+  --sample-name DBS19-n_4000-rep_05 \
+  --output-pdf plot/DBS19-n_4000-rep_05_plot.pdf
+
+#--> Works!!!
+
+
+```
+
+--> It seems to be working!!!
+
+
+
+
+
+
+
+# QC simulation
+
+
+
+Check that the simulation is correct by investigating simulating parquet file
+
+
+--> Generate `scripts/dbs_ref_alt.py` custom script that:
+- Transform our parquet to indicate ref and alt BPs instead of using context IDs
+- Generate a preview TSV (top 1000 rows)
+- Generate a simple VCF for vizualization on IGV
+
+
+
+```bash
+scripts/dbs_ref_alt.py
+
+
+python scripts/dbs_ref_alt.py \
+  --parquet-in results_DBS/DBS19/n_4000/rep_01.sim.parquet \
+  --fasta ref/GRCh38.primary_assembly.genome.fa \
+  --parquet-out results_DBS/DBS19/n_4000/rep_01.with_refalt.parquet \
+  --tsv-out results_DBS/DBS19/n_4000/rep_01.preview.tsv \
+  --vcf-out results_DBS/DBS19/n_4000/rep_01.with_refalt.vcf
+
+
+
+
+
+
+
+
+
+```
 
 
 
