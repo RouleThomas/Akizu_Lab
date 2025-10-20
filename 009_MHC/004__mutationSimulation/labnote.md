@@ -231,9 +231,19 @@ for i, col in enumerate(header, 1):
 conda activate mutsim
 
 
+XXXY THIS ONE TO RUN!
+
+
 # Generate plot for all (script updated to use `scripts/simulate_array_v3.py` and `scripts/annotate_damage4.py`)
-sbatch scripts/run_filtered_contexts_v3.slurm # 55881483 xxx  --> results_contexts_v3/
-sbatch scripts/run_filtered_cosmic_v3.slurm # 55881484 xxx  --> results_v3/
+
+sbatch scripts/run_filtered_cosmic_v3.slurm # 55881484 ongoig  --> results_v3/
+sbatch scripts/run_filtered_contexts_v3.slurm # 55881483 ok  --> results_contexts_v3/
+
+
+XXXY THIS ONE TO RUN!
+
+
+
 sbatch scripts/run_filtered_experimental_v3.slurm # 55881533 xxx  --> results_experimental_v3/
 ```
 

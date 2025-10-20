@@ -168,6 +168,7 @@ python scripts/simulate_array_DBS.py \
 
 sbatch scripts/run_filtered_cosmic_DBS.slurm # 55679243 ok   --> results_DBS
 
+XXXY THIS ONE TO RUN!
 
 sbatch scripts/run_filtered_contexts_DBS.slurm # 55881584 xxx   --> results_contexts_DBS
 
