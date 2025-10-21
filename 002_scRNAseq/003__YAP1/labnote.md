@@ -35187,7 +35187,7 @@ write.table(all_markers, file = "output/seurat/srat_GASTRU_24h_merge-dim20kparam
 
 
 
-# WT vs Kcnc1
+# UNTREATED vs DASA vs XMU
 DefaultAssay(GASTRU_24h_merge) <- "RNA"
 GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
 all.genes <- rownames(GASTRU_24h_merge)
@@ -36215,6 +36215,34 @@ FeaturePlot(GASTRU_72h_merge, features = "ICA1", max.cutoff = 1, cols = c("grey"
 dev.off()
 
 
+
+
+# Check some genes
+
+
+
+
+# UNTREATED vs DASA vs XMU
+DefaultAssay(GASTRU_72h_merge) <- "RNA"
+GASTRU_72h_merge <- NormalizeData(GASTRU_72h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge)
+GASTRU_72h_merge <- ScaleData(GASTRU_72h_merge, features = all.genes) # zero-centres and scales it
+
+DefaultAssay(GASTRU_72h_merge) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_GASTRU_72h_merge-dim20kparam30res03-CDX2-split.pdf", width=10, height=5)
+FeaturePlot(GASTRU_72h_merge, features = c("CDX2"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_GASTRU_72h_merge-dim20kparam30res03-GATA6-split.pdf", width=10, height=5)
+FeaturePlot(GASTRU_72h_merge, features = c("GATA6"), max.cutoff = 5, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
+
 ```
 
 
@@ -36276,8 +36304,8 @@ GASTRU_72h_merge_UNTREATED <- NormalizeData(GASTRU_72h_merge_UNTREATED, normaliz
 all.genes <- rownames(GASTRU_72h_merge_UNTREATED)
 GASTRU_72h_merge_UNTREATED <- ScaleData(GASTRU_72h_merge_UNTREATED, features = all.genes) # zero-centres and scales it
 
-all_markers_CDX2_UNTREATED <- FindAllMarkers(GASTRU_72h_merge_UNTREATED, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25) # treshold reduce here otherwise not enough genes!
-#write.table(all_markers_CDX2_UNTREATED, file = "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_CDX2_detected.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers_CDX2_UNTREATED <- FindAllMarkers(GASTRU_72h_merge_UNTREATED, assay = "RNA", only.pos = TRUE, min.pct = 0.15, logfc.threshold = 0.15) # treshold reduce here otherwise not enough genes! 0.25 for 24hrs
+#write.table(all_markers_CDX2_UNTREATED, file = "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_CDX2_detected-015thresh.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 all_markers_CDX2_UNTREATED <- read.table(
   "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_CDX2_detected.txt",
   sep = "\t",
@@ -36319,8 +36347,8 @@ GASTRU_72h_merge_UNTREATED <- NormalizeData(GASTRU_72h_merge_UNTREATED, normaliz
 all.genes <- rownames(GASTRU_72h_merge_UNTREATED)
 GASTRU_72h_merge_UNTREATED <- ScaleData(GASTRU_72h_merge_UNTREATED, features = all.genes) # zero-centres and scales it
 
-all_markers_GATA6_UNTREATED <- FindAllMarkers(GASTRU_72h_merge_UNTREATED, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-#write.table(all_markers_GATA6_UNTREATED, file = "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_GATA6_detected.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+all_markers_GATA6_UNTREATED <- FindAllMarkers(GASTRU_72h_merge_UNTREATED, assay = "RNA", only.pos = TRUE, min.pct = 0.15, logfc.threshold = 0.15)
+#write.table(all_markers_GATA6_UNTREATED, file = "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_GATA6_detected-015thresh.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 all_markers_GATA6_UNTREATED <- read.table(
   "output/seurat/srat_GASTRU_72h_merge_UNTREATED-dim20kparam30res03-all_markers_GATA6_detected.txt",
   sep = "\t",
@@ -36477,7 +36505,7 @@ expr_mat <- avg_mat
 expr_mat_ordered <- avg_mat[genes_ordered_scaleData[genes_ordered_scaleData %in% rownames(avg_mat)], , drop = FALSE]
 
 
-pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-scaleData.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-72hrs-scaleData.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36531,7 +36559,7 @@ expr_mat <- avg_mat
 expr_mat_ordered <- avg_mat[genes_ordered_data[genes_ordered_data %in% rownames(avg_mat)], , drop = FALSE]
 
 
-pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-data.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-72hrs-data.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36544,7 +36572,7 @@ pheatmap(
 )
 dev.off()
 
-pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-data-scale0_10.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_cdx2-CDX2cells-72hrs-data-scale0_10.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36593,7 +36621,7 @@ expr_mat <- avg_mat
 expr_mat_ordered <- avg_mat[genes_ordered_scaleData[genes_ordered_scaleData %in% rownames(avg_mat)], , drop = FALSE]
 
 
-pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-scaleData.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-72hrs-scaleData.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36636,7 +36664,7 @@ expr_mat <- avg_mat
 expr_mat_ordered <- avg_mat[genes_ordered_data[genes_ordered_data %in% rownames(avg_mat)], , drop = FALSE]
 
 
-pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-data.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-72hrs-data.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36649,7 +36677,7 @@ pheatmap(
 )
 dev.off()
 
-pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-data-scale0_10.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_cdx2-GATA6cells-72hrs-data-scale0_10.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36716,7 +36744,7 @@ expr_mat <- avg_mat
 expr_mat_ordered <- avg_mat[genes_ordered_scaleData[genes_ordered_scaleData %in% rownames(avg_mat)], , drop = FALSE]
 
 
-pdf("output/seurat/heatmap-markers_gata6-GATA6cells-scaleData.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_gata6-GATA6cells-72hrs-scaleData.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36770,7 +36798,7 @@ expr_mat <- avg_mat
 expr_mat_ordered <- avg_mat[genes_ordered_data[genes_ordered_data %in% rownames(avg_mat)], , drop = FALSE]
 
 
-pdf("output/seurat/heatmap-markers_gata6-GATA6cells-data.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_gata6-GATA6cells-72hrs-data.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36784,7 +36812,7 @@ pheatmap(
 dev.off()
 
 
-pdf("output/seurat/heatmap-markers_gata6-GATA6cells-data-scale0_10.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_gata6-GATA6cells-72hrs-data-scale0_10.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36832,7 +36860,7 @@ expr_mat <- avg_mat
 expr_mat_ordered <- avg_mat[genes_ordered_scaleData[genes_ordered_scaleData %in% rownames(avg_mat)], , drop = FALSE]
 
 
-pdf("output/seurat/heatmap-markers_gata6-CDX2cells-scaleData.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_gata6-CDX2cells-72hrs-scaleData.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36875,7 +36903,7 @@ expr_mat <- avg_mat
 expr_mat_ordered <- avg_mat[genes_ordered_data[genes_ordered_data %in% rownames(avg_mat)], , drop = FALSE]
 
 
-pdf("output/seurat/heatmap-markers_gata6-CDX2cells-data.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_gata6-CDX2cells-72hrs-data.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36889,7 +36917,7 @@ pheatmap(
 dev.off()
 
 
-pdf("output/seurat/heatmap-markers_gata6-CDX2cells-data-scale0_10.pdf", width = 2, height = 10)
+pdf("output/seurat/heatmap-markers_gata6-CDX2cells-72hrs-data-scale0_10.pdf", width = 2, height = 10)
 pheatmap(
   expr_mat_ordered,
   cluster_rows = FALSE,
@@ -36906,6 +36934,8 @@ dev.off()
 
 ```
 
+--> Same as for 24hrs; except the *treshold of marekr genes decreased to* `min.pct = 0.15, logfc.threshold = 0.15` was `min.pct = 0.25, logfc.threshold = 0.25` for 24hrs. 
+  --> Was necessary to obtain at least 100 marker genes
 
 
 
