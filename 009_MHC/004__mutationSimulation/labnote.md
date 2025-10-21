@@ -236,7 +236,7 @@ XXXY THIS ONE TO RUN!
 
 # Generate plot for all (script updated to use `scripts/simulate_array_v3.py` and `scripts/annotate_damage4.py`)
 
-sbatch scripts/run_filtered_cosmic_v3.slurm # 55881484 ongoig  --> results_v3/
+sbatch scripts/run_filtered_cosmic_v3.slurm # 55881484 ok  --> results_v3/
 sbatch scripts/run_filtered_contexts_v3.slurm # 55881483 ok  --> results_contexts_v3/
 
 
@@ -277,6 +277,13 @@ python scripts/plot_sbs96_from_parquet.py \
   --fasta ref/GRCh38.primary_assembly.genome.fa \
   --sample-name SBS2-n_4000-rep_01 \
   --output-pdf plot/SBS2-n_4000-rep_01_plot.pdf
+
+python scripts/plot_sbs96_from_parquet.py \
+  --parquet results/SBS4/n_4000/rep_01.annot.parquet \
+  --fasta ref/GRCh38.primary_assembly.genome.fa \
+  --sample-name SBS4-n_4000-rep_01 \
+  --output-pdf plot/SBS4-n_4000-rep_01_plot.pdf
+
 ```
 
 --> It seems to be working!!!
@@ -433,6 +440,75 @@ python scripts/plot_all_signatures_combined-experimental-highlight_random_v3.py
 
 
 
+
+### Version4
+
+From the `## version3 .json corrected and path. score corrected` simulation where CADD_PHRED score corrected.. 
+
+--> Annotate using consequences of the pathogeneicity, rather than score; so for **pathogeneicity use qualitative and not continuous variables.**
+  --> Still keep same plot, just add horizontal lines for path. threshold:
+    - SIFT4G: < 0.05 = damaging; > 0.05 = benign
+    - PolyPhen2: 0-0.15= benign; 0.15-0.85 = possibly damaging; >0.85 = damaging
+    - CADD: < 2= benign; >10 = likely damaging, >20 = damaging
+
+
+--> **Exact same code as v3; I just now use the results_v3 folders!**
+  --> And output `*_summary_all_v4.tsv` and `*_summary_plots_v4.pdf`
+
+
+```bash
+conda activate mutsim
+
+####################################
+# CONTEXTS ##########################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-contexts_v4.sh
+
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-contexts_v4.py
+#--> results_contexts_v3/combined_signature_summary_errorbars_v4.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-contexts-highlight_random_v4.py
+#--> results_contexts_v3/combined_signature_summary_plots-highlight_random_v4.pdf
+
+####################################
+# COSMIC ###########################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-cosmic_v4.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-cosmic_v4.py
+#--> results_v3/combined_signature_summary_errorbars_v4.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-cosmic-highlight_random_v4.py
+#--> results_v3/combined_signature_summary_plots-highlight_random_v4.pdf
+
+
+XXXY WAIT BEFORE TO RUN AS SIMULATION NOT DONE YUET! scripts/run_filtered_experimental_v3.slurm # 55881533 xxx --> results_experimental_v3/
+
+####################################
+# EXPERIMENTAL #####################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-experimental_v4.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-experimental_v4.py
+#--> results_experimental_v3/combined_signature_summary_errorbars_v4.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-experimental-highlight_random_v4.py
+#--> results_experimental_v3/combined_signature_summary_plots-highlight_random_v4.pdf
+
+```
+
+
+
+
+
+
 # QC simulation
 
 ## Check issue with mutation center codon
@@ -516,7 +592,7 @@ Issue from `## Annotation summary plot` scripts; when computing the stop; I incl
 
 
 
-# Score distribution 
+# Score distribution  version1 continuous values
 
 Instead of relying on the error-bar average for each annotation score; lets check specifically their dispersion: is there some extremes or most mutations fall within the error bar?
 
@@ -533,7 +609,7 @@ For each SBS signature:
 --> `*scoreUpdate` is by translating path. score to consequences:
   - SIFT4G: < 0.05 = damaging; > 0.05 = benign
   - PolyPhen2: 0-0.15= benign; 0.15-0.85 = possibly damaging; >0.85 = damaging
-  - CADD: 
+  - CADD: < 2= benign; >10 = likely damaging, >20 = damaging
 
 ```bash
 conda activate mutsim
@@ -605,6 +681,97 @@ python scripts/plot_distributions_per_replicate-contexts.py
 
 
 
+
+
+
+
+
+# Score distribution  version2 qualitative values
+
+Same as version1, but this time display count as begnin, damaging for the path. scores
+  - SIFT4G: < 0.05 = damaging; > 0.05 = benign
+  - PolyPhen2: 0-0.15= benign; 0.15-0.85 = possibly damaging; >0.85 = damaging
+  - CADD: < 2= benign; >10 = likely damaging, >20 = damaging
+
+
+
+## SBS
+
+Let's now check for each SBS signature the profile/distribution of each scores for 4k mutations (ie. 4k is where variance stabilizes)
+
+For each SBS signature:
+- Loop through `results/*/*/` (All folders: all SBS and Flat)
+- Generates one 6-panel page per replicate (6 scores annotations)
+
+--> `*scoreUpdate` is by translating path. score to consequences:
+  - SIFT4G: < 0.05 = damaging; > 0.05 = benign
+  - PolyPhen2: 0-0.15= benign; 0.15-0.85 = possibly damaging; >0.85 = damaging
+  - CADD: < 2= benign; >10 = likely damaging, >20 = damaging
+
+
+
+```bash
+conda activate mutsim
+
+# light testing on one signature
+python scripts/plot_distributions_per_replicate_version2-SBS2_4k.py
+#--> Works!
+
+
+
+# Run all SBS signatures and Flat
+python scripts/plot_distributions_per_replicate_version2-SBS.py
+
+
+
+
+```
+--> Plot produced at `results_v3/*/*/*_replicate_score_distributions.pdf`
+
+
+Some mutations with extreme score are masked with average.
+  --> Average score can be biased and contain mutations with extreme csq
+
+
+
+
+## Context
+
+
+Same for Experimental signatures
+
+
+```bash
+conda activate mutsim
+
+# Run all contexts signatures
+python scripts/plot_distributions_per_replicate_version2-contexts.py
+
+
+```
+--> Plot produced at `results_contexts/*/*/*_replicate_score_distributions.pdf`
+
+
+
+
+## Experimental
+
+
+XXXY HERE BELOW TO RUN!!!! AFTER  sbatch scripts/run_filtered_experimental_v3.slurm # 55881533 xxx --> results_experimental_v3/
+
+Same for Experimental signatures
+
+
+
+```bash
+conda activate mutsim
+
+# Run all Experimental signatures
+python scripts/plot_distributions_per_replicate_version2-experimental.py
+
+
+```
+--> Plot produced at `results_experimental/*/*/*_replicate_score_distributions.pdf`
 
 
 

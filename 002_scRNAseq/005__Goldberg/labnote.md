@@ -71183,7 +71183,7 @@ keep_genes <- c("P2ry12","P2ry13","Cx3cr1","Tmem119") # HM microglia markers
 
 
 
-#### Isolating cell of interest - Cortex Layers p14
+#### Isolating cell of interest - Cortex Layers p14 version1 all cortical layers cells
 
 
 
@@ -71339,13 +71339,17 @@ Part_CorticalLayers_subset <- slingshot(Part_CorticalLayers_subset, reducedDim =
                  clusterLabels = colData(Part_CorticalLayers_subset)$seurat_clusters,
                  start.clus = c("2", "4"), end.clus = c("29") ,approx_points = 100, extend = 'pc1', stretch = 1) # n
 
-##########################################
+Part_CorticalLayers_subset <- slingshot(Part_CorticalLayers_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_CorticalLayers_subset)$seurat_clusters,
+                 start.clus = c("2"), end.clus = c("29") ,approx_points = 100, extend = 'y', stretch = 1) # n
 
+##########################################
 
 
 Part_CorticalLayers_subset <- slingshot(Part_CorticalLayers_subset, reducedDim = 'UMAP',
                  clusterLabels = colData(Part_CorticalLayers_subset)$seurat_clusters,
-                 start.clus = c("2"), end.clus = c("29") ,approx_points = 100, extend = 'y', stretch = 1) # n
+                 start.clus = c("2"), end.clus = c("29") ,approx_points = 100, extend = 'n', stretch = 1) # n
+
 
 
 #test reduceDim PCA or subset endoderm
@@ -71360,7 +71364,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_p14_CX-version2dim30kparam50res07-Part_CorticalLayers_subset-START2_END29_points100extendystretch1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_p14_CX-version2dim30kparam50res07-Part_CorticalLayers_subset-START2_END29_points100extendnstretch1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -71370,6 +71374,9 @@ ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
 dev.off()
 
 
+#-->Lets remove cluster2 Otof_2! Impossible to make a complete trajectory including it..
+
+XXXY BELOW NOT MOD; #--> see next version without Otof_2
 
 
 ## PLOT with separate trajectories - Individually
@@ -71885,6 +71892,1505 @@ dev.off()
 
 
 ```
+
+
+
+
+
+#### Isolating cell of interest - Cortex Layers p14 version2 wihout cluster2 (Otof_2)
+
+
+
+--> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
+
+
+```bash
+conda activate condiments_V6
+```
+
+
+
+
+```R
+
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+set.seed(42)
+
+
+# import rds with increased clustering
+WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V2_label-macrov1.rds") # 
+set.seed(42)
+
+
+DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CX <- as.SingleCellExperiment(WT_Kcnc1_p14_CX_1step.sct, assay = "RNA")
+
+
+
+## SEPARATE CELLS for each trajectory ############################
+
+########################################################
+############################ Cortical Layers ############################
+########################################################
+
+
+# First filter based on cell type
+Part_CorticalLayers <- WT_Kcnc1_CX[, WT_Kcnc1_CX$cluster.annot %in% c( "L2L3_IT__Otof_1", "L4L5_IT__Rorb", "L5_IT__Etv1_1", "L5_IT__Etv1_2", "L6_IT__Cdh9", "L6__Car3")]
+table(Part_CorticalLayers$cluster.annot) # to double check
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_CorticalLayers)$UMAP),
+  as.data.frame(colData(Part_CorticalLayers)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Kcnc1_p14_CX-version2dim30kparam50res07-Part_CorticalLayers.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_CorticalLayers)$UMAP
+
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+
+selected_cells <-  umap_coords[,1] > -5 & umap_coords[,1] < 10 &
+                  umap_coords[,2] > -1 & umap_coords[,2] < 10.75
+
+non_selected_cells1 <-  umap_coords[,1] > -5 & umap_coords[,1] < 0 &
+                  umap_coords[,2] > 7.5
+
+non_selected_cells2 <-  umap_coords[,1] > -3 & umap_coords[,1] < 1 &
+                  umap_coords[,2] > 3 & umap_coords[,2] < 5
+
+final_selection <- selected_cells & !non_selected_cells1 & !non_selected_cells2
+
+# Subset your SCE object
+Part_CorticalLayers_subset <- Part_CorticalLayers[, final_selection]
+
+# Check resulting subset
+dim(Part_CorticalLayers_subset)
+
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_CorticalLayers_subset)$UMAP),
+  as.data.frame(colData(Part_CorticalLayers_subset)[, -3])
+  ) %>%
+  sample_frac(1)
+
+pdf("output/condiments/UMAP_WT_Kcnc1_p14_CX-version2dim30kparam50res07-Part_CorticalLayers_subset.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## genotype overlap
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_p14_CX-version2dim30kparam50res07-Part_CorticalLayers_subset.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_p14_CX-version2dim30kparam50res07-Part_CorticalLayers_subset.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+
+##########################################
+
+
+Part_CorticalLayers_subset <- slingshot(Part_CorticalLayers_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_CorticalLayers_subset)$seurat_clusters,
+                 start.clus = c("1"), end.clus = c("29") ,approx_points = 100, extend = 'pc1', stretch = 1) # n
+
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_CorticalLayers_subset), Part_CorticalLayers_subset$condition) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_CorticalLayers_subset), Part_CorticalLayers_subset$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_p14_CX-version2dim30kparam50res07-Part_CorticalLayers_subset-START1_END29_points100extendpc1stretch1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+Part_CorticalLayers_subset_WT <- Part_CorticalLayers_subset[, Part_CorticalLayers_subset$condition == "WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_CorticalLayers_subset_WT, "UMAP")),
+  slingPseudotime(Part_CorticalLayers_subset_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_CorticalLayers_subset_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
+curves <- slingCurves(Part_CorticalLayers_subset_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:1) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_CorticalLayers_subset_WT-version2dim30kparam50res07-START1_END29_points100extendpc1stretch1.pdf", width=6, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+### Kcnc1
+Part_CorticalLayers_subset_Kcnc1 <- Part_CorticalLayers_subset[, Part_CorticalLayers_subset$condition == "Kcnc1"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_CorticalLayers_subset_Kcnc1, "UMAP")),
+  slingPseudotime(Part_CorticalLayers_subset_Kcnc1) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_CorticalLayers_subset_Kcnc1) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst))
+curves <- slingCurves(Part_CorticalLayers_subset_Kcnc1, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:1) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_CorticalLayers_subset_Kcnc1-version2dim30kparam50res07-START1_END29_points100extendpc1stretch1.pdf", width=6, height=6)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_CorticalLayers_subset, conditions = Part_CorticalLayers_subset$condition, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_CorticalLayers_subset) %>% as.data.frame() 
+
+df_3$condition <- Part_CorticalLayers_subset$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_CorticalLayers_subset-version2dim30kparam50res07-START1_END29_points100extendpc1stretch1.pdf", width=5, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_CorticalLayers_subset-version2dim30kparam50res07-START1_END29_points100extendpc1stretch1.pdf", width=5, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .6, aes(fill = condition),
+               col = "transparent", adjust = 3.0 , n = 1024, trim = TRUE) +
+  geom_density(aes(col = condition), size = 1.5,
+               col = "transparent", adjust = 3.0 , n = 1024, trim = TRUE) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+df_3 %>%
+  group_by(Lineage) %>%
+  summarise(p_ks = ks.test(pst[condition=="WT"],
+                           pst[condition=="Kcnc1"])$p.value)
+#--> Statistic diff in prifle
+
+
+# plot separating cell types
+## Isolate cells and pseudotime values
+pst <- slingPseudotime(Part_CorticalLayers_subset)
+head(rownames(pst))
+pst_df <- as.data.frame(pst)
+pst_df$cell <- rownames(pst_df)
+pst_df = as_tibble(pst_df)
+## Retrive cell names , conditions, and cluster name from seurat object
+meta <- WT_Kcnc1_p14_CX_1step.sct@meta.data
+### Add cell names (rownames of the meta.data correspond to cell names)
+meta$cell <- rownames(meta)
+### Keep only the relevant columns
+meta_df <- meta[, c("cell", "condition", "cluster.annot")]
+meta_df = as_tibble(meta_df)
+## Put together pseudotime and seurat metadata
+pst_meta = pst_df %>%
+  inner_join(meta_df)
+## PLOT
+pdf("output/condiments/densityPlotCellType_trajectory_lineage_Part_CorticalLayers_subset-version2dim30kparam50res07-START1_END29_points100extendpc1stretch1.pdf", width=5, height=3)
+ggplot(pst_meta, aes(x = Lineage1)) +
+  geom_density(alpha = .8, aes(fill = cluster.annot), col = "transparent") +
+  geom_density(aes(col = cluster.annot), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "cluster.annot") +
+  facet_wrap(~condition, nrow=2) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_CorticalLayers_subset_START1_END29_points100extendpc1stretch1-version2dim30kparam50res07.RData")
+### load("output/condiments/condiments-Part_CorticalLayers_subset_START1_END29_points100extendpc1stretch1-version2dim30kparam50res07.RData")
+set.seed(42)
+
+
+
+XXXY BELOW NOT RUN!!!
+
+
+
+
+#  Differential expression
+# --> Run fitGam() through Slurm
+
+
+################### Time Course effect COMMON CONDITIONS ######################################################
+## TRAJECTORY1 - Granule ##################
+set.seed(42)
+traj1 <- readRDS("output/condiments/traj1_Part_Granule_subset-version4dim40kparam15res03.rds")
+
+
+## DEGs between condition
+traj1_l2fc0 <- conditionTest(traj1, l2fc =  0.15) #  traj1_l2fc0 <- conditionTest(traj1, l2fc = 2)
+# --> l2fc2 padj0.05 = 5 DEGs total 
+# --> l2fc1 padj0.05 = 49 DEGs total 
+# --> l2fc015 padj0.05 = 1055 DEGs total 
+# --> l2fc0.5 padj0.05 = 310 DEGs total (only genes upreg in Kcnc1)
+
+
+# Correct the pvalue with fdr
+traj1_l2fc0$padj <- p.adjust(traj1_l2fc0$pvalue, "fdr")
+
+
+### Save output tables
+traj1_l2fc0$gene <- rownames(traj1_l2fc0) # create new column label gene; as matrix before
+condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1))] # just to put gene column 1st
+
+write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD 
+## first version with l2fc0 and padj0.05  ##############################
+condRes_traj1_l2fc0 <- read.table("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc0 <- condRes_traj1_l2fc0 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc0, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=13) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
+## version with l2fc015 and padj0.05  ##############################
+condRes_traj1_l2fc015 <- read.table("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc015.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc015 <- condRes_traj1_l2fc015 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc015, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=7) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+## show only one gene ##################
+## gene expr over time with SE
+target_gene <- "Gabra6"   # <<< change here
+yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
+stopifnot(length(yhat_cell) == ncol(traj1))
+
+pt <- slingPseudotime(Part_Granule_subset, na = FALSE)[, 1]   # lineage 1; change index if needed
+
+# 3) Condition per cell (adapt to your metadata column name)
+cond <- WT_Kcnc1_p14_CB_1step.sct@meta.data[colnames(traj1), "condition"]          
+cond <- factor(cond, levels = c("WT","Kcnc1"))             
+colData(traj1)$condition <- cond 
+
+
+df_cells <- data.frame(
+  Gene = target_gene,
+  Pseudotime = pt,
+  Expression = as.numeric(yhat_cell),
+  Condition = cond
+) %>% filter(is.finite(Pseudotime), is.finite(Expression))
+
+# 4) Bin pseudotime and summarize
+n_bins <- 40
+df_cells <- df_cells %>%
+  mutate(bin = cut(Pseudotime, breaks = n_bins, include.lowest = TRUE, labels = FALSE)) %>%
+  group_by(Condition, bin) %>%
+  summarise(
+    Pseudotime_mid = mean(Pseudotime, na.rm = TRUE),
+    mean_expr = mean(Expression, na.rm = TRUE),
+    sd_expr   = sd(Expression, na.rm = TRUE),
+    n = dplyr::n(),
+    se_expr = sd_expr / sqrt(pmax(n, 1)),
+    .groups = "drop"
+  )
+
+pdf(paste0("output/condiments/linePlot_traj1_Granule-version4dim40kparam15res03-", target_gene, "_withRibbon.pdf"), width=5, height=3.5)
+ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill = Condition)) +
+  geom_ribbon(aes(ymin = mean_expr - sd_expr, ymax = mean_expr + sd_expr), alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c(WT="black", Kcnc1="red")) +
+  scale_fill_manual(values  = c(WT="black", Kcnc1="red")) +
+  theme_bw() +
+  labs(title = paste(target_gene),
+       x = "Pseudotime", y = "Fitted expression (mean ± SE)")
+dev.off()
+
+
+##########################################
+
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
+
+# Check some genes individually - RNA
+#load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
+set.seed(42)
+## FOR LINEAGE 1
+
+counts <- WT_Kcnc1_p14_CB_1step.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(WT_Kcnc1_p14_CB_1step.sct$condition) # identify conditions
+pseudotimes <- slingPseudotime(Part_Granule_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_Granule_subset) [,1] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers-traj1_Granule-version4dim40kparam15res03-RNA_common-Cbln1.pdf", width=4, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Cbln1", curvesCols = c("black","red"), size = 0.2, lwd= 1, border = FALSE) +
+scale_color_manual(values =c("black","red")) + ggtitle("Cbln1")
+dev.off()
+
+
+
+
+# Heatmap representation
+# Define colors for each cluster
+# 20
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 13
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue" ))(13),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 12
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred" ))(12),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+
+col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
+combinedData <- combinedData[, col_order]
+pdf("output/condiments/heatmap-traj1_Granule_version4dim40kparam15res03-l2fc015_cl7.pdf", width=5, height=5)
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  legend = TRUE,
+  cutree_rows = 7,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
+
+
+
+```
+
+
+
+
+
+
+
+#### Isolating cell of interest - Cortex Layers p35
+
+XXXY here repreat but remove ETv1 line
+
+--> Follow `002*/006__Kim` `#### Run condiments RNA assay - V1 common condition`
+
+
+```bash
+conda activate condiments_V6
+```
+
+
+
+
+```R
+
+# package installation 
+## install.packages("remotes")
+## remotes::install_github("cran/spatstat.core")
+## remotes::install_version("Seurat", "4.0.3")
+## install.packages("magrittr")
+## install.packages("magrittr")
+## install.packages("dplyr")
+## BiocManager::install("DelayedMatrixStats")
+## BiocManager::install("tradeSeq")
+
+
+# packages
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+library("cowplot")
+library("scales")
+library("pheatmap")
+library("readr")
+set.seed(42)
+
+
+# import rds with increased clustering
+WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065.sct_V1_label.rds")
+set.seed(42)
+
+DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "RNA" # According to condiments workflow
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CX <- as.SingleCellExperiment(WT_Kcnc1_p35_CX_1step.sct, assay = "RNA")
+
+
+
+## SEPARATE CELLS for each trajectory ############################
+
+########################################################
+############################ Cortical Layers ############################
+########################################################
+
+
+
+
+
+
+# First filter based on cell type
+Part_CorticalLayers <- WT_Kcnc1_CX[, WT_Kcnc1_CX$cluster.annot %in% c(  "L2L3_IT__Otof_1",
+  "L4L5_IT__Rorb_1",
+  "L4L5_IT__Rorb_2",
+  "L5_IT__Etv1_1",
+  "L5L6_IT",
+  "L6__Car3")]
+table(Part_CorticalLayers$cluster.annot) # to double check
+
+
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_CorticalLayers)$UMAP),
+  as.data.frame(colData(Part_CorticalLayers)[, -3])
+  ) %>%
+  sample_frac(1)
+
+# PLOT
+pdf("output/condiments/UMAP_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_CorticalLayers)$UMAP
+
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+
+selected_cells <-  umap_coords[,1] > -5 & umap_coords[,1] < 10 &
+                  umap_coords[,2] > 0 & umap_coords[,2] < 12
+
+non_selected_cells1 <-  umap_coords[,1] > -3 & umap_coords[,1] < 3 &
+                  umap_coords[,2] < 3
+
+
+final_selection <- selected_cells & !non_selected_cells1 
+
+# Subset your SCE object
+Part_CorticalLayers_subset <- Part_CorticalLayers[, final_selection]
+
+# Check resulting subset
+dim(Part_CorticalLayers_subset)
+
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_CorticalLayers_subset)$UMAP),
+  as.data.frame(colData(Part_CorticalLayers_subset)[, -3])
+  ) %>%
+  sample_frac(1)
+
+pdf("output/condiments/UMAP_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers_subset.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
+  geom_point(size = .7) +
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+
+
+## genotype overlap
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers_subset.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7) +
+  scale_color_manual(values = c("blue", "red")) + # Specify colors here
+  labs(col = "Genotype") +
+  theme_classic()
+dev.off()
+
+## imbalance score
+scores <- condiments::imbalance_score(
+  Object = df %>% select(UMAP_1, UMAP_2) %>% as.matrix(), 
+  conditions = df$condition,
+  k = 20, smooth = 40)
+df$scores <- scores$scaled_scores
+
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers_subset.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
+  geom_point(size = .7) +
+  scale_color_viridis_c(option = "C") +
+  labs(col = "Scores") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with Separate trajectories
+### Testing Area ############
+
+
+##########################################
+
+
+Part_CorticalLayers_subset <- slingshot(Part_CorticalLayers_subset, reducedDim = 'UMAP',
+                 clusterLabels = colData(Part_CorticalLayers_subset)$seurat_clusters,
+                 start.clus = c("1"), end.clus = c("27") ,approx_points = 100, extend = 'n', stretch = 1) # n
+
+
+
+#test reduceDim PCA or subset endoderm
+topologyTest(SlingshotDataSet(Part_CorticalLayers_subset), Part_CorticalLayers_subset$condition) #  
+
+
+sdss <- slingshot_conditions(SlingshotDataSet(Part_CorticalLayers_subset), Part_CorticalLayers_subset$condition)
+curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
+                    .id = "condition")
+
+
+
+#  
+
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers_subset-START1_END27_points100extendnstretch1.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = .7, alpha = .2) +
+  scale_color_brewer(palette = "Accent") +
+  geom_path(data = curves %>% arrange(condition, Lineage, Order),
+            aes(group = interaction(Lineage, condition)), size = 1.5) +
+  theme_classic()
+dev.off()
+
+
+
+
+
+## PLOT with separate trajectories - Individually
+### WT
+Part_CorticalLayers_subset_WT <- Part_CorticalLayers_subset[, Part_CorticalLayers_subset$condition == "WT"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_CorticalLayers_subset_WT, "UMAP")),
+  slingPseudotime(Part_CorticalLayers_subset_WT) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_CorticalLayers_subset_WT) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst))
+curves <- slingCurves(Part_CorticalLayers_subset_WT, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:3) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_CorticalLayers_subset_WT_p35-version2dim35kparam15res065-START1_END27_points100extendnstretch1.pdf", width=6, height=18)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+### Kcnc1
+Part_CorticalLayers_subset_Kcnc1 <- Part_CorticalLayers_subset[, Part_CorticalLayers_subset$condition == "Kcnc1"]
+
+df_2 <- bind_cols(
+  as.data.frame(reducedDim(Part_CorticalLayers_subset_Kcnc1, "UMAP")),
+  slingPseudotime(Part_CorticalLayers_subset_Kcnc1) %>% as.data.frame() %>%
+    dplyr::rename_with(paste0, "_pst", .cols = everything()),
+  slingCurveWeights(Part_CorticalLayers_subset_Kcnc1) %>% as.data.frame(),
+  ) %>%
+  mutate(Lineage1_pst = if_else(is.na(Lineage1_pst), 0, Lineage1_pst),
+         Lineage2_pst = if_else(is.na(Lineage2_pst), 0, Lineage2_pst),
+         Lineage3_pst = if_else(is.na(Lineage3_pst), 0, Lineage3_pst))
+
+curves <- slingCurves(Part_CorticalLayers_subset_Kcnc1, as.df = TRUE)
+### Function to create the plot for each lineage
+create_plot <- function(lineage_number) {
+  df_2 <- df_2 %>%
+    mutate(pst = case_when(
+      !!sym(paste0("Lineage", lineage_number, "_pst")) > 0 ~ !!sym(paste0("Lineage", lineage_number, "_pst")),
+      TRUE ~ 0
+    ),
+    group = if_else(pst > 0, paste0("lineage", lineage_number), "other"))
+  curves_filtered <- curves %>% filter(Lineage == lineage_number)
+  curves_endpoints <- curves_filtered %>%
+    group_by(Lineage) %>%
+    arrange(Order) %>%
+    top_n(1, Order) # Get the top/last ordered point for each group
+  df_2_lineage <- df_2 %>% filter(group == paste0("lineage", lineage_number))
+  df_2_other <- df_2 %>% filter(group == "other")
+  p <- ggplot() +
+    geom_point(data = df_2_other, aes(x = UMAP_1, y = UMAP_2), size = .7, color = "grey85") +
+    geom_point(data = df_2_lineage, aes(x = UMAP_1, y = UMAP_2, col = pst), size = .7) +
+    scale_color_viridis_c() +
+    labs(col = "Pseudotime", title = paste("Lineage", lineage_number)) +
+    geom_path(data = curves_filtered %>% arrange(Order),
+              aes(x = UMAP_1, y = UMAP_2, group = Lineage), col = "black", size = 1) +
+    geom_text(data = curves_endpoints, aes(x = UMAP_1, y = UMAP_2, label = Lineage), size = 4, vjust = -1, hjust = -1, col = "red") +  # Use endpoints for labels
+    theme_classic()
+  return(p)
+}
+### Generate the plots for each lineage
+plots <- list()
+for (i in 1:3) {
+  plots[[i]] <- create_plot(i)
+}
+pdf("output/condiments/UMAP_trajectory_common_label_Part_CorticalLayers_subset_Kcnc1_p35-version2dim35kparam15res065-START1_END27_points100extendnstretch1.pdf", width=6, height=18)
+gridExtra::grid.arrange(grobs = plots, ncol = 1)
+dev.off()
+
+
+
+# Differential Progression
+prog_res <- progressionTest(Part_CorticalLayers_subset, conditions = Part_CorticalLayers_subset$condition, lineages = TRUE)
+
+df_3 <-  slingPseudotime(Part_CorticalLayers_subset) %>% as.data.frame() 
+
+df_3$condition <- Part_CorticalLayers_subset$condition
+df_3 <- df_3 %>% 
+  pivot_longer(-condition, names_to = "Lineage",
+               values_to = "pst") %>%
+  filter(!is.na(pst))
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_CorticalLayers_subset_p35-version2dim35kparam15res065-START1_END27_points100extendnstretch1.pdf", width=5, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
+  geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_CorticalLayers_subset_p35-version2dim35kparam15res065-START1_END27_points100extendnstretch1.pdf", width=5, height=3)
+ggplot(df_3, aes(x = pst)) +
+  geom_density(alpha = .6, aes(fill = condition),
+               col = "transparent", adjust = 3.0 , n = 1024, trim = TRUE) +
+  geom_density(aes(col = condition), size = 1.5,
+               col = "transparent", adjust = 3.0 , n = 1024, trim = TRUE) +
+  labs(x = "Pseudotime", fill = "condition") +
+  facet_wrap(~Lineage, scales = "free", nrow=2) +
+  guides(col = "none", fill = guide_legend(
+    override.aes = list(size = 1.5, col = c("blue", "red"))
+  )) +
+  scale_fill_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red")) +
+  theme_bw()
+dev.off()
+
+df_3 %>%
+  group_by(Lineage) %>%
+  summarise(p_ks = ks.test(pst[condition=="WT"],
+                           pst[condition=="Kcnc1"])$p.value)
+#--> Statistic diff in prifle
+
+
+# plot separating cell types
+## Isolate cells and pseudotime values
+pst <- slingPseudotime(Part_CorticalLayers_subset)
+head(rownames(pst))
+pst_df <- as.data.frame(pst)
+pst_df$cell <- rownames(pst_df)
+pst_df = as_tibble(pst_df)
+## Retrive cell names , conditions, and cluster name from seurat object
+meta <- WT_Kcnc1_p35_CX_1step.sct@meta.data
+### Add cell names (rownames of the meta.data correspond to cell names)
+meta$cell <- rownames(meta)
+### Keep only the relevant columns
+meta_df <- meta[, c("cell", "condition", "cluster.annot")]
+meta_df = as_tibble(meta_df)
+## Put together pseudotime and seurat metadata
+pst_meta = pst_df %>%
+  inner_join(meta_df)
+## PLOT
+pdf("output/condiments/densityPlotCellType_trajectory_lineage2_Part_CorticalLayers_subset_p35-version2dim35kparam15res065-START1_END27_points100extendnstretch1.pdf", width=5, height=3)
+ggplot(pst_meta, aes(x = Lineage2)) +
+  geom_density(alpha = .8, aes(fill = cluster.annot), col = "transparent") +
+  geom_density(aes(col = cluster.annot), fill = "transparent", size = 1.5) +
+  labs(x = "Pseudotime", fill = "cluster.annot") +
+  facet_wrap(~condition, nrow=2) +
+  theme_bw()
+dev.off()
+
+
+
+
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_CorticalLayers_subset_p35_START1_END27_points100extendnstretch1-version2dim35kparam15res065.RData")
+### load("output/condiments/condiments-Part_CorticalLayers_subset_p35_START1_END27_points100extendnstretch1-version2dim35kparam15res065.RData")
+set.seed(42)
+
+
+
+XXXY BELOW NOT RUN!!!
+
+
+
+
+#  Differential expression
+# --> Run fitGam() through Slurm
+
+
+################### Time Course effect COMMON CONDITIONS ######################################################
+## TRAJECTORY1 - Granule ##################
+set.seed(42)
+traj1 <- readRDS("output/condiments/traj1_Part_Granule_subset-version4dim40kparam15res03.rds")
+
+
+## DEGs between condition
+traj1_l2fc0 <- conditionTest(traj1, l2fc =  0.15) #  traj1_l2fc0 <- conditionTest(traj1, l2fc = 2)
+# --> l2fc2 padj0.05 = 5 DEGs total 
+# --> l2fc1 padj0.05 = 49 DEGs total 
+# --> l2fc015 padj0.05 = 1055 DEGs total 
+# --> l2fc0.5 padj0.05 = 310 DEGs total (only genes upreg in Kcnc1)
+
+
+# Correct the pvalue with fdr
+traj1_l2fc0$padj <- p.adjust(traj1_l2fc0$pvalue, "fdr")
+
+
+### Save output tables
+traj1_l2fc0$gene <- rownames(traj1_l2fc0) # create new column label gene; as matrix before
+condRes_traj1_l2fc0 <- traj1_l2fc0[, c(ncol(traj1_l2fc0), 1:(ncol(traj1_l2fc0)-1))] # just to put gene column 1st
+
+write.table(condRes_traj1_l2fc0, file = c("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc0.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+# Heatmap clutering DEGs per traj _ REVISED METHOD 
+## first version with l2fc0 and padj0.05  ##############################
+condRes_traj1_l2fc0 <- read.table("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc0.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc0 <- condRes_traj1_l2fc0 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc0, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=13) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc0-cl13.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
+## version with l2fc015 and padj0.05  ##############################
+condRes_traj1_l2fc015 <- read.table("output/condiments/condRes-traj1_Granule-version4dim40kparam15res03-l2fc015.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) 
+
+
+
+## Isolate significant DEGs and transform into a vector
+conditionGenes_traj1_l2fc015 <- condRes_traj1_l2fc015 %>% 
+  filter(padj <= 0.05) %>%
+  pull(gene)
+
+# Predict smoothed values
+yhatSmooth <- 
+  predictSmooth(traj1, gene = conditionGenes_traj1_l2fc015, nPoints = 50, tidy = FALSE) %>%
+  log1p()
+yhatSmoothScaled <- t(apply(yhatSmooth, 1, scales::rescale))
+combinedData <- yhatSmoothScaled[, c(51:100, 1:50)]
+# Generate heatmap with clustering
+# Perform hierarchical clustering
+hc <- hclust(dist(combinedData))
+clusters <- cutree(hc, k=7) # !!!!!!!!!!!!!!!!!! CHANGE CLUSTER NB HERE !!!!!!!!!!!!!!!!!!
+# Create an annotation data frame for the rows based on cluster assignments
+annotation_row <- data.frame(Cluster = factor(clusters))
+
+
+# Line plots
+library("reshape2")
+library("stringr")
+# Assuming yhatSmoothScaled contains your smoothed gene expression data
+# Convert the yhatSmoothScaled data to a dataframe
+df <- as.data.frame(yhatSmoothScaled)
+df$Gene <- rownames(df)
+# Transform the data into a long format
+df_long <- melt(df, id.vars = "Gene", variable.name = "Pseudotime", value.name = "Expression")
+# Attach the cluster information to the data frame
+df$Cluster <- factor(clusters[df$Gene])
+df_long$Cluster <- df$Cluster[match(df_long$Gene, df$Gene)]
+
+# Extract condition column
+df_long$Condition <- ifelse(str_detect(df_long$Pseudotime, "WT"), "WT", "Kcnc1")
+
+# Extract the point value and convert it to numeric
+df_long$Updated_Pseudotime <- as.numeric(str_extract(df_long$Pseudotime, "(?<=point)\\d+"))
+
+# Define colors for the conditions
+color_map <- c("WT" = "black", "Kcnc1" = "red")
+
+gene_counts <- df_long %>%
+  group_by(Cluster) %>%
+  summarise(GeneCount = n_distinct(Gene))
+df_long <- df_long %>%
+  left_join(gene_counts, by = "Cluster") %>%
+  mutate(ClusterLabel = paste0("Cluster ", Cluster, " (", GeneCount, " genes)"))
+
+# Plot using ggplot
+pdf("output/condiments/clustered_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.pdf", width=10, height=5)
+ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = Gene)) + 
+  geom_line(data = subset(df_long, Condition == "WT"), aes(color = Condition), alpha = 0.5) +
+  geom_line(data = subset(df_long, Condition == "Kcnc1"), aes(color = Condition), alpha = 0.5) +
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+## show only one gene ##################
+## gene expr over time with SE
+target_gene <- "Gabra6"   # <<< change here
+yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
+stopifnot(length(yhat_cell) == ncol(traj1))
+
+pt <- slingPseudotime(Part_Granule_subset, na = FALSE)[, 1]   # lineage 1; change index if needed
+
+# 3) Condition per cell (adapt to your metadata column name)
+cond <- WT_Kcnc1_p14_CB_1step.sct@meta.data[colnames(traj1), "condition"]          
+cond <- factor(cond, levels = c("WT","Kcnc1"))             
+colData(traj1)$condition <- cond 
+
+
+df_cells <- data.frame(
+  Gene = target_gene,
+  Pseudotime = pt,
+  Expression = as.numeric(yhat_cell),
+  Condition = cond
+) %>% filter(is.finite(Pseudotime), is.finite(Expression))
+
+# 4) Bin pseudotime and summarize
+n_bins <- 40
+df_cells <- df_cells %>%
+  mutate(bin = cut(Pseudotime, breaks = n_bins, include.lowest = TRUE, labels = FALSE)) %>%
+  group_by(Condition, bin) %>%
+  summarise(
+    Pseudotime_mid = mean(Pseudotime, na.rm = TRUE),
+    mean_expr = mean(Expression, na.rm = TRUE),
+    sd_expr   = sd(Expression, na.rm = TRUE),
+    n = dplyr::n(),
+    se_expr = sd_expr / sqrt(pmax(n, 1)),
+    .groups = "drop"
+  )
+
+pdf(paste0("output/condiments/linePlot_traj1_Granule-version4dim40kparam15res03-", target_gene, "_withRibbon.pdf"), width=5, height=3.5)
+ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill = Condition)) +
+  geom_ribbon(aes(ymin = mean_expr - sd_expr, ymax = mean_expr + sd_expr), alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c(WT="black", Kcnc1="red")) +
+  scale_fill_manual(values  = c(WT="black", Kcnc1="red")) +
+  theme_bw() +
+  labs(title = paste(target_gene),
+       x = "Pseudotime", y = "Fitted expression (mean ± SE)")
+dev.off()
+
+
+##########################################
+
+
+# Plot using ggplot
+pdf("output/condiments/smoothed_linePlot_traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.pdf", width=10, height=5)
+ggplot(df_long, aes(x = Updated_Pseudotime, y = Expression, color = Condition)) + 
+  geom_smooth(method = "loess", se = TRUE, span = 0.5) + 
+  scale_color_manual(values = color_map) + 
+  facet_wrap(~ClusterLabel, scales = "free_y", nrow = 2) +  # Use the updated ClusterLabel column
+  theme_bw() +
+  labs(title = "Smoothed Gene Expression Dynamics Across Pseudotime by Cluster",
+       x = "Pseudotime",
+       y = "Expression Level")
+dev.off()
+
+### Export gene list from each cluster
+## Create a data frame with gene names and their respective cluster assignments
+output_df <- data.frame(
+  gene = rownames(combinedData),
+  cluster = clusters
+)
+
+# Write the data frame to a .txt file
+write.table(output_df, 
+            file = "output/condiments/gene_clusters-traj1_Granule-version4dim40kparam15res03-l2fc015-cl7.txt", 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE, 
+            col.names = TRUE)
+
+
+
+
+
+
+
+
+# Check some genes individually - RNA
+#load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
+set.seed(42)
+## FOR LINEAGE 1
+
+counts <- WT_Kcnc1_p14_CB_1step.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(WT_Kcnc1_p14_CB_1step.sct$condition) # identify conditions
+pseudotimes <- slingPseudotime(Part_Granule_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_Granule_subset) [,1] # HERE INDICATE TRAJ
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+pdf("output/condiments/plotSmoothers-traj1_Granule-version4dim40kparam15res03-RNA_common-Cbln1.pdf", width=4, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Cbln1", curvesCols = c("black","red"), size = 0.2, lwd= 1, border = FALSE) +
+scale_color_manual(values =c("black","red")) + ggtitle("Cbln1")
+dev.off()
+
+
+
+
+# Heatmap representation
+# Define colors for each cluster
+# 20
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue", "gold", "darkgray", "lightblue", "lightgreen", "lightcoral", "lightpink", "lightcyan"))(20),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 13
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred", "darkblue" ))(13),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 12
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen", "grey", "darkred" ))(12),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 10
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown", "cyan", "darkgreen" ))(10),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 8
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink", "brown" ))(8),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 7
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange", "pink" ))(7),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 6
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple", "orange"))(6),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 5
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow", "purple"))(5),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# 4
+cluster_colors <- setNames(colorRampPalette(c("red", "blue", "green", "yellow" ))(4),
+                           unique(annotation_row$Cluster))
+annotation_colors <- list(Cluster = cluster_colors)
+# Generate the heatmap
+
+col_order <- order(grepl("WT", colnames(combinedData)), decreasing = TRUE)
+combinedData <- combinedData[, col_order]
+pdf("output/condiments/heatmap-traj1_Granule_version4dim40kparam15res03-l2fc015_cl7.pdf", width=5, height=5)
+pheatmap(combinedData,
+  cluster_cols = FALSE,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  legend = TRUE,
+  cutree_rows = 7,
+  annotation_row = annotation_row,
+  annotation_colors = annotation_colors
+)
+dev.off()
+
+
+
+```
+
+
 
 
 
