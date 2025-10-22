@@ -38416,6 +38416,137 @@ dev.off()
 ```
 
 
+##### miloR for cell type abundance
+
+XXXY HERE RERUN!!
+
+
+Let's use [miloR](https://github.com/MarioniLab/miloR) to further investigate cell type proportion changes.
+
+
+###### installation
+
+Let's clone scRNAseq
+
+
+```bash
+conda create --name scRNAseqV4 --clone scRNAseq
+conda activate scRNAseqV4
+#--> Fail for BiocManager::install("scater") ; lets instead use a conda env where scater is already installed
+
+conda create --name miloR --clone monocle3
+
+
+```
+
+```R
+BiocManager::install("miloR")
+
+
+
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+```
+
+###### run miloR on granule sub-population used in pseudotime
+
+Let's try on the subset of granule cells; that already show a slight changes in cell type proportion; cells from this `#### Isolating cell of interest - Granule p14 time point only`
+
+--> Follow this [tutorial](https://rawcdn.githack.com/MarioniLab/miloR/7c7f906b94a73e62e36e095ddb3e3567b414144e/vignettes/milo_gastrulation.html#5_Finding_markers_of_DA_populations)
+
+
+```bash
+conda activate scRNAseqV4
+```
+
+
+```R
+
+#packages
+library("Seurat")
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+
+####################################################################################
+# import and re-generate cell subset same as for the psuedotime analysis ###########
+####################################################################################
+
+# import rds with increased clustering
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam15res03.sct_V1_numeric.rds") # 
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # According to condiments workflow
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+# First filter based on cell type
+Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("6", "1", "4")]
+table(Part_Granule$seurat_clusters) # to double check
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_Granule)$UMAP
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+selected_cells <-  umap_coords[,1] > 3 & umap_coords[,2] < 8 & umap_coords[,2] > -10
+# Subset your SCE object
+Part_Granule_subset <- Part_Granule[, selected_cells]
+# Check resulting subset
+dim(Part_Granule_subset)
+#--> PART UP COMES FROM `#### Isolating cell of interest - Granule p14 time point only`
+##################################################################################################################
+
+
+
+# Re vizualize data
+#--> Not needed to re-run runUMAP()
+
+pdf("output/miloR/plotReducedDim-p14_CB_Part_Granule_subset.pdf", width=5, height=3)
+plotReducedDim(Part_Granule_subset, colour_by="condition", dimred = "UMAP") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+#####################################################
+# Differential abundance testing ####################
+#####################################################
+
+# create Milo object
+
+Part_Granule_subset_milo <- Milo(Part_Granule_subset)
+Part_Granule_subset_milo
+
+
+## Construct KNN graph
+Part_Granule_subset_milo <- buildGraph(Part_Granule_subset_milo, k = 30, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+#--> HEre I got error `did not converge--results might be invalid!; try increasing work or maxit`; so I change reduced.dim to PCA and not 'corrected.pca' whic his a dim i do not have!!!
+
+
+## Defining representative neighbourhoods on the KNN graph
+Part_Granule_subset_milo <- makeNhoods(Part_Granule_subset_milo, prop = 0.1, k = 30, d=40, refined = TRUE, reduced_dims = "PCA")
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-p14_CB_Part_Granule_subset-k30d40.pdf", width=5, height=3)
+plotNhoodSizeHist(Part_Granule_subset_milo)
+dev.off()
+
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+Part_Granule_subset_milo <- countCells(Part_Granule_subset_milo, meta.data = as.data.frame(colData(embryo_milo)), sample="sample")
+
+
+
+
+```
+
+- NOTE: It seems here I use my UMAP for vizualization but PCA for the calculation. It seems to be the way to go according to ChatGPT, and also another [tutorial](https://bioconductor.org/packages/release/bioc/vignettes/miloR/inst/doc/milo_demo.html) used UMAP for vizualization. So I think that is good.
 
 
 
@@ -50205,7 +50336,7 @@ dev.off()
 
 
 ############################################################
-# Create macro group to decrease complexity ###############
+# Create macro group to decrease complexity FOR CELLCHAT ###############
 ############################################################
 
 
@@ -50269,6 +50400,153 @@ dev.off()
 
 ## saveRDS(WT_Kcnc1_p14_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V2_label-macrov1.rds") 
 WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V2_label-macrov1.rds") # 
+
+set.seed(42)
+##########
+
+
+
+
+
+
+
+
+############################################################
+# Create macro group to decrease complexity FOR CELL PROP and DEGs ###############
+############################################################
+
+
+# 1) Fine labels -> subgroup vectors
+ExcN <- c("L2L3_IT_immature","L2_IT__Pdlim1","L2L3_IT__Otof_1","L2L3_IT__Otof_2","L4L5_IT__Rorb","L5_IT__Etv1_1","L5_IT__Etv1_2","L5_IT__Tshz2","L5_PT__Pou3f1","L5L6_NP__Tle4Stard5","L6_IT__Cdh9","L6__Car3","L6_IT__Foxp2","L6B__Pou6f2")
+
+InhN <- c("GABA__Vip","GABA__NdnfLamp5","GABA__Sst","GABA__Pvalb","GABA__PvalbSt18","GABA__Baiap3","GABA__NdnfKlhl1","GABA__Vipr2","GABA__SstCalb2",
+               "GABA_immature_1","GABA_immature_2", "L6_GABA__Foxp2", "L5_IT_GABA__Adora2a", "L5L6_GABA__Reln")
+
+
+
+
+# 2) Build a lookup table: fine -> macro
+map_list <- list(
+  ExcN = ExcN,
+  InhN = InhN
+)
+lookup <- unlist(map_list, use.names = TRUE)
+names(lookup) <- rep(names(map_list), lengths(map_list))  # names are macro; values are fine
+# invert to fine -> macro
+fine2macro <- setNames(names(lookup), lookup)
+
+# 3) Apply to your Seurat object 
+lab <- as.character(WT_Kcnc1_p14_CX_1step.sct$cluster.annot)
+WT_Kcnc1_p14_CX_1step.sct$macro <- ifelse(
+  lab %in% names(fine2macro),
+  fine2macro[lab],
+  lab  # keep original label if not in ExcN or InhN
+)
+
+
+Idents(WT_Kcnc1_p14_CX_1step.sct) <- "macro"
+
+
+print(table(WT_Kcnc1_p14_CX_1step.sct$macro))
+print(prop.table(table(WT_Kcnc1_p14_CX_1step.sct$macro)))
+
+
+levels(WT_Kcnc1_p14_CX_1step.sct) <- c(
+"ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07_noSplit_labelversion2-macrov2.pdf", width=8, height=6)
+DimPlot(WT_Kcnc1_p14_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+
+
+
+## cell type proportion macrov2 ######
+### count nb of cells in each cluster
+WT_p14_CX_Rep1 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "WT_p14_CX_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p14",
+             replicate= "Rep1")
+WT_p14_CX_Rep2 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "WT_p14_CX_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p14",
+             replicate= "Rep2")
+WT_p14_CX_Rep3 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "WT_p14_CX_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p14",
+             replicate= "Rep3")
+
+Kcnc1_p14_CX_Rep1 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "Kcnc1_p14_CX_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p14",
+             replicate= "Rep1")
+Kcnc1_p14_CX_Rep2 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "Kcnc1_p14_CX_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p14",
+             replicate= "Rep2")
+Kcnc1_p14_CX_Rep3 = table(Idents(WT_Kcnc1_p14_CX_1step.sct)[WT_Kcnc1_p14_CX_1step.sct$orig.ident == "Kcnc1_p14_CX_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p14",
+             replicate= "Rep3")
+
+
+p14_CX = WT_p14_CX_Rep1 %>%
+  bind_rows(WT_p14_CX_Rep2) %>%
+  bind_rows(WT_p14_CX_Rep3) %>%
+  bind_rows(Kcnc1_p14_CX_Rep1) %>%
+  bind_rows(Kcnc1_p14_CX_Rep2) %>%
+  bind_rows(Kcnc1_p14_CX_Rep3) %>%
+  as_tibble()
+  
+
+
+
+### Keeping all replicates
+p14_CX_prop = p14_CX %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p14_CX_prop$genotype <-
+  factor(p14_CX_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p14_CX_1step_version2dim30kparam50res07-labelversion2macrov2.pdf", width=5, height=4)
+ggbarplot(p14_CX_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+# save ##################
+
+## saveRDS(WT_Kcnc1_p14_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V2_label-macrov2.rds") 
+WT_Kcnc1_p14_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07.sct_V2_label-macrov2.rds") # 
 
 set.seed(42)
 ##########
@@ -53416,7 +53694,7 @@ dev.off()
 
 
 
-##### GO all clusters
+###### GO all clusters
 
 
 Let's do GO analysis for all cluster, separating up and down reg genes
@@ -53619,10 +53897,11 @@ dev.off()
 
 
 
-######## Specific case ################
+######## Specific case KEGG ################
 cell_types <- c("GABA__Pvalb")
 
-pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top10_UpandDown-GABA__Pvalb.pdf", width = 6, height = 5)
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top10_UpandDown-GABA__Sst.pdf", width = 6, height = 5)
 for (cell_type in cell_types) {
   message("Processing KEGG enrichment: ", cell_type)
   file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
@@ -53655,9 +53934,11 @@ dev.off()
 
 
 cell_types <- c("GABA__Pvalb")
+cell_types <- c("GABA__Sst")
+cell_types <- c("GABA__Vip")
 
 
-pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Up-GABA__Pvalb.pdf", width = 6, height = 3)
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Up-GABA__Vip.pdf", width = 6, height = 3)
 for (cell_type in cell_types) {
   message("Processing KEGG enrichment: ", cell_type)
   file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
@@ -53691,7 +53972,7 @@ for (cell_type in cell_types) {
 dev.off()
 
 
-pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Down-GABA__Pvalb.pdf", width = 6, height = 3)
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Down-GABA__Vip.pdf", width = 6, height = 3)
 for (cell_type in cell_types) {
   message("Processing KEGG enrichment: ", cell_type)
   file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
@@ -53729,8 +54010,11 @@ dev.off()
 
 ######## Specific case GO BP ################
 cell_types <- c("GABA__Pvalb")
+cell_types <- c("GABA__Sst")
+cell_types <- c("GABA__Vip")
 
-pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Up-GABA__Pvalb.pdf", width = 6, height = 3)
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Up-GABA__Vip.pdf", width = 6, height = 3)
 for (cell_type in cell_types) {
   message("Processing: ", cell_type)
   file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
@@ -53755,7 +54039,7 @@ for (cell_type in cell_types) {
 dev.off()
 
 
-pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Down-GABA__Pvalb.pdf", width = 6, height = 3)
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-top5_Down-GABA__Vip.pdf", width = 6, height = 3)
 for (cell_type in cell_types) {
   message("Processing: ", cell_type)
   file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
@@ -56477,7 +56761,7 @@ dev.off()
 
 
 ############################################################
-# Create macro group to decrease complexity ###############
+# Create macro group to decrease complexity FOR CELLCHAT ###############
 ############################################################
 
 
@@ -56546,6 +56830,156 @@ WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step
 
 set.seed(42)
 ##########
+
+
+
+
+
+
+
+
+
+############################################################
+# Create macro group to decrease complexity FOR CELL PROP and DEGs ###############
+############################################################
+
+
+
+# 1) Fine labels -> subgroup vectors
+ExcN <- c("L2L3_IT__Otof_1", "L2L3_IT__Otof_2", "L2L3_IT__Reln", "L2L3_IT__Tfap2d_1", "L2L3_IT__Tfap2d_2", "L2L3_IT__Cdhr1Ms4a15","L4L5_IT__Rorb_1", "L4L5_IT__Rorb_2", "L5_IT__Lypd1", "L5_PT__Bcl11b", "L5_IT__Tshz2",  "L5_IT__Etv1_1","L5L6_IT__Tshz2", "L5L6_IT", "L5L6_NP__Slc17a8","L6_CT__Foxp2", "L6B__Pou6f2", "L6__Car3", "L6_IT__Foxp2Gpr149_1", "L6_IT__Foxp2Gpr149_2", "L6_IT__Synpo2Shox2", "L6_IT__Gabra5")
+
+InhN <- c("GABA__Pvalb", "GABA__Vip", "GABA__Sst", "GABA__Lamp5Ndnf", "GABA_ThPax6", "GABA__Igfbp4Pthlh", "GABA__PvalbEgfl6", "GABA__PvalbSix3","GABA_immature", "GABA__Baiap3", "GABA__Vipr2", "GABA__Calb2", "GABA__Vcan", "GABA__NdnfKlhl1", "L5_IT_GABA__Adora2a")
+
+
+
+
+# 2) Build a lookup table: fine -> macro
+map_list <- list(
+  ExcN = ExcN,
+  InhN = InhN
+)
+lookup <- unlist(map_list, use.names = TRUE)
+names(lookup) <- rep(names(map_list), lengths(map_list))  # names are macro; values are fine
+# invert to fine -> macro
+fine2macro <- setNames(names(lookup), lookup)
+
+# 3) Apply to your Seurat object 
+lab <- as.character(WT_Kcnc1_p35_CX_1step.sct$cluster.annot)
+WT_Kcnc1_p35_CX_1step.sct$macro <- ifelse(
+  lab %in% names(fine2macro),
+  fine2macro[lab],
+  lab  # keep original label if not in ExcN or InhN
+)
+
+
+Idents(WT_Kcnc1_p35_CX_1step.sct) <- "macro"
+
+
+print(table(WT_Kcnc1_p35_CX_1step.sct$macro))
+print(prop.table(table(WT_Kcnc1_p35_CX_1step.sct$macro)))
+
+
+levels(WT_Kcnc1_p35_CX_1step.sct) <- c(
+"ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CX_1step_version2dim35kparam15res065_noSplit_labelversion2-macrov2.pdf", width=8, height=6)
+DimPlot(WT_Kcnc1_p35_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+
+
+
+## cell type proportion macrov2 ######
+### count nb of cells in each cluster
+WT_p35_CX_Rep1 = table(Idents(WT_Kcnc1_p35_CX_1step.sct)[WT_Kcnc1_p35_CX_1step.sct$orig.ident == "WT_p35_CX_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p35",
+             replicate= "Rep1")
+WT_p35_CX_Rep2 = table(Idents(WT_Kcnc1_p35_CX_1step.sct)[WT_Kcnc1_p35_CX_1step.sct$orig.ident == "WT_p35_CX_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p35",
+             replicate= "Rep2")
+WT_p35_CX_Rep3 = table(Idents(WT_Kcnc1_p35_CX_1step.sct)[WT_Kcnc1_p35_CX_1step.sct$orig.ident == "WT_p35_CX_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p35",
+             replicate= "Rep3")
+
+Kcnc1_p35_CX_Rep1 = table(Idents(WT_Kcnc1_p35_CX_1step.sct)[WT_Kcnc1_p35_CX_1step.sct$orig.ident == "Kcnc1_p35_CX_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p35",
+             replicate= "Rep1")
+Kcnc1_p35_CX_Rep2 = table(Idents(WT_Kcnc1_p35_CX_1step.sct)[WT_Kcnc1_p35_CX_1step.sct$orig.ident == "Kcnc1_p35_CX_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p35",
+             replicate= "Rep2")
+Kcnc1_p35_CX_Rep3 = table(Idents(WT_Kcnc1_p35_CX_1step.sct)[WT_Kcnc1_p35_CX_1step.sct$orig.ident == "Kcnc1_p35_CX_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p35",
+             replicate= "Rep3")
+
+
+p35_CX = WT_p35_CX_Rep1 %>%
+  bind_rows(WT_p35_CX_Rep2) %>%
+  bind_rows(WT_p35_CX_Rep3) %>%
+  bind_rows(Kcnc1_p35_CX_Rep1) %>%
+  bind_rows(Kcnc1_p35_CX_Rep2) %>%
+  bind_rows(Kcnc1_p35_CX_Rep3) %>%
+  as_tibble()
+  
+
+
+
+### Keeping all replicates
+p35_CX_prop = p35_CX %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p35_CX_prop$genotype <-
+  factor(p35_CX_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p35_CX_1step_version2dim35kparam15res065-labelversion2macrov2.pdf", width=5, height=4)
+ggbarplot(p35_CX_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+# save ##################
+
+## saveRDS(WT_Kcnc1_p35_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065.sct_V2_label-macrov2.rds") 
+WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065.sct_V2_label-macrov2.rds") # 
+
+set.seed(42)
+##########
+
+
 
 
 ```
@@ -62030,6 +62464,152 @@ WT_Kcnc1_p180_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CX_1st
 
 set.seed(42)
 ##########
+
+
+
+
+
+############################################################
+# Create macro group to decrease complexity FOR CELL PROP and DEGs ###############
+############################################################
+
+
+
+
+# 1) Fine labels -> subgroup vectors
+ExcN <- c("L2L3_IT__Otof",  "L2L3_IT__Abi3bp",  "L2L3_IT__Reln","L4_IT__Gabra6",  "L4L5_IT__Rorb",  "L5_IT_GABA__Adora2a",  "L5_ET__L3mbtl4",  "L5_IT__Tshz2",  "Mix_IT__Tshz2_1",  "Mix_IT__Tshz2_2","L5L6_NP__Tle4Stard5",  "L5L6_IT__Osr1",  "L5L6_NP__Slc17a8","L6__Car3",  "L6_CT__Foxp2Syt6")
+
+InhN <- c("GABA__Pvalb",  "GABA__Vip",  "GABA__Sst",  "GABA__Lamp5","L6_GABA__Foxp2",  "GABA__Baiap3",  "GABA__Vipr2",  "GABA__Calb2",  "GABA__NdnfKlhl1",  "GABA__Igfbpl1")
+
+
+
+
+# 2) Build a lookup table: fine -> macro
+map_list <- list(
+  ExcN = ExcN,
+  InhN = InhN
+)
+lookup <- unlist(map_list, use.names = TRUE)
+names(lookup) <- rep(names(map_list), lengths(map_list))  # names are macro; values are fine
+# invert to fine -> macro
+fine2macro <- setNames(names(lookup), lookup)
+
+# 3) Apply to your Seurat object 
+lab <- as.character(WT_Kcnc1_p180_CX_1step.sct$cluster.annot)
+WT_Kcnc1_p180_CX_1step.sct$macro <- ifelse(
+  lab %in% names(fine2macro),
+  fine2macro[lab],
+  lab  # keep original label if not in ExcN or InhN
+)
+
+
+Idents(WT_Kcnc1_p180_CX_1step.sct) <- "macro"
+
+
+print(table(WT_Kcnc1_p180_CX_1step.sct$macro))
+print(prop.table(table(WT_Kcnc1_p180_CX_1step.sct$macro)))
+
+
+levels(WT_Kcnc1_p180_CX_1step.sct) <- c(
+"ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+
+
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04_noSplit_labelversion2-macrov2.pdf", width=8, height=6)
+DimPlot(WT_Kcnc1_p180_CX_1step.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 4)
+dev.off()
+
+
+
+
+## cell type proportion macrov2 ######
+### count nb of cells in each cluster
+WT_p180_CX_Rep1 = table(Idents(WT_Kcnc1_p180_CX_1step.sct)[WT_Kcnc1_p180_CX_1step.sct$orig.ident == "WT_p180_CX_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p180",
+             replicate= "Rep1")
+WT_p180_CX_Rep2 = table(Idents(WT_Kcnc1_p180_CX_1step.sct)[WT_Kcnc1_p180_CX_1step.sct$orig.ident == "WT_p180_CX_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p180",
+             replicate= "Rep2")
+WT_p180_CX_Rep3 = table(Idents(WT_Kcnc1_p180_CX_1step.sct)[WT_Kcnc1_p180_CX_1step.sct$orig.ident == "WT_p180_CX_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "WT",
+             time= "p180",
+             replicate= "Rep3")
+
+Kcnc1_p180_CX_Rep1 = table(Idents(WT_Kcnc1_p180_CX_1step.sct)[WT_Kcnc1_p180_CX_1step.sct$orig.ident == "Kcnc1_p180_CX_Rep1"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p180",
+             replicate= "Rep1")
+Kcnc1_p180_CX_Rep2 = table(Idents(WT_Kcnc1_p180_CX_1step.sct)[WT_Kcnc1_p180_CX_1step.sct$orig.ident == "Kcnc1_p180_CX_Rep2"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p180",
+             replicate= "Rep2")
+Kcnc1_p180_CX_Rep3 = table(Idents(WT_Kcnc1_p180_CX_1step.sct)[WT_Kcnc1_p180_CX_1step.sct$orig.ident == "Kcnc1_p180_CX_Rep3"]) %>%
+  as.data.frame() %>%
+  dplyr::rename("cluster"= "Var1" , "count" = "Freq") %>%
+  add_column(genotype= "Kcnc1",
+             time= "p180",
+             replicate= "Rep3")
+
+
+p180_CX = WT_p180_CX_Rep1 %>%
+  bind_rows(WT_p180_CX_Rep2) %>%
+  bind_rows(WT_p180_CX_Rep3) %>%
+  bind_rows(Kcnc1_p180_CX_Rep1) %>%
+  bind_rows(Kcnc1_p180_CX_Rep2) %>%
+  bind_rows(Kcnc1_p180_CX_Rep3) %>%
+  as_tibble()
+  
+
+
+
+### Keeping all replicates
+p180_CX_prop = p180_CX %>%
+  group_by(replicate, genotype) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup() %>%
+  mutate(proportion = (count / total_count) * 100)
+
+p180_CX_prop$genotype <-
+  factor(p180_CX_prop$genotype,
+         c("WT", "Kcnc1"))
+
+pdf("output/seurat/histogramProp_WT_Kcnc1_p180_CX_1step_version2dim30kparam30res04-labelversion2macrov2.pdf", width=5, height=4)
+ggbarplot(p180_CX_prop, x = "cluster", y = "proportion", fill = "genotype",
+                  color = "genotype", palette = c("black", "blue"),
+                  position = position_dodge(0.8), # Separate bars by genotype
+                  add = "mean_se", # Add error bars
+                  lab.pos = "out", lab.size = 3) +
+  stat_compare_means(aes(group = genotype), method = "t.test", label = "p.signif") +
+  theme_bw() +
+  labs(x = "Cell Type (Cluster)", y = "Cell Proportion (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
+
+
+
+
+
+
+# save ##################
+
+## saveRDS(WT_Kcnc1_p180_CX_1step.sct, file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04.sct_V2_label-macrov2.rds") 
+WT_Kcnc1_p180_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04.sct_V2_label-macrov2.rds") # 
+
+set.seed(42)
+##########
+
 
 
 
@@ -73439,13 +74019,14 @@ set.seed(42)
 
 
 # import rds with increased clustering
-WT_Kcnc1_p35_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065.sct_V1_label.rds")
+WT_Kcnc1_p180_CX_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04.sct_V1_label-macrov1.rds") # 
+
 set.seed(42)
 
-DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "RNA" # According to condiments workflow
+DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "RNA" # According to condiments workflow
 
 # convert to SingleCellExperiment
-WT_Kcnc1_CX <- as.SingleCellExperiment(WT_Kcnc1_p35_CX_1step.sct, assay = "RNA")
+WT_Kcnc1_CX <- as.SingleCellExperiment(WT_Kcnc1_p180_CX_1step.sct, assay = "RNA")
 
 
 
@@ -73477,7 +74058,7 @@ df <- bind_cols(
   sample_frac(1)
 
 # PLOT
-pdf("output/condiments/UMAP_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_p180_CX-version2dim30kparam30res04-Part_CorticalLayers.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -73513,7 +74094,7 @@ df <- bind_cols(
   ) %>%
   sample_frac(1)
 
-pdf("output/condiments/UMAP_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers_subset.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_WT_Kcnc1_p180_CX-version2dim30kparam30res04-Part_CorticalLayers_subset.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = seurat_clusters)) +
   geom_point(size = .7) +
   labs(col = "Genotype") +
@@ -73523,7 +74104,7 @@ dev.off()
 
 
 ## genotype overlap
-pdf("output/condiments/UMAP_condition_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers_subset.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_condition_WT_Kcnc1_p180_CX-version2dim30kparam30res04-Part_CorticalLayers_subset.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7) +
   scale_color_manual(values = c("blue", "red")) + # Specify colors here
@@ -73538,7 +74119,7 @@ scores <- condiments::imbalance_score(
   k = 20, smooth = 40)
 df$scores <- scores$scaled_scores
 
-pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers_subset.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_imbalance_score_WT_Kcnc1_p180_CX-version2dim30kparam30res04-Part_CorticalLayers_subset.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = scores)) +
   geom_point(size = .7) +
   scale_color_viridis_c(option = "C") +
@@ -73575,7 +74156,7 @@ curves <- bind_rows(lapply(sdss, slingCurves, as.df = TRUE),
 
 #  
 
-pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_p35_CX-version2dim35kparam15res065-Part_CorticalLayers_subset-START1_END27_points100extendpc1stretch1.pdf", width=6, height=5)
+pdf("output/condiments/UMAP_trajectory_separated_WT_Kcnc1_p180_CX-version2dim30kparam30res04-Part_CorticalLayers_subset-START1_END27_points100extendpc1stretch1.pdf", width=6, height=5)
 ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
   geom_point(size = .7, alpha = .2) +
   scale_color_brewer(palette = "Accent") +
@@ -73632,7 +74213,7 @@ plots <- list()
 for (i in 1:2) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_CorticalLayers_subset_WT_p35-version2dim35kparam15res065-START1_END27_points100extendpc1stretch1.pdf", width=6, height=12)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_CorticalLayers_subset_WT_p180-version2dim30kparam30res04-START1_END27_points100extendpc1stretch1.pdf", width=6, height=12)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -73681,7 +74262,7 @@ plots <- list()
 for (i in 1:2) {
   plots[[i]] <- create_plot(i)
 }
-pdf("output/condiments/UMAP_trajectory_common_label_Part_CorticalLayers_subset_Kcnc1_p35-version2dim35kparam15res065-START1_END27_points100extendpc1stretch1.pdf", width=6, height=12)
+pdf("output/condiments/UMAP_trajectory_common_label_Part_CorticalLayers_subset_Kcnc1_p180-version2dim30kparam30res04-START1_END27_points100extendpc1stretch1.pdf", width=6, height=12)
 gridExtra::grid.arrange(grobs = plots, ncol = 1)
 dev.off()
 
@@ -73698,7 +74279,7 @@ df_3 <- df_3 %>%
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineage_Part_CorticalLayers_subset_p35-version2dim35kparam15res065-START1_END27_points100extendpc1stretch1.pdf", width=5, height=3)
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_CorticalLayers_subset_p180-version2dim30kparam30res04-START1_END27_points100extendpc1stretch1.pdf", width=5, height=3)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = condition), col = "transparent") +
   geom_density(aes(col = condition), fill = "transparent", size = 1.5) +
@@ -73713,7 +74294,7 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-pdf("output/condiments/densityPlot_trajectory_lineage_Part_CorticalLayers_subset_p35-version2dim35kparam15res065-START1_END27_points100extendpc1stretch1.pdf", width=5, height=3)
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_CorticalLayers_subset_p180-version2dim30kparam30res04-START1_END27_points100extendpc1stretch1.pdf", width=5, height=3)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .6, aes(fill = condition),
                col = "transparent", adjust = 3.0 , n = 1024, trim = TRUE) +
@@ -73744,7 +74325,7 @@ pst_df <- as.data.frame(pst)
 pst_df$cell <- rownames(pst_df)
 pst_df = as_tibble(pst_df)
 ## Retrive cell names , conditions, and cluster name from seurat object
-meta <- WT_Kcnc1_p35_CX_1step.sct@meta.data
+meta <- WT_Kcnc1_p180_CX_1step.sct@meta.data
 ### Add cell names (rownames of the meta.data correspond to cell names)
 meta$cell <- rownames(meta)
 ### Keep only the relevant columns
@@ -73754,7 +74335,7 @@ meta_df = as_tibble(meta_df)
 pst_meta = pst_df %>%
   inner_join(meta_df)
 ## PLOT
-pdf("output/condiments/densityPlotCellType_trajectory_lineage1_Part_CorticalLayers_subset_p35-version2dim35kparam15res065-START1_END27_points100extendpc1stretch1.pdf", width=5, height=3)
+pdf("output/condiments/densityPlotCellType_trajectory_lineage1_Part_CorticalLayers_subset_p180-version2dim30kparam30res04-START1_END27_points100extendpc1stretch1.pdf", width=5, height=3)
 ggplot(pst_meta, aes(x = Lineage1)) +
   geom_density(alpha = .8, aes(fill = cluster.annot), col = "transparent") +
   geom_density(aes(col = cluster.annot), fill = "transparent", size = 1.5) +
@@ -73768,8 +74349,8 @@ dev.off()
 
 
 
-#### ->  save.image(file="output/condiments/condiments-Part_CorticalLayers_subset_p35_START1_END27_points100extendpc1stretch1-version2dim35kparam15res065.RData")
-### load("output/condiments/condiments-Part_CorticalLayers_subset_p35_START1_END27_points100extendpc1stretch1-version2dim35kparam15res065.RData")
+#### ->  save.image(file="output/condiments/condiments-Part_CorticalLayers_subset_p180_START1_END27_points100extendpc1stretch1-version2dim30kparam30res04.RData")
+### load("output/condiments/condiments-Part_CorticalLayers_subset_p180_START1_END27_points100extendpc1stretch1-version2dim30kparam30res04.RData")
 set.seed(42)
 
 
@@ -74208,14 +74789,19 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2_MAST.sh # 41323739 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2_default.sh # 41323740 ok
 
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2labelversion2_MAST.sh # 49025733 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2labelversion2macrov2_MAST.sh # 56401427 xxx
+
 
 
 # p35 CX - version2dim35kparam15res065
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CX_Version2labelversion1_MAST.sh # 51866628 ok
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CX_Version2labelversion1macrov2_MAST.sh # 56402196 xxx
 
 
 # p180 CX - version2dim30kparam30res04
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CX_Version2labelversion1_MAST.sh # 54458292 fail not enough cells in L4_IT__Gabra6; rerun without L4_IT__Gabra6; 54738998 OK
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CX_Version2labelversion1macrov2_MAST.sh # 56402884 xxx
+
 
 
 ```

@@ -211,6 +211,13 @@ WORK great!
 --> Same `scRNAseqV2` but with MuSic2 and bisque and without  SeuratDisk, anndata, zellkonverter : Can use `algorithm = 4` please see note in `### scRNAseqV2`
 
 
+### miloR
+
+--> Same `monocle3` but with miloR for diff. cell abundance
+
+
+
+
 
 ### SignacV5
 
