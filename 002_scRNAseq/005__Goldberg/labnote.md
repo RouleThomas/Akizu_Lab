@@ -38436,7 +38436,7 @@ conda activate scRNAseqV4
 
 conda create --name miloR --clone monocle3
 
-
+conda activate miloR
 ```
 
 ```R
@@ -38461,7 +38461,7 @@ Let's try on the subset of granule cells; that already show a slight changes in 
 
 
 ```bash
-conda activate scRNAseqV4
+conda activate miloR
 ```
 
 
@@ -38527,7 +38527,7 @@ Part_Granule_subset_milo <- buildGraph(Part_Granule_subset_milo, k = 30, d = 40,
 
 
 ## Defining representative neighbourhoods on the KNN graph
-Part_Granule_subset_milo <- makeNhoods(Part_Granule_subset_milo, prop = 0.1, k = 30, d=40, refined = TRUE, reduced_dims = "PCA")
+Part_Granule_subset_milo <- makeNhoods(Part_Granule_subset_milo, prop = 0.1, k = 30, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
 
 
 ## plot to check if our k was ok
@@ -38539,7 +38539,86 @@ dev.off()
 
 
 # Counting cells in neighbourhoods (in each replicate)
-Part_Granule_subset_milo <- countCells(Part_Granule_subset_milo, meta.data = as.data.frame(colData(embryo_milo)), sample="sample")
+Part_Granule_subset_milo <- countCells(Part_Granule_subset_milo, meta.data = as.data.frame(colData(Part_Granule_subset_milo)), sample="orig.ident")
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+Part_Granule_subset_design <- data.frame(colData(Part_Granule_subset_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+Part_Granule_subset_design <- distinct(Part_Granule_subset_design)
+rownames(Part_Granule_subset_design) <- Part_Granule_subset_design$orig.ident
+
+Part_Granule_subset_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(Part_Granule_subset_milo, design = ~ condition, design.df = Part_Granule_subset_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_Condition.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_Condition.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+Part_Granule_subset_design <- data.frame(colData(Part_Granule_subset_milo))[,c("orig.ident", "condition", "replicate")]
+## Convert batch info from integer to factor
+Part_Granule_subset_design <- distinct(Part_Granule_subset_design)
+rownames(Part_Granule_subset_design) <- Part_Granule_subset_design$orig.ident
+
+Part_Granule_subset_design
+
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(Part_Granule_subset_milo, design = ~ replicate + condition, design.df = Part_Granule_subset_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_ReplicateCondition.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_ReplicateCondition.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+#--> No signifcant changes for with and without replicate in design...
+
+
+
+
+
+
 
 
 
@@ -38548,6 +38627,14 @@ Part_Granule_subset_milo <- countCells(Part_Granule_subset_milo, meta.data = as.
 
 - NOTE: It seems here I use my UMAP for vizualization but PCA for the calculation. It seems to be the way to go according to ChatGPT, and also another [tutorial](https://bioconductor.org/packages/release/bioc/vignettes/miloR/inst/doc/milo_demo.html) used UMAP for vizualization. So I think that is good.
 
+- ERROR for calcNhoodDistance() with `"dgCMatrix")' is deprecated.`; discuss [here](https://github.com/MarioniLab/miloR/issues/314)
+  --> Seems I can simply instead not run calcNhoodDistance and: "Use the newer refinement_scheme="graph" for makeNhoods and fdr.weighting="graph-overlap" for testNhoods"
+
+
+
+
+--> First test I used reduced.dim = "PCA" and it gave no signficant changes.
+  --> By using reduced.dim = "UMAP"; it XXX
 
 
 
