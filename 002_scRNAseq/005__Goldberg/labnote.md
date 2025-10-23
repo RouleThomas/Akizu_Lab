@@ -39228,7 +39228,11 @@ dev.off()
 
 --> **changing k change pvalue**; from 20-30 to 100 it reduced it; but then 200 increased it...
 
+--> changing the number of dims in the fastMNN integration, together with the k value in miloR is the way to go; I found that 20 dims and k of 30 was optimal and gave signif results!
 
+
+
+XXXY NEXT USE MY BEST PARAM
 
 
 
