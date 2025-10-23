@@ -38418,8 +38418,6 @@ dev.off()
 
 ##### miloR for cell type abundance
 
-XXXY HERE RERUN!!
-
 
 Let's use [miloR](https://github.com/MarioniLab/miloR) to further investigate cell type proportion changes.
 
@@ -38476,6 +38474,7 @@ library("patchwork")
 library("scater")
 library("scran")
 
+set.seed(42)
 
 ####################################################################################
 # import and re-generate cell subset same as for the psuedotime analysis ###########
@@ -38512,7 +38511,7 @@ plotReducedDim(Part_Granule_subset, colour_by="condition", dimred = "UMAP") +
 dev.off()
 
 #####################################################
-# Differential abundance testing ####################
+# Differential abundance testing VERSION1 ####################
 #####################################################
 
 # create Milo object
@@ -38522,19 +38521,18 @@ Part_Granule_subset_milo
 
 
 ## Construct KNN graph
-Part_Granule_subset_milo <- buildGraph(Part_Granule_subset_milo, k = 30, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+Part_Granule_subset_milo <- buildGraph(Part_Granule_subset_milo, k = 40, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
 #--> HEre I got error `did not converge--results might be invalid!; try increasing work or maxit`; so I change reduced.dim to PCA and not 'corrected.pca' whic his a dim i do not have!!!
 
 
 ## Defining representative neighbourhoods on the KNN graph
-Part_Granule_subset_milo <- makeNhoods(Part_Granule_subset_milo, prop = 0.1, k = 30, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+Part_Granule_subset_milo <- makeNhoods(Part_Granule_subset_milo, prop = 0.1, k = 40, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
 
 
 ## plot to check if our k was ok
-pdf("output/miloR/plotNhoodSizeHist-p14_CB_Part_Granule_subset-k30d40.pdf", width=5, height=3)
+pdf("output/miloR/plotNhoodSizeHist-p14_CB_Part_Granule_subset-k40d40.pdf", width=5, height=3)
 plotNhoodSizeHist(Part_Granule_subset_milo)
 dev.off()
-
 
 
 
@@ -38565,11 +38563,11 @@ da_results <- testNhoods(Part_Granule_subset_milo, design = ~ condition, design.
 head(da_results)
 
 # Inspecting DA testing results
-pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_Condition.pdf", width=5, height=3)
+pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_Condition-k40d40.pdf", width=5, height=3)
 ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
 dev.off()
 
-pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_Condition.pdf", width=5, height=3)
+pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_Condition-k40d40.pdf", width=5, height=3)
 ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
   geom_point() +
   geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
@@ -38601,11 +38599,11 @@ da_results <- testNhoods(Part_Granule_subset_milo, design = ~ replicate + condit
 head(da_results)
 
 # Inspecting DA testing results
-pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_ReplicateCondition.pdf", width=5, height=3)
+pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_ReplicateCondition-k30d20.pdf", width=5, height=3)
 ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
 dev.off()
 
-pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_ReplicateCondition.pdf", width=5, height=3)
+pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_ReplicateCondition-k30d20.pdf", width=5, height=3)
 ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
   geom_point() +
   geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
@@ -38614,6 +38612,158 @@ dev.off()
 
 #--> No signifcant changes for with and without replicate in design...
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####################################################
+# Differential abundance testing VERSION2 - reduce dim UMAP ####################
+#####################################################
+
+# create Milo object
+
+Part_Granule_subset_milo <- Milo(Part_Granule_subset)
+Part_Granule_subset_milo
+
+
+## Construct KNN graph
+Part_Granule_subset_milo <- buildGraph(Part_Granule_subset_milo, k = 30, d = 20, reduced.dim = "UMAP") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+#--> ERROR: `subscript ouf of bounds`
+
+
+
+
+
+
+
+
+
+
+
+#####################################################
+# Differential abundance testing VERSION3 - regenerate PCA ####################
+#####################################################
+# Recompute PCA and UMAP
+
+Part_Granule_subset <- Part_Granule_subset[,apply(reducedDim(Part_Granule_subset, "PCA"), 1, function(x) !all(is.na(x)))]
+Part_Granule_subset <- runUMAP(Part_Granule_subset, dimred = "PCA", name = 'umap')
+
+pdf("output/miloR/plotReducedDim-p14_CB_Part_Granule_subset-PCA.pdf", width=5, height=3)
+plotReducedDim(Part_Granule_subset, colour_by="condition", dimred = "umap")  +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+
+# create Milo object
+
+Part_Granule_subset_milo <- Milo(Part_Granule_subset)
+Part_Granule_subset_milo
+
+
+## Construct KNN graph
+Part_Granule_subset_milo <- buildGraph(Part_Granule_subset_milo, k = 30, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+
+
+## Defining representative neighbourhoods on the KNN graph
+Part_Granule_subset_milo <- makeNhoods(Part_Granule_subset_milo, prop = 0.1, k = 30, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-p14_CB_Part_Granule_subset-k30d40_reduceddimsPCA.pdf", width=5, height=3)
+plotNhoodSizeHist(Part_Granule_subset_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+Part_Granule_subset_milo <- countCells(Part_Granule_subset_milo, meta.data = as.data.frame(colData(Part_Granule_subset_milo)), sample="orig.ident")
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+Part_Granule_subset_design <- data.frame(colData(Part_Granule_subset_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+Part_Granule_subset_design <- distinct(Part_Granule_subset_design)
+rownames(Part_Granule_subset_design) <- Part_Granule_subset_design$orig.ident
+
+Part_Granule_subset_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(Part_Granule_subset_milo, design = ~ condition, design.df = Part_Granule_subset_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_Condition-k30d40_reduceddimsPCA.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_Condition-k30d40_reduceddimsPCA.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+Part_Granule_subset_design <- data.frame(colData(Part_Granule_subset_milo))[,c("orig.ident", "condition", "replicate")]
+## Convert batch info from integer to factor
+Part_Granule_subset_design <- distinct(Part_Granule_subset_design)
+rownames(Part_Granule_subset_design) <- Part_Granule_subset_design$orig.ident
+
+Part_Granule_subset_design
+
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(Part_Granule_subset_milo, design = ~ replicate + condition, design.df = Part_Granule_subset_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_ReplicateCondition-k30d40_reduceddimsPCA.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_ReplicateCondition-k30d40_reduceddimsPCA.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+#--> No signifcant changes for with and without replicate in design...
 
 
 
@@ -38633,8 +38783,572 @@ dev.off()
 
 
 
---> First test I used reduced.dim = "PCA" and it gave no signficant changes.
-  --> By using reduced.dim = "UMAP"; it XXX
+--> First test (VERSION1) I used reduced.dim = "PCA" and it gave no signficant changes. I also changed d, k, and prop parameters but no changes...
+  --> Then second test (VERSION1) By using reduced.dim = "UMAP"; it gave error `subscript ouf of bounds`
+  --> Then third test (VERSION3) By using reduced.dim= PCA; does not gaveany signif. changes too...
+
+
+
+--> I think there is no differences, maybe **SCTransform over-corrected the data**, so we lose information regarding delay maturation; but not sure!
+  --> To test for this:
+    - Extract my granule cells; already identified and re-separate each replicate and re-merge them, simple merge, no integration
+
+
+
+
+###### run miloR on granule sub-population used in pseudotime AFTER RE-MERGING OUR SAMPLES
+
+
+Let's isolate my granule cells, where I did the pseudotime, and re-process them for miloR:
+- extract granule cells
+- split cells based on orig.ident (ie. "de-integrate" cells)
+- merge cells (not integrate); to avoid over-correction from SCTransform
+- re-perform PCA for miloR
+
+
+
+
+
+
+
+
+```bash
+conda activate miloR
+```
+
+
+```R
+
+#packages
+library("Seurat")
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+set.seed(42)
+
+####################################################################################
+# import and re-generate cell subset same as for the psuedotime analysis ###########
+####################################################################################
+
+# import rds with increased clustering
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam15res03.sct_V1_numeric.rds") # 
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # According to condiments workflow
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+# First filter based on cell type
+Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("6", "1", "4")]
+table(Part_Granule$seurat_clusters) # to double check
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_Granule)$UMAP
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+selected_cells <-  umap_coords[,1] > 3 & umap_coords[,2] < 8 & umap_coords[,2] > -10
+# Subset your SCE object
+Part_Granule_subset <- Part_Granule[, selected_cells]
+# Check resulting subset
+dim(Part_Granule_subset)
+#--> PART UP COMES FROM `#### Isolating cell of interest - Granule p14 time point only`
+##################################################################################################################
+
+
+
+# De-integrate samples
+## Convert back to a Seurat object if you currently have an SCE
+Part_Granule_subset_seurat <- as.Seurat(Part_Granule_subset)
+
+# Split by replicate
+granule.list <- SplitObject(Part_Granule_subset_seurat, split.by = "orig.ident")
+
+names(granule.list)
+
+# Keep only the RNA assay (drop integration)
+for (i in 1:length(granule.list)) {
+  DefaultAssay(granule.list[[i]]) <- "RNA"
+  granule.list[[i]] <- NormalizeData(granule.list[[i]])
+  granule.list[[i]] <- FindVariableFeatures(granule.list[[i]], selection.method = "vst", nfeatures = 3000)
+}
+
+# Merge all replicates
+granule_merged <- merge(granule.list[[1]], y = granule.list[-1])
+
+
+Granule_sce <- as.SingleCellExperiment(granule_merged, assay = "RNA")
+
+
+# Log norm
+Granule_sce <- computeLibraryFactors(Granule_sce)
+Granule_sce <- logNormCounts(Granule_sce)
+
+dec <- modelGeneVar(Granule_sce, block = Granule_sce$orig.ident)
+hvgs <- getTopHVGs(dec, n = 3000)
+
+Granule_sce <- runPCA(Granule_sce, subset_row = hvgs, ncomponents = 40, name = "PCA")
+Granule_sce <- runUMAP(Granule_sce, dimred = "PCA", name = "UMAP")
+
+
+# Re vizualize data
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce-ReProcessSCE.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, colour_by="condition", dimred = "UMAP") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce-ReProcessSCE_origident.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, colour_by="orig.ident", dimred = "UMAP") 
+dev.off()
+
+
+#####################################################
+# Differential abundance testing VERSION1 ####################
+#####################################################
+
+# create Milo object
+
+Granule_sce_milo <- Milo(Granule_sce)
+Granule_sce_milo
+
+
+## Construct KNN graph
+Granule_sce_milo <- buildGraph(Granule_sce_milo, k = 40, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+
+
+
+
+## Defining representative neighbourhoods on the KNN graph
+Granule_sce_milo <- makeNhoods(Granule_sce_milo, prop = 0.1, k = 40, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-p14_CB_Granule_sce-k40d40.pdf", width=5, height=3)
+plotNhoodSizeHist(Granule_sce_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+Granule_sce_milo <- countCells(Granule_sce_milo, meta.data = as.data.frame(colData(Granule_sce_milo)), sample="orig.ident")
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+Granule_sce_design <- data.frame(colData(Granule_sce_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+Granule_sce_design <- distinct(Granule_sce_design)
+rownames(Granule_sce_design) <- Granule_sce_design$orig.ident
+
+Granule_sce_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(Granule_sce_milo, design = ~ condition, design.df = Granule_sce_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB_Granule_sce-design_Condition-k40d40.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce-design_Condition-k40d40.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+Granule_sce_design <- data.frame(colData(Granule_sce_milo))[,c("orig.ident", "condition", "replicate")]
+## Convert batch info from integer to factor
+Granule_sce_design <- distinct(Granule_sce_design)
+rownames(Granule_sce_design) <- Granule_sce_design$orig.ident
+
+Granule_sce_design
+
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(Granule_sce_milo, design = ~ replicate + condition, design.df = Granule_sce_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB_Granule_sce-design_ReplicateCondition-k40d40.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce-design_ReplicateCondition-k40d40.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+#--> No signifcant changes for with and without replicate in design... But better than SCTransform...
+
+
+
+######################################################
+# Integration with FastMNN ###########################
+######################################################
+
+granule.list
+
+WT_p14_CB_Rep1     <- granule.list[["WT_p14_CB_Rep1"]]
+WT_p14_CB_Rep2     <- granule.list[["WT_p14_CB_Rep2"]]
+WT_p14_CB_Rep3     <- granule.list[["WT_p14_CB_Rep3"]]
+
+Kcnc1_p14_CB_Rep1  <- granule.list[["Kcnc1_p14_CB_Rep1"]]
+Kcnc1_p14_CB_Rep2  <- granule.list[["Kcnc1_p14_CB_Rep2"]]
+Kcnc1_p14_CB_Rep3  <- granule.list[["Kcnc1_p14_CB_Rep3"]]
+
+# convert to SingleCellExperiment
+WT_p14_CB_Rep1_sce <- as.SingleCellExperiment(WT_p14_CB_Rep1, assay = "RNA")
+WT_p14_CB_Rep2_sce <- as.SingleCellExperiment(WT_p14_CB_Rep2, assay = "RNA")
+WT_p14_CB_Rep3_sce <- as.SingleCellExperiment(WT_p14_CB_Rep3, assay = "RNA")
+Kcnc1_p14_CB_Rep1_sce <- as.SingleCellExperiment(Kcnc1_p14_CB_Rep1, assay = "RNA")
+Kcnc1_p14_CB_Rep2_sce <- as.SingleCellExperiment(Kcnc1_p14_CB_Rep2, assay = "RNA")
+Kcnc1_p14_CB_Rep3_sce <- as.SingleCellExperiment(Kcnc1_p14_CB_Rep3, assay = "RNA")
+
+sce_list <- list(
+  WT_p14_CB_Rep1_sce,
+  WT_p14_CB_Rep2_sce,
+  WT_p14_CB_Rep3_sce,
+  Kcnc1_p14_CB_Rep1_sce,
+  Kcnc1_p14_CB_Rep2_sce,
+  Kcnc1_p14_CB_Rep3_sce
+)
+
+# 1) Same genes across batches
+common_genes <- Reduce(intersect, lapply(sce_list, rownames))
+length(common_genes)
+sce_list <- lapply(sce_list, function(sce) sce[common_genes, , drop = FALSE])
+# 2) Normalize per batch on the same scale
+sce_list <- multiBatchNorm(sce_list)   # creates/updates "logcounts"
+# 3) Pick shared HVGs
+dec_list <- lapply(sce_list, modelGeneVar)
+combined.dec  <- combineVar(dec_list)
+chosen.hvgs      <- getTopHVGs(combined.dec, n = 5000)
+
+
+
+f.out <- do.call(
+  fastMNN,
+  c(sce_list, list(subset.row = chosen.hvgs, d = 30))
+)
+
+
+
+str(reducedDim(f.out, "corrected"))
+
+rle(f.out$batch)
+
+
+f.out <- runTSNE(f.out, dimred="corrected")
+
+pdf("output/miloR/fastMNN_plotTSNE-p14_CB_Granule_sce.pdf", width=5, height=3)
+plotTSNE(f.out, colour_by="batch")
+dev.off()
+
+# re label meta columns condition, replicate
+meta <- do.call(rbind, lapply(sce_list, function(sce) {
+  # Extract replicate name from orig.ident (text after last underscore, e.g. "Rep1")
+  replicate_name <- sub(".*_(Rep[0-9]+)$", "\\1", sce$orig.ident)
+
+  DataFrame(
+    sample    = sce$orig.ident,
+    condition = if (!is.null(sce$condition)) sce$condition else
+                  ifelse(grepl("^WT", sce$orig.ident, ignore.case = TRUE), "WT", "Kcnc1"),
+    replicate = replicate_name,
+    row.names = colnames(sce)
+  )
+}))
+
+# Reattach metadata to fastMNN output by cell name
+f.out$sample    <- meta[colnames(f.out), "sample"]
+f.out$condition <- meta[colnames(f.out), "condition"]
+f.out$replicate <- meta[colnames(f.out), "replicate"]
+
+# Optional: convert to factors with proper order
+f.out$sample    <- factor(f.out$sample)
+f.out$condition <- factor(f.out$condition, levels = c("WT", "Kcnc1"))
+f.out$replicate <- factor(f.out$replicate, levels = c("Rep1", "Rep2", "Rep3"))
+
+
+Granule_sce_fastMNN = f.out
+
+# Now miloR
+
+
+
+# Re vizualize data
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_fastMNN10dim-sample.pdf", width=5, height=3)
+plotReducedDim(Granule_sce_fastMNN, colour_by="sample", dimred = "corrected")
+dev.off()
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_fastMNN10dim-condition.pdf", width=5, height=3)
+plotReducedDim(Granule_sce_fastMNN, colour_by="condition", dimred = "corrected") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+
+#####################################################
+# Differential abundance testing VERSION1 ####################
+#####################################################
+
+# create Milo object
+
+Granule_sce_fastMNN_milo <- Milo(Granule_sce_fastMNN)
+Granule_sce_fastMNN_milo
+
+
+## Construct KNN graph
+Granule_sce_fastMNN_milo <- buildGraph(Granule_sce_fastMNN_milo, k = 10, d = 30, reduced.dim = "corrected") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+
+
+
+
+## Defining representative neighbourhoods on the KNN graph
+Granule_sce_fastMNN_milo <- makeNhoods(Granule_sce_fastMNN_milo, prop = 0.1, k = 10, d=30, refined = TRUE, reduced_dims = "corrected", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-p14_CB_Granule_sce_fastMNN-k30d50.pdf", width=5, height=3)
+plotNhoodSizeHist(Granule_sce_fastMNN_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+Granule_sce_fastMNN_milo <- countCells(Granule_sce_fastMNN_milo, meta.data = as.data.frame(colData(Granule_sce_fastMNN_milo)), sample="sample")
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+Granule_sce_fastMNN_design <- data.frame(colData(Granule_sce_fastMNN_milo))[,c("sample", "condition")]
+## Convert batch info from integer to factor
+Granule_sce_fastMNN_design <- distinct(Granule_sce_fastMNN_design)
+rownames(Granule_sce_fastMNN_design) <- Granule_sce_fastMNN_design$sample
+
+Granule_sce_fastMNN_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(Granule_sce_fastMNN_milo, design = ~ condition, design.df = Granule_sce_fastMNN_design, fdr.weighting="graph-overlap", reduced.dim = "corrected") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB_Granule_sce_fastMNN_milo-design_Condition-k30d50.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce_fastMNN_milo-design_Condition-k30d50.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+Granule_sce_fastMNN_design <- data.frame(colData(Granule_sce_fastMNN_milo))[,c("sample", "condition", "replicate")]
+## Convert batch info from integer to factor
+Granule_sce_fastMNN_design <- distinct(Granule_sce_fastMNN_design)
+rownames(Granule_sce_fastMNN_design) <- Granule_sce_fastMNN_design$sample
+
+Granule_sce_fastMNN_design
+
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(Granule_sce_fastMNN_milo, design = ~ replicate + condition, design.df = Granule_sce_design, fdr.weighting="graph-overlap", reduced.dim = "corrected") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB_Granule_sce_fastMNN_milo-design_ReplicateCondition-k30d50.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce_fastMNN_milo-design_ReplicateCondition-k30d50.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+#--> No signifcant changes for with and without replicate in design... But better than SCTransform...
+
+
+
+
+```
+
+--> **pvalue seems lower with using merge**, as compared to using SCTransform; lets try to integrate replicate with [fastMNN](https://bioconductor.org/packages/release/bioc/vignettes/batchelor/inst/doc/correction.html) like in the miloR tutorial
+  --> Also with merge only the **UMAP is super ugly**! Seems cut in half...
+
+
+--> Using **fastMNN, pvalue also lower**, but not as lower as using merge..
+
+
+--> **changing k change pvalue**; from 20-30 to 100 it reduced it; but then 200 increased it...
+
+
+
+
+
+
+
+###### run miloR on all cells p14
+
+
+
+--> Follow this [tutorial](https://rawcdn.githack.com/MarioniLab/miloR/7c7f906b94a73e62e36e095ddb3e3567b414144e/vignettes/milo_gastrulation.html#5_Finding_markers_of_DA_populations)
+
+
+```bash
+conda activate miloR
+```
+
+
+```R
+
+#packages
+library("Seurat")
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+set.seed(42)
+
+
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+set.seed(42)
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # According to condiments workflow
+# convert to SingleCellExperiment
+p14_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+
+
+
+
+
+# Re vizualize data
+#--> Not needed to re-run runUMAP()
+
+pdf("output/miloR/plotReducedDim-p14_CB.pdf", width=5, height=3)
+plotReducedDim(p14_CB, colour_by="condition", dimred = "UMAP") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+#####################################################
+# Differential abundance testing VERSION1 ####################
+#####################################################
+
+# create Milo object
+
+p14_CB_milo <- Milo(p14_CB)
+p14_CB_milo
+
+
+## Construct KNN graph
+p14_CB_milo <- buildGraph(p14_CB_milo, k = 30, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+
+
+
+
+## Defining representative neighbourhoods on the KNN graph
+p14_CB_milo <- makeNhoods(p14_CB_milo, prop = 0.1, k = 30, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-p14_CB-k30d40_reduceddimPCA.pdf", width=5, height=3)
+plotNhoodSizeHist(p14_CB_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+p14_CB_milo <- countCells(p14_CB_milo, meta.data = as.data.frame(colData(p14_CB_milo)), sample="orig.ident")
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+p14_CB_design <- data.frame(colData(p14_CB_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+p14_CB_design <- distinct(p14_CB_design)
+rownames(p14_CB_design) <- p14_CB_design$orig.ident
+
+p14_CB_design
+
+
+
+
+
+# Testing
+
+da_results <- testNhoods(p14_CB_milo, design = ~ condition, design.df = p14_CB_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB-design_Condition-k30d40_reduceddimPCA.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB-design_Condition-k30d40_reduceddimPCA.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+```
+
+
+--> Using all cells p14 CB also gave no signif diff..
+
+
+
 
 
 
