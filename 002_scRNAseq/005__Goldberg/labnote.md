@@ -38521,16 +38521,16 @@ Part_Granule_subset_milo
 
 
 ## Construct KNN graph
-Part_Granule_subset_milo <- buildGraph(Part_Granule_subset_milo, k = 40, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+Part_Granule_subset_milo <- buildGraph(Part_Granule_subset_milo, k = 50, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
 #--> HEre I got error `did not converge--results might be invalid!; try increasing work or maxit`; so I change reduced.dim to PCA and not 'corrected.pca' whic his a dim i do not have!!!
 
 
 ## Defining representative neighbourhoods on the KNN graph
-Part_Granule_subset_milo <- makeNhoods(Part_Granule_subset_milo, prop = 0.1, k = 40, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+Part_Granule_subset_milo <- makeNhoods(Part_Granule_subset_milo, prop = 0.1, k = 50, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
 
 
 ## plot to check if our k was ok
-pdf("output/miloR/plotNhoodSizeHist-p14_CB_Part_Granule_subset-k40d40.pdf", width=5, height=3)
+pdf("output/miloR/plotNhoodSizeHist-p14_CB_Part_Granule_subset-k50d40.pdf", width=5, height=3)
 plotNhoodSizeHist(Part_Granule_subset_milo)
 dev.off()
 
@@ -38563,11 +38563,11 @@ da_results <- testNhoods(Part_Granule_subset_milo, design = ~ condition, design.
 head(da_results)
 
 # Inspecting DA testing results
-pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_Condition-k40d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results-p14_CB_Part_Granule_subset-design_Condition-k50d40.pdf", width=5, height=3)
 ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
 dev.off()
 
-pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_Condition-k40d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results_Volcano-p14_CB_Part_Granule_subset-design_Condition-k50d40.pdf", width=5, height=3)
 ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
   geom_point() +
   geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
@@ -38886,19 +38886,20 @@ Granule_sce <- logNormCounts(Granule_sce)
 dec <- modelGeneVar(Granule_sce, block = Granule_sce$orig.ident)
 hvgs <- getTopHVGs(dec, n = 3000)
 
-Granule_sce <- runPCA(Granule_sce, subset_row = hvgs, ncomponents = 40, name = "PCA")
+Granule_sce <- runPCA(Granule_sce, subset_row = hvgs, ncomponents = 30, name = "PCA")
 Granule_sce <- runUMAP(Granule_sce, dimred = "PCA", name = "UMAP")
 
 
 # Re vizualize data
 
-pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce-ReProcessSCE.pdf", width=5, height=3)
-plotReducedDim(Granule_sce, colour_by="condition", dimred = "UMAP") +
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCE.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, colour_by="condition", dimred = "PCA") +
   scale_color_manual(values = c(WT="black", Kcnc1="red"))
 dev.off()
 
-pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce-ReProcessSCE_origident.pdf", width=5, height=3)
-plotReducedDim(Granule_sce, colour_by="orig.ident", dimred = "UMAP") 
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCE_origident.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, colour_by="orig.ident", dimred = "PCA") 
 dev.off()
 
 
@@ -38913,17 +38914,17 @@ Granule_sce_milo
 
 
 ## Construct KNN graph
-Granule_sce_milo <- buildGraph(Granule_sce_milo, k = 40, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+Granule_sce_milo <- buildGraph(Granule_sce_milo, k = 30, d = 30, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
 
 
 
 
 ## Defining representative neighbourhoods on the KNN graph
-Granule_sce_milo <- makeNhoods(Granule_sce_milo, prop = 0.1, k = 40, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+Granule_sce_milo <- makeNhoods(Granule_sce_milo, prop = 0.2, k = 30, d=30, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
 
 
 ## plot to check if our k was ok
-pdf("output/miloR/plotNhoodSizeHist-p14_CB_Granule_sce-k40d40.pdf", width=5, height=3)
+pdf("output/miloR/plotNhoodSizeHist-p14_CB_Granule_sce-k30d30.pdf", width=5, height=3)
 plotNhoodSizeHist(Granule_sce_milo)
 dev.off()
 
@@ -38956,15 +38957,51 @@ da_results <- testNhoods(Granule_sce_milo, design = ~ condition, design.df = Gra
 head(da_results)
 
 # Inspecting DA testing results
-pdf("output/miloR/da_results-p14_CB_Granule_sce-design_Condition-k40d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results-p14_CB_Granule_sce_dim30-design_Condition-k30d30.pdf", width=5, height=3)
 ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
 dev.off()
 
-pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce-design_Condition-k40d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce_dim30-design_Condition-k30d30.pdf", width=5, height=3)
 ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
   geom_point() +
   geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
 dev.off()
+
+
+
+
+Granule_sce_milo <- buildNhoodGraph(Granule_sce_milo)
+
+
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce_dim30-design_Condition-k30d30.pdf", width=5, height=3)
+plotNhoodGraphDA(Granule_sce_milo, da_results, layout="PCA",alpha=0.05)
+dev.off()
+
+
+da_results <- annotateNhoods(Granule_sce_milo, da_results, coldata_col = "cluster.annot")
+head(da_results)
+
+
+pdf("output/miloR/plotDAbeeswarm-p14_CB_Granule_sce_dim30-design_Condition-k30d30.pdf", width=5, height=2)
+plotDAbeeswarm(da_results, group.by = "cluster.annot")
+dev.off()
+
+#--> Show signif changes
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-Ptprk.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, dimred = "PCA", colour_by = "Ptprk")
+dev.off()
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-Gabra6.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, dimred = "PCA", colour_by = "Gabra6")
+dev.off()
+
+
+
+
+
+
+
 
 
 
@@ -39053,7 +39090,7 @@ chosen.hvgs      <- getTopHVGs(combined.dec, n = 5000)
 
 f.out <- do.call(
   fastMNN,
-  c(sce_list, list(subset.row = chosen.hvgs, d = 30))
+  c(sce_list, list(subset.row = chosen.hvgs, d = 20))
 )
 
 
@@ -39063,11 +39100,6 @@ str(reducedDim(f.out, "corrected"))
 rle(f.out$batch)
 
 
-f.out <- runTSNE(f.out, dimred="corrected")
-
-pdf("output/miloR/fastMNN_plotTSNE-p14_CB_Granule_sce.pdf", width=5, height=3)
-plotTSNE(f.out, colour_by="batch")
-dev.off()
 
 # re label meta columns condition, replicate
 meta <- do.call(rbind, lapply(sce_list, function(sce) {
@@ -39102,10 +39134,10 @@ Granule_sce_fastMNN = f.out
 
 # Re vizualize data
 
-pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_fastMNN10dim-sample.pdf", width=5, height=3)
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_fastMNN20dim-sample.pdf", width=5, height=3)
 plotReducedDim(Granule_sce_fastMNN, colour_by="sample", dimred = "corrected")
 dev.off()
-pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_fastMNN10dim-condition.pdf", width=5, height=3)
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_fastMNN20dim-condition.pdf", width=5, height=3)
 plotReducedDim(Granule_sce_fastMNN, colour_by="condition", dimred = "corrected") +
   scale_color_manual(values = c(WT="black", Kcnc1="red"))
 dev.off()
@@ -39122,17 +39154,17 @@ Granule_sce_fastMNN_milo
 
 
 ## Construct KNN graph
-Granule_sce_fastMNN_milo <- buildGraph(Granule_sce_fastMNN_milo, k = 10, d = 30, reduced.dim = "corrected") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+Granule_sce_fastMNN_milo <- buildGraph(Granule_sce_fastMNN_milo, k = 20, d = 20, reduced.dim = "corrected") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
 
 
 
 
 ## Defining representative neighbourhoods on the KNN graph
-Granule_sce_fastMNN_milo <- makeNhoods(Granule_sce_fastMNN_milo, prop = 0.1, k = 10, d=30, refined = TRUE, reduced_dims = "corrected", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+Granule_sce_fastMNN_milo <- makeNhoods(Granule_sce_fastMNN_milo, prop = 0.25, k = 20, d=20, refined = TRUE, reduced_dims = "corrected", refinement_scheme="graph") # refinement_scheme="graph" added, see note
 
 
 ## plot to check if our k was ok
-pdf("output/miloR/plotNhoodSizeHist-p14_CB_Granule_sce_fastMNN-k30d50.pdf", width=5, height=3)
+pdf("output/miloR/plotNhoodSizeHist-p14_CB_Granule_sce_fastMNN-k30d20.pdf", width=5, height=3)
 plotNhoodSizeHist(Granule_sce_fastMNN_milo)
 dev.off()
 
@@ -39165,11 +39197,11 @@ da_results <- testNhoods(Granule_sce_fastMNN_milo, design = ~ condition, design.
 head(da_results)
 
 # Inspecting DA testing results
-pdf("output/miloR/da_results-p14_CB_Granule_sce_fastMNN_milo-design_Condition-k30d50.pdf", width=5, height=3)
+pdf("output/miloR/da_results-p14_CB_Granule_sce_fastMNN_milo-design_Condition-k20d20.pdf", width=5, height=3)
 ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
 dev.off()
 
-pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce_fastMNN_milo-design_Condition-k30d50.pdf", width=5, height=3)
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce_fastMNN_milo-design_Condition-k20d20.pdf", width=5, height=3)
 ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
   geom_point() +
   geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
@@ -39178,6 +39210,18 @@ dev.off()
 
 
 
+Granule_sce_fastMNN_milo <- buildNhoodGraph(Granule_sce_fastMNN_milo)
+
+## Plot single-cell UMAP
+umap_pl <- plotReducedDim(Granule_sce_fastMNN_milo, dimred = "corrected", colour_by="condition", text_by = "condition", text_size = 3) +
+  guides(fill="none")
+
+## Plot neighbourhood graph
+nh_graph_pl <- plotNhoodGraphDA(Granule_sce_fastMNN_milo, da_results, layout="corrected",alpha=0.05)
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_sce_fastMNN_milo-design_Condition-k20d20prop025.pdf", width=5, height=3)
+plotNhoodGraphDA(Granule_sce_fastMNN_milo, da_results, layout="corrected",alpha=0.05)
+dev.off()
 
 
 
