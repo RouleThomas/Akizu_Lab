@@ -39396,8 +39396,393 @@ dev.off()
 --> Using all cells p14 CB also gave no signif diff..
 
 
+###### run miloR on granule sub-population used in pseudotime - Sample de-integrating and merge; PCA analyzed
+
+- Let's use the cells used in granule subset pseudotime (ie. use version from condiments with the pseudotime information)
+- Add bin pseudotime information (pseudotime cut in bins 0-2 or 0-5)
+  - Re-load and re-process seurat and subset granule and from this add the pseudotime information (needed as I cannot convert SCE object from condiments to Seurat object (step needed for de-integration))
+- de-integrate them (ie. individualize sample)
+- merge them --> Run PCA --> Conduct miloR analysis
 
 
+
+
+
+
+```bash
+conda activate miloR
+```
+
+
+```R
+
+#packages
+library("Seurat")
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+set.seed(42)
+
+
+# Load pseudotime SCE object Part_Granule_subset
+load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
+set.seed(42)
+
+#####################################
+# Generate pseudotime bins (bin 2 and 5) ##########
+#####################################
+Part_Granule_subset
+
+# Find range of pseudotime
+range(Part_Granule_subset$slingPseudotime_1, na.rm = TRUE)
+# say it goes from 0 to ~18
+
+# Create bins and assign labels
+Part_Granule_subset$pseudotime_bin_2 <- cut(
+  Part_Granule_subset$slingPseudotime_1,
+  breaks = seq(0, 20, by = 2),         # 0–2, 2–4, …, up to 18–20
+  include.lowest = TRUE,
+  right = FALSE,
+  labels = paste0("bin_", seq(0, 18, by = 2), "_", seq(2, 20, by = 2))
+)
+
+# Check your new metadata column
+table(Part_Granule_subset$pseudotime_bin_2)
+
+
+# Create bins and assign labels
+Part_Granule_subset$pseudotime_bin_5 <- cut(
+  Part_Granule_subset$slingPseudotime_1,
+  breaks = seq(0, 20, by = 5),         # 0–5 5-10
+  include.lowest = TRUE,
+  right = FALSE,
+  labels = paste0("bin_", seq(0, 15, by = 5), "_", seq(5, 20, by = 5))
+  )
+
+# Check your new metadata column
+table(Part_Granule_subset$pseudotime_bin_5)
+
+Part_Granule_subset$pseudotime_bin_2 <- factor(
+  Part_Granule_subset$pseudotime_bin_2,
+  levels = c("bin_0_2", "bin_2_4", "bin_4_6", "bin_6_8", 
+"bin_8_10", "bin_10_12", "bin_12_14", 
+"bin_14_16", "bin_16_18")  # WT first, Kcnc1 second
+)
+Part_Granule_subset$pseudotime_bin_5 <- factor(
+  Part_Granule_subset$pseudotime_bin_5,
+  levels = c("bin_0_5", "bin_5_10", "bin_10_15", "bin_15_20")  # WT first, Kcnc1 second
+)
+
+pdf("output/miloR/plotReducedDim-Part_Granule_subset-pseudotime_bin_2.pdf", width=5, height=3)
+plotReducedDim(Part_Granule_subset, dimred = "UMAP", colour_by = "pseudotime_bin_2") +
+  scale_colour_manual(values = setNames(viridis(length(c("bin_0_2","bin_2_4","bin_4_6","bin_6_8",
+                 "bin_8_10","bin_10_12","bin_12_14",
+                 "bin_14_16","bin_16_18"))), c("bin_0_2","bin_2_4","bin_4_6","bin_6_8",
+                 "bin_8_10","bin_10_12","bin_12_14",
+                 "bin_14_16","bin_16_18")), name = "Pseudotime (bins)")
+dev.off()
+pdf("output/miloR/plotReducedDim-Part_Granule_subset-pseudotime_bin_5.pdf", width=5, height=3)
+plotReducedDim(Part_Granule_subset, dimred = "UMAP", colour_by = "pseudotime_bin_5") +
+  scale_colour_manual(values = setNames(viridis(length(c("bin_0_5", "bin_5_10", "bin_10_15", "bin_15_20"))), c("bin_0_5", "bin_5_10", "bin_10_15", "bin_15_20")), name = "Pseudotime (bins)")
+dev.off()
+
+
+
+
+####################################################################################
+# Load seurat object and add pseudotime information from previous SCE object #######
+####################################################################################
+# import rds with increased clustering
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam15res03.sct_V1_numeric.rds") # 
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # According to condiments workflow
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+# First filter based on cell type
+Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("6", "1", "4")]
+table(Part_Granule$seurat_clusters) # to double check
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_Granule)$UMAP
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+selected_cells <-  umap_coords[,1] > 3 & umap_coords[,2] < 8 & umap_coords[,2] > -10
+# Subset your SCE object
+Part_Granule_subset_raw <- Part_Granule[, selected_cells]
+# Check resulting subset
+dim(Part_Granule_subset_raw)
+# COPY pseudotime info onto the raw seurat
+# Check that cell names match
+all(colnames(Part_Granule_subset_raw) == colnames(Part_Granule_subset))
+# If TRUE, you can directly copy
+Part_Granule_subset_raw$pseudotime_bin_5 <- Part_Granule_subset$pseudotime_bin_5
+Part_Granule_subset_raw$pseudotime_bin_2 <- Part_Granule_subset$pseudotime_bin_2
+
+
+
+
+
+
+
+
+
+
+
+##############################
+# De-integrate samples #######
+##############################
+## Convert back to a Seurat object if you currently have an SCE
+Part_Granule_subset_seurat <- as.Seurat(Part_Granule_subset_raw)
+
+# Split by replicate
+granule.list <- SplitObject(Part_Granule_subset_seurat, split.by = "orig.ident")
+
+names(granule.list)
+
+# Keep only the RNA assay (drop integration)
+for (i in 1:length(granule.list)) {
+  DefaultAssay(granule.list[[i]]) <- "RNA"
+  granule.list[[i]] <- NormalizeData(granule.list[[i]])
+  granule.list[[i]] <- FindVariableFeatures(granule.list[[i]], selection.method = "vst", nfeatures = 3000)
+}
+
+# Merge all replicates
+granule_merged <- merge(granule.list[[1]], y = granule.list[-1])
+
+
+Granule_sce <- as.SingleCellExperiment(granule_merged, assay = "RNA")
+
+
+# Log norm
+Granule_sce <- computeLibraryFactors(Granule_sce)
+Granule_sce <- logNormCounts(Granule_sce)
+
+dec <- modelGeneVar(Granule_sce, block = Granule_sce$orig.ident)
+hvgs <- getTopHVGs(dec, n = 3000)
+
+Granule_sce <- runPCA(Granule_sce, subset_row = hvgs, ncomponents = 30, name = "PCA")
+Granule_sce <- runUMAP(Granule_sce, dimred = "PCA", name = "UMAP")
+
+
+# Order factors
+Granule_sce$condition <- factor(
+  Granule_sce$condition,
+  levels = c("WT", "Kcnc1")  # WT first, Kcnc1 second
+)
+Granule_sce$pseudotime_bin_2 <- factor(
+  Granule_sce$pseudotime_bin_2,
+  levels = c("bin_0_2", "bin_2_4", "bin_4_6", "bin_6_8", 
+"bin_8_10", "bin_10_12", "bin_12_14", 
+"bin_14_16", "bin_16_18")  # WT first, Kcnc1 second
+)
+Granule_sce$pseudotime_bin_5 <- factor(
+  Granule_sce$pseudotime_bin_5,
+  levels = c("bin_0_5", "bin_5_10", "bin_10_15", "bin_15_20")  # WT first, Kcnc1 second
+)
+
+
+# Re vizualize data
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCEpseudotime_grey.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, dimred = "PCA")
+dev.off()
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCEpseudotime.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, colour_by="condition", dimred = "PCA") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCEpseudotime_origident.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, colour_by="orig.ident", dimred = "PCA") 
+dev.off()
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCEpseudotime_pseudotime_bin_2.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, colour_by="pseudotime_bin_2", dimred = "PCA") +
+  scale_colour_manual(values = setNames(viridis(length(c("bin_0_2","bin_2_4","bin_4_6","bin_6_8",
+                 "bin_8_10","bin_10_12","bin_12_14",
+                 "bin_14_16","bin_16_18"))), c("bin_0_2","bin_2_4","bin_4_6","bin_6_8",
+                 "bin_8_10","bin_10_12","bin_12_14",
+                 "bin_14_16","bin_16_18")), name = "Pseudotime (bins)")
+dev.off()
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCEpseudotime_pseudotime_bin_5.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, colour_by="pseudotime_bin_5", dimred = "PCA") +
+  scale_colour_manual(values = setNames(viridis(length(c("bin_0_5", "bin_5_10", "bin_10_15", "bin_15_20"))), c("bin_0_5", "bin_5_10", "bin_10_15", "bin_15_20")), name = "Pseudotime (bins)")
+dev.off()
+
+
+
+
+
+#####################################################
+# Differential abundance testing VERSION1 ####################
+#####################################################
+
+# create Milo object
+
+Granule_sce_milo <- Milo(Granule_sce)
+Granule_sce_milo
+
+
+## Construct KNN graph
+Granule_sce_milo <- buildGraph(Granule_sce_milo, k = 30, d = 30, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+
+
+
+
+## Defining representative neighbourhoods on the KNN graph
+Granule_sce_milo <- makeNhoods(Granule_sce_milo, prop = 0.2, k = 30, d=30, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-p14_CB_Granule_scePseudotime-k30d30.pdf", width=5, height=3)
+plotNhoodSizeHist(Granule_sce_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+Granule_sce_milo <- countCells(Granule_sce_milo, meta.data = as.data.frame(colData(Granule_sce_milo)), sample="orig.ident")
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+Granule_sce_design <- data.frame(colData(Granule_sce_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+Granule_sce_design <- distinct(Granule_sce_design)
+rownames(Granule_sce_design) <- Granule_sce_design$orig.ident
+
+Granule_sce_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(Granule_sce_milo, design = ~ condition, design.df = Granule_sce_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-p14_CB_Granule_scePseudotime-design_Condition-k30d30.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_scePseudotime-design_Condition-k30d30.pdf", width=3, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) + ## Mark significance threshold (10% FDR)
+  theme_bw()
+dev.off()
+
+
+
+
+Granule_sce_milo <- buildNhoodGraph(Granule_sce_milo)
+
+
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_scePseudotime-design_Condition-k30d30.pdf", width=5, height=3)
+plotNhoodGraphDA(Granule_sce_milo, da_results, layout="PCA",alpha=0.1)
+dev.off()
+
+
+da_results <- annotateNhoods(Granule_sce_milo, da_results, coldata_col = "cluster.annot")
+da_results <- annotateNhoods(Granule_sce_milo, da_results, coldata_col = "pseudotime_bin_5")
+da_results <- annotateNhoods(Granule_sce_milo, da_results, coldata_col = "pseudotime_bin_2")
+
+head(da_results)
+
+da_results$pseudotime_bin_2 <- factor(da_results$pseudotime_bin_2, levels= c("bin_0_2","bin_2_4","bin_4_6","bin_6_8","bin_8_10","bin_10_12","bin_12_14", "bin_14_16","bin_16_18"))
+da_results$pseudotime_bin_5 <- factor(da_results$pseudotime_bin_5, levels= c("bin_0_5", "bin_5_10", "bin_10_15", "bin_15_20"))
+
+
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCEpseudotime_pseudotime_bin_5.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, colour_by="pseudotime_bin_5", dimred = "PCA") +
+  scale_colour_manual(values = setNames(viridis(length(c("bin_0_5", "bin_5_10", "bin_10_15", "bin_15_20"))), c("bin_0_5", "bin_5_10", "bin_10_15", "bin_15_20")), name = "Pseudotime (bins)")
+dev.off()
+
+
+
+pdf("output/miloR/plotDAbeeswarm-p14_CB_Granule_scePseudotime-design_Condition-k30d30.pdf", width=5, height=2)
+plotDAbeeswarm(da_results, group.by = "cluster.annot",alpha=0.1)
+dev.off()
+pdf("output/miloR/plotDAbeeswarm-p14_CB_Granule_scePseudotime-design_pseudotime_bin_2-k30d30.pdf", width=5, height=5)
+plotDAbeeswarm(da_results, group.by = "pseudotime_bin_2",alpha=0.1)
+dev.off()
+pdf("output/miloR/plotDAbeeswarm-p14_CB_Granule_scePseudotime-design_pseudotime_bin_5-k30d30.pdf", width=5, height=4)
+plotDAbeeswarm(da_results, group.by = "pseudotime_bin_5",alpha=0.1)
+dev.off()
+
+#--> Show signif changes
+
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_scePseudotime-Ptprk.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, dimred = "PCA", colour_by = "Ptprk") +
+  scale_colour_gradient(
+    low = "grey",
+    high = "red",
+    name = "Ptprk expression"
+  )
+dev.off()
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_scePseudotime-Gabra6.pdf", width=5, height=3)
+plotReducedDim(Granule_sce, dimred = "PCA", colour_by = "Gabra6") +
+  scale_colour_gradient(
+    low = "grey",
+    high = "red",
+    name = "Gabra6 expression"
+  )
+dev.off()
+
+
+
+# Identifying signatures of DA subpopulations
+
+logcounts(Granule_sce_milo) <- log1p(counts(Granule_sce_milo))
+dge_bin_15_20 <- findNhoodMarkers(Granule_sce_milo, da_results,
+                                     assay = "counts", gene.offset = FALSE, da.fdr = 0.1,
+                                     aggregate.samples = TRUE, sample_col = "orig.ident",
+                                     subset.nhoods = da_results$pseudotime_bin_5 %in% c("bin_15_20")
+                                     )
+
+head(dge_bin_15_20)
+#--> Genes that distinguish the two groupd at bin_15_20
+
+
+
+markers <- dge_bin_15_20[which(dge_bin_15_20$adj.P.Val_1 < 0.1 ), "GeneID"]
+
+Granule_sce_milo <- calcNhoodExpression(Granule_sce_milo, subset.row=markers)
+
+pdf("output/miloR/plotNhoodExpressionDA-p14_CB_Granule_scePseudotime-bin_15_20.pdf", width=5, height=3)
+plotNhoodExpressionDA(Granule_sce_milo, da_results, features = markers,
+                      subset.nhoods = da_results$pseudotime_bin_5 %in% c("bin_15_20"),
+                      assay="logcounts",
+                      scale_to_1 = TRUE, cluster_features = TRUE, alpha = 0.1
+                      )
+dev.off()
+
+
+which(da_results$pseudotime_bin_5 == "bin_15_20")
+
+
+#### ->  save.image(file="output/miloR/p14_CB_Granule_scePseudotime_v1.RData")
+### load("output/miloR/p14_CB_Granule_scePseudotime_v1.RData")
+set.seed(42)
+
+
+
+
+```
+
+
+--> miloR analsyis show less mature granule cells in Kcnc1 as compared to WT. PCA organization is in agreement with pseudotime and granule maturation!
 
 
 
@@ -69263,6 +69648,10 @@ df_3 %>%
 #### ->  save.image(file="output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
 ### load("output/condiments/condiments-Part_Granule_subset_START4_END1_points100extendpc1stretch1-version4dim40kparam15res03.RData")
 set.seed(42)
+
+
+# generate new class in Part_Granule_subset; pseudotime bins
+
 
 
 
