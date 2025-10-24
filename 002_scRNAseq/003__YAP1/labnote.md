@@ -2711,6 +2711,12 @@ all_markers_DASATINIB <- FindAllMarkers(humangastruloid_DASATINIB.combined.sct, 
 write.table(all_markers_DASATINIB, file = "output/seurat/srat_humangastruloid72hrs_DASATINIB_dim25kparam15res02_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
 
+Idents(humangastruloid.combined.sct) <- "cluster.annot"
+all_markers <- FindAllMarkers(humangastruloid.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_humangastruloid72hrs_dim25kparam15res02_3Dpaper_all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
 # SAVE ############################################################################################################################################
 #saveRDS(humangastruloid.combined.sct, file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam15res02.rds")
 humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam15res02.rds")
@@ -32054,6 +32060,10 @@ for (cell_type in cell_types) {
 all_markers <- FindAllMarkers(humangastruloid24hr.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 write.table(all_markers, file = "output/seurat/srat_humangastruloid24hr_all_markers_25dim.txt", sep = "\t", quote = FALSE, row.names = TRUE)
 
+Idents(humangastruloid24hr.combined.sct) <- "cluster.annot"
+all_markers <- FindAllMarkers(humangastruloid24hr.combined.sct, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_humangastruloid24hr_all_markers_25dim_clusterAnnot.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
 
 # Display the top 10 CONSERVED marker genes of each cluster
 Idents(humangastruloid24hr.combined.sct) <- "cluster.annot"
@@ -34990,6 +35000,10 @@ pdf("output/seurat/UMAP_GASTRU_24h_merge-dim20kparam30res03-splitCondition.pdf",
 DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, split.by = "condition")
 dev.off()
 
+pdf("output/seurat/UMAP_GASTRU_24h_merge-dim20kparam30res03-seurat_clusters.pdf", width=7, height=6)
+DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, group.by = "seurat_clusters")
+dev.off()
+
 pdf("output/seurat/UMAP_GASTRU_24h_merge-dim20kparam30res03-splitConditionGroupPhase.pdf", width=14, height=6)
 DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, split.by = "condition", group.by = "Phase",
   cols = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) 
@@ -35210,6 +35224,74 @@ dev.off()
 
 
 
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+
+## what genes change in different conditions for cells of the same type
+
+GASTRU_24h_merge$celltype.stim <- paste(GASTRU_24h_merge$seurat_clusters, GASTRU_24h_merge$condition,
+    sep = "-")
+Idents(GASTRU_24h_merge) <- "celltype.stim"
+
+# use RNA corrected count for DEGs
+## GASTRU_24h_merge <- PrepSCTFindMarkers(GASTRU_24h_merge)
+
+
+## Automation::
+cell_types <- c("1",
+  "2",
+  "3",
+  "4",
+  "5",
+  #"6", # not in DASA
+  #"7", # not in DASA
+  #"8", # not in DASA
+  "9")
+
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "DASATINIB24hrmerge_dim20kparam30res03.response", sep = ".")
+  ident_1 <- paste(cell_type, "-DASATINIB", sep = "")
+  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+
+  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  
+  print(head(response, n = 15))
+  
+  file_name <- paste("output/seurat/", cell_type, "-DASATINIBresponse24hrmerge_dim20kparam30res03.txt", sep = "")
+  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+}
+
+
+cell_types <- c("1"
+ # "2",
+ #  "3",
+  # "4",
+  # "5",
+  # "6", 
+ #  "7", 
+ #  "8",
+  # "9")
+)
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "XMU24hrmerge_dim20kparam30res03.response", sep = ".")
+  ident_1 <- paste(cell_type, "-XMU", sep = "")
+  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+
+  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  
+  print(head(response, n = 15))
+  
+  file_name <- paste("output/seurat/", cell_type, "-XMUresponse24hrmerge_dim20kparam30res03.txt", sep = "")
+  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+}
 
 
 ```
@@ -36012,6 +36094,10 @@ pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03-splitCondition.pdf",
 DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, split.by = "condition")
 dev.off()
 
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03-seurat_clusters.pdf", width=7, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, group.by = "seurat_clusters")
+dev.off()
+
 pdf("output/seurat/UMAP_GASTRU_72h_merge-dim20kparam30res03-splitConditionGroupPhase.pdf", width=14, height=6)
 DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, split.by = "condition", group.by = "Phase",
   cols = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) 
@@ -36241,6 +36327,78 @@ dev.off()
 
 
 
+
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+
+DefaultAssay(GASTRU_72h_merge) <- "RNA"
+
+GASTRU_72h_merge <- NormalizeData(GASTRU_72h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge)
+GASTRU_72h_merge <- ScaleData(GASTRU_72h_merge, features = all.genes) # zero-centres and scales it
+
+
+## what genes change in different conditions for cells of the same type
+
+GASTRU_72h_merge$celltype.stim <- paste(GASTRU_72h_merge$seurat_clusters, GASTRU_72h_merge$condition,
+    sep = "-")
+Idents(GASTRU_72h_merge) <- "celltype.stim"
+
+# use RNA corrected count for DEGs
+## GASTRU_72h_merge <- PrepSCTFindMarkers(GASTRU_72h_merge)
+
+
+## Automation::
+cell_types <- c("1",
+  "2",
+  "3",
+  #"4",
+  #"5",
+  "6")
+
+
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "DASATINIB72hrmerge_dim20kparam30res03.response", sep = ".")
+  ident_1 <- paste(cell_type, "-DASATINIB", sep = "")
+  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+
+  response <- FindMarkers(GASTRU_72h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  
+  print(head(response, n = 15))
+  
+  file_name <- paste("output/seurat/", cell_type, "-DASATINIBresponse72hrmerge_dim20kparam30res03.txt", sep = "")
+  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+}
+
+
+
+
+
+cell_types <- c(#"1"
+ # "2",
+ #  "3",
+  # "4",
+  # "5",
+  # "6", 
+ #  "7", 
+ #  "8",
+  # "9")
+)
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "XMU72hrmerge_dim20kparam30res03.response", sep = ".")
+  ident_1 <- paste(cell_type, "-XMU", sep = "")
+  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+
+  response <- FindMarkers(GASTRU_72h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  
+  print(head(response, n = 15))
+  
+  file_name <- paste("output/seurat/", cell_type, "-XMUresponse72hrmerge_dim20kparam30res03.txt", sep = "")
+  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+}
+
+#--> No common cell types for UNTREATED vs XMU
 
 
 ```

@@ -39692,6 +39692,24 @@ pdf("output/miloR/da_results_Volcano-p14_CB_Granule_scePseudotime-design_Conditi
 plotNhoodGraphDA(Granule_sce_milo, da_results, layout="PCA",alpha=0.1)
 dev.off()
 
+# Use the original UMAP for representation ############
+sce_src <- Part_Granule_subset           # has reducedDim(sce_src, "UMAP") and/or "PCA"
+milo    <- Granule_sce_milo              # your Milo object
+
+stopifnot(setequal(colnames(sce_src), colnames(milo)))
+
+## reorder the source embedding to match the milo column order
+umap_mat <- reducedDim(sce_src, "UMAP")[match(colnames(milo), colnames(sce_src)), , drop = FALSE]
+pca_mat  <- reducedDim(sce_src, "PCA")[match(colnames(milo), colnames(sce_src)), , drop = FALSE]
+## Attach to Milo with your chosen names
+reducedDim(milo, "UMAP_original") <- umap_mat
+
+reducedDimNames(milo)
+
+pdf("output/miloR/da_results_Volcano-p14_CB_Granule_scePseudotime-design_Condition-k30d30-originalUMAP.pdf", width=5, height=3)
+plotNhoodGraphDA(milo, da_results, layout = "UMAP_original", alpha = 0.1)
+dev.off()
+######################################################
 
 da_results <- annotateNhoods(Granule_sce_milo, da_results, coldata_col = "cluster.annot")
 da_results <- annotateNhoods(Granule_sce_milo, da_results, coldata_col = "pseudotime_bin_5")
