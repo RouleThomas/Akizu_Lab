@@ -250,8 +250,8 @@ clone of `scRNAseq` with R  `CellChat`v2 and `ComplexHeatmap` and `presto`
 
 
 ### monocle3
-Only `monocle3`, `Seurat_v_5`, `BiocManager` and `glmGamPoi` and `EnhancedVolcano`
-(Can run SCTransform in seurat v5)
+Only `monocle3`, `Seurat_v_4`, `BiocManager` and `glmGamPoi` and `EnhancedVolcano`
+(Can run SCTransform in seurat v4)
 
 Also added in R: `deseq2`, `edgeR`, `scater`
 
@@ -300,6 +300,17 @@ R4.3.1 with `granulator` and `tidyverse`
 --> tradeseq installed (can do DEG pseudotime)
 
 --> zellkonverter installed (read h5da)
+
+
+### bpcells_r44
+
+
+Installed in `009*/006*`
+
+Include R4.4.3; with Seurat v5.3.0, Azimuth and BPCells (For very large scRNAseqdataset)
+
+Signac is there too, many package here!
+
 
 ### salmon1
 

@@ -235,10 +235,7 @@ conda activate mutsim
 
 sbatch scripts/run_filtered_cosmic_v3.slurm # 55881484 ok  --> results_v3/
 sbatch scripts/run_filtered_contexts_v3.slurm # 55881483 ok  --> results_contexts_v3/
-
-
-
-sbatch scripts/run_filtered_experimental_v3.slurm # 56796128 xxx  --> results_experimental_v3/
+sbatch scripts/run_filtered_experimental_v3.slurm # 56796128 ok  --> results_experimental_v3/
 ```
 
 
@@ -481,7 +478,6 @@ python scripts/plot_all_signatures_combined-cosmic-highlight_random_v4.py
 #--> results_v3/combined_signature_summary_plots-highlight_random_v4.pdf
 
 
-XXXY WAIT BEFORE TO RUN AS SIMULATION NOT DONE YUET! scripts/run_filtered_experimental_v3.slurm # 55881533 xxx --> results_experimental_v3/
 
 ####################################
 # EXPERIMENTAL #####################
