@@ -55324,6 +55324,347 @@ dev.off()
 
 
 
+###### GO all clusters macrov2
+
+
+Let's do GO analysis for all cluster, separating up and down reg genes
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+# Cell types
+cell_types <- c(
+"ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)  # progress tracking
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment only if gene list is non-empty
+  ego_up <- if (length(up_genes) > 0) {
+    enrichGO(gene = up_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  ego_down <- if (length(down_genes) > 0) {
+    enrichGO(gene = down_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplots if not NULL and has rows
+  p1 <- if (!is.null(ego_down) && nrow(ego_down) > 0) {
+    dotplot(ego_down, showCategory = 20) + ggtitle(paste(cell_type, "DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ego_up) && nrow(ego_up) > 0) {
+    dotplot(ego_up, showCategory = 20) + ggtitle(paste(cell_type, "UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+# GO BP  - NOT sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 20) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Extract gene names
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOL to ENTREZ ID with safety check
+  entrez_up <- if (length(up_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = up_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  entrez_down <- if (length(down_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = down_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment with robust checks
+  ekegg_up <- if (length(entrez_up) > 0) {
+    enrichKEGG(gene = entrez_up, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  ekegg_down <- if (length(entrez_down) > 0) {
+    enrichKEGG(gene = entrez_down, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Dotplots
+  p1 <- if (!is.null(ekegg_down) && nrow(ekegg_down) > 0) {
+    dotplot(ekegg_down, showCategory = 20) + ggtitle(paste(cell_type, "KEGG DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ekegg_up) && nrow(ekegg_up) > 0) {
+    dotplot(ekegg_up, showCategory = 20) + ggtitle(paste(cell_type, "KEGG UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+
+
+# KEGG - NOT sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-top20_UpandDown.pdf", width = 8, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 20) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+######## Specific case KEGG ################
+cell_types <- c("InhN")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-top10_UpandDown-InhN.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+cell_types <- c("GABA__Pvalb")
+cell_types <- c("GABA__Sst")
+cell_types <- c("GABA__Vip")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-top5_Up-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-top5_Down-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+######## Specific case GO BP ################
+cell_types <- c("InhN")
+
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-top5_Up-InhN.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-top5_Down-InhN.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+```
+
+
+
+
+
+
 
 
 
@@ -61138,6 +61479,737 @@ dev.off()
 
 
 
+###### GO all clusters
+
+
+Let's do GO analysis for all cluster, separating up and down reg genes
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+# Cell types
+cell_types <- c(
+  "L2L3_IT__Otof_1",
+  "L2L3_IT__Otof_2",
+  "L2L3_IT__Reln",
+  "L2L3_IT__Tfap2d_1",
+  "L2L3_IT__Tfap2d_2",
+  "L2L3_IT__Cdhr1Ms4a15",
+  "L4L5_IT__Rorb_1",
+  "L4L5_IT__Rorb_2",
+  "L5_IT__Lypd1",
+  "L5_PT__Bcl11b",
+  "L5_IT__Tshz2",
+  "L5L6_IT__Tshz2",
+  "L5L6_IT",
+  "L5L6_NP__Slc17a8",
+  "L6_CT__Foxp2",
+  "L6B__Pou6f2",
+  "L6__Car3",
+  "L6_IT__Foxp2Gpr149_1",
+  "L6_IT__Foxp2Gpr149_2",
+  "L5_IT__Etv1_1",
+  "L6_IT__Synpo2Shox2",
+  "L6_IT__Gabra5",
+
+  "GABA_immature",
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5Ndnf",
+  "GABA__Calb2",
+  "GABA__Vcan",
+  "GABA__NdnfKlhl1",
+  "GABA_ThPax6",
+  "GABA__Igfbp4Pthlh",
+  "GABA__PvalbEgfl6",
+  "GABA__PvalbSix3",
+
+  "L5_IT_GABA__Adora2a",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Meningeal",
+  "Endothelial"
+)
+
+# GO BP 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)  # progress tracking
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment only if gene list is non-empty
+  ego_up <- if (length(up_genes) > 0) {
+    enrichGO(gene = up_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  ego_down <- if (length(down_genes) > 0) {
+    enrichGO(gene = down_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplots if not NULL and has rows
+  p1 <- if (!is.null(ego_down) && nrow(ego_down) > 0) {
+    dotplot(ego_down, showCategory = 20) + ggtitle(paste(cell_type, "DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ego_up) && nrow(ego_up) > 0) {
+    dotplot(ego_up, showCategory = 20) + ggtitle(paste(cell_type, "UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+# GO BP  - NOT sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 20) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Extract gene names
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOL to ENTREZ ID with safety check
+  entrez_up <- if (length(up_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = up_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  entrez_down <- if (length(down_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = down_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment with robust checks
+  ekegg_up <- if (length(entrez_up) > 0) {
+    enrichKEGG(gene = entrez_up, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  ekegg_down <- if (length(entrez_down) > 0) {
+    enrichKEGG(gene = entrez_down, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Dotplots
+  p1 <- if (!is.null(ekegg_down) && nrow(ekegg_down) > 0) {
+    dotplot(ekegg_down, showCategory = 20) + ggtitle(paste(cell_type, "KEGG DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ekegg_up) && nrow(ekegg_up) > 0) {
+    dotplot(ekegg_up, showCategory = 20) + ggtitle(paste(cell_type, "KEGG UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+#--> Fail because many cluster without genes I think
+
+
+
+# KEGG - NOT sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-top20_UpandDown.pdf", width = 8, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 20) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+#--> Fail because many cluster without genes I think
+
+
+######## Specific case KEGG ################
+cell_types <- c("GABA__Pvalb")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-top10_UpandDown-GABA__Sst.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+cell_types <- c("GABA__Pvalb")
+cell_types <- c("GABA__Sst")
+cell_types <- c("GABA__Vip")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-top5_Up-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-top5_Down-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+######## Specific case GO BP ################
+cell_types <- c("GABA__Pvalb")
+
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-top5_Up-GABA__Pvalb.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-top5_Down-GABA__Pvalb.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+```
+
+
+
+
+
+
+###### GO all clusters macrov2
+
+
+Let's do GO analysis for all cluster, separating up and down reg genes
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+# Cell types
+cell_types <- c(
+"ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)  # progress tracking
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment only if gene list is non-empty
+  ego_up <- if (length(up_genes) > 0) {
+    enrichGO(gene = up_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  ego_down <- if (length(down_genes) > 0) {
+    enrichGO(gene = down_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplots if not NULL and has rows
+  p1 <- if (!is.null(ego_down) && nrow(ego_down) > 0) {
+    dotplot(ego_down, showCategory = 20) + ggtitle(paste(cell_type, "DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ego_up) && nrow(ego_up) > 0) {
+    dotplot(ego_up, showCategory = 20) + ggtitle(paste(cell_type, "UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+# GO BP  - NOT sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 20) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Extract gene names
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOL to ENTREZ ID with safety check
+  entrez_up <- if (length(up_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = up_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  entrez_down <- if (length(down_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = down_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment with robust checks
+  ekegg_up <- if (length(entrez_up) > 0) {
+    enrichKEGG(gene = entrez_up, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  ekegg_down <- if (length(entrez_down) > 0) {
+    enrichKEGG(gene = entrez_down, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Dotplots
+  p1 <- if (!is.null(ekegg_down) && nrow(ekegg_down) > 0) {
+    dotplot(ekegg_down, showCategory = 20) + ggtitle(paste(cell_type, "KEGG DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ekegg_up) && nrow(ekegg_up) > 0) {
+    dotplot(ekegg_up, showCategory = 20) + ggtitle(paste(cell_type, "KEGG UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+
+
+# KEGG - NOT sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-top20_UpandDown.pdf", width = 8, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 20) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+######## Specific case KEGG ################
+cell_types <- c("InhN")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-top10_UpandDown-InhN.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+cell_types <- c("GABA__Pvalb")
+cell_types <- c("GABA__Sst")
+cell_types <- c("GABA__Vip")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-top5_Up-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-top5_Down-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+######## Specific case GO BP ################
+cell_types <- c("InhN")
+
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-top5_Up-InhN.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-top5_Down-InhN.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+```
+
+
+
+
+
+
+
+
+
 
 ##### p180 Cortex
 
@@ -66767,6 +67839,725 @@ dev.off()
 
 
 ```
+
+
+
+
+
+
+###### GO all clusters
+
+
+Let's do GO analysis for all cluster, separating up and down reg genes
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+# Cell types
+cell_types <- c(
+  "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+#  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal"
+)
+
+# GO BP  
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)  # progress tracking
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment only if gene list is non-empty
+  ego_up <- if (length(up_genes) > 0) {
+    enrichGO(gene = up_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  ego_down <- if (length(down_genes) > 0) {
+    enrichGO(gene = down_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplots if not NULL and has rows
+  p1 <- if (!is.null(ego_down) && nrow(ego_down) > 0) {
+    dotplot(ego_down, showCategory = 20) + ggtitle(paste(cell_type, "DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ego_up) && nrow(ego_up) > 0) {
+    dotplot(ego_up, showCategory = 20) + ggtitle(paste(cell_type, "UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+# GO BP  - NOT sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 20) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Extract gene names
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOL to ENTREZ ID with safety check
+  entrez_up <- if (length(up_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = up_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  entrez_down <- if (length(down_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = down_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment with robust checks
+  ekegg_up <- if (length(entrez_up) > 0) {
+    enrichKEGG(gene = entrez_up, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  ekegg_down <- if (length(entrez_down) > 0) {
+    enrichKEGG(gene = entrez_down, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Dotplots
+  p1 <- if (!is.null(ekegg_down) && nrow(ekegg_down) > 0) {
+    dotplot(ekegg_down, showCategory = 20) + ggtitle(paste(cell_type, "KEGG DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ekegg_up) && nrow(ekegg_up) > 0) {
+    dotplot(ekegg_up, showCategory = 20) + ggtitle(paste(cell_type, "KEGG UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+#--> Fail because many cluster without genes I think
+
+
+
+# KEGG - NOT sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-top20_UpandDown.pdf", width = 8, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 20) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+#--> Fail because many cluster without genes I think
+
+
+######## Specific case KEGG ################
+cell_types <- c("GABA__Pvalb")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-top10_UpandDown-GABA__Sst.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+cell_types <- c("GABA__Pvalb")
+cell_types <- c("GABA__Sst")
+cell_types <- c("GABA__Vip")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-top5_Up-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-top5_Down-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+######## Specific case GO BP ################
+cell_types <- c("GABA__Pvalb")
+
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-top5_Up-GABA__Pvalb.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-top5_Down-GABA__Pvalb.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+```
+
+
+
+
+
+
+###### GO all clusters macrov2
+
+
+Let's do GO analysis for all cluster, separating up and down reg genes
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+# Required packages
+library("clusterProfiler")
+library("org.Mm.eg.db")  
+library("enrichplot")
+library("tidyverse")
+library("patchwork")
+
+# Cell types
+cell_types <- c(
+"ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+
+
+# GO BP
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)  # progress tracking
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment only if gene list is non-empty
+  ego_up <- if (length(up_genes) > 0) {
+    enrichGO(gene = up_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  ego_down <- if (length(down_genes) > 0) {
+    enrichGO(gene = down_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplots if not NULL and has rows
+  p1 <- if (!is.null(ego_down) && nrow(ego_down) > 0) {
+    dotplot(ego_down, showCategory = 20) + ggtitle(paste(cell_type, "DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ego_up) && nrow(ego_up) > 0) {
+    dotplot(ego_up, showCategory = 20) + ggtitle(paste(cell_type, "UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+# GO BP  - NOT sep up down 
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-top20_UpandDown.pdf", width = 6, height = 6)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 20) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+# KEGG
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-top20.pdf", width = 12, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Extract gene names
+  up_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  down_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOL to ENTREZ ID with safety check
+  entrez_up <- if (length(up_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = up_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  entrez_down <- if (length(down_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = down_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>% 
+      na.omit() %>% as.character()
+  } else { character(0) }
+  # KEGG enrichment with robust checks
+  ekegg_up <- if (length(entrez_up) > 0) {
+    enrichKEGG(gene = entrez_up, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  ekegg_down <- if (length(entrez_down) > 0) {
+    enrichKEGG(gene = entrez_down, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Dotplots
+  p1 <- if (!is.null(ekegg_down) && nrow(ekegg_down) > 0) {
+    dotplot(ekegg_down, showCategory = 20) + ggtitle(paste(cell_type, "KEGG DOWN"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG DOWN - No Enrichment")) + theme_void()
+  }
+  p2 <- if (!is.null(ekegg_up) && nrow(ekegg_up) > 0) {
+    dotplot(ekegg_up, showCategory = 20) + ggtitle(paste(cell_type, "KEGG UP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "KEGG UP - No Enrichment")) + theme_void()
+  }
+  print(p1 + p2)
+}
+dev.off()
+
+
+
+
+# KEGG - NOT sep up down 
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-top20_UpandDown.pdf", width = 8, height = 6)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 20) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+######## Specific case KEGG ################
+cell_types <- c("InhN")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-top10_UpandDown-InhN.pdf", width = 6, height = 5)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, abs(avg_log2FC) > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 10) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+cell_types <- c("GABA__Pvalb")
+cell_types <- c("GABA__Sst")
+cell_types <- c("GABA__Vip")
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-top5_Up-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_KEGG-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-top5_Down-GABA__Vip.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing KEGG enrichment: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated gene symbols
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Convert SYMBOLs to ENTREZ IDs with safety check
+  entrez_combined <- if (length(dereg_genes) > 0) {
+    mapIds(org.Mm.eg.db, keys = dereg_genes, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first") %>%
+      na.omit() %>%
+      as.character()
+  } else { character(0) }
+  # KEGG enrichment
+  ekegg_combined <- if (length(entrez_combined) > 0) {
+    enrichKEGG(gene = entrez_combined, organism = "mmu", pvalueCutoff = 0.05, pAdjustMethod = "BH")
+  } else { NULL }
+  # Clean descriptions (remove " - Mus musculus")
+  if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    ekegg_combined@result$Description <- gsub(" - Mus musculus.*", "", ekegg_combined@result$Description)
+  }
+  # Plot
+  p <- if (!is.null(ekegg_combined) && nrow(ekegg_combined) > 0) {
+    dotplot(ekegg_combined, showCategory = 5) + ggtitle(paste(cell_type, "- KEGG"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No KEGG Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+
+######## Specific case GO BP ################
+cell_types <- c("InhN")
+
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-top5_Up-InhN.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC > 0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+pdf("output/Pathway/dotplot_BP-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-top5_Down-InhN.pdf", width = 6, height = 3)
+for (cell_type in cell_types) {
+  message("Processing: ", cell_type)
+  file_name <- paste0("output/seurat/", cell_type, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  deg_data <- read.table(file_name, header = TRUE, sep = "\t")
+  # Combine up and downregulated genes
+  dereg_genes <- deg_data %>%
+    filter(p_val_adj < 0.05, avg_log2FC < -0.25) %>%
+    rownames()
+  # Run GO enrichment if gene list is non-empty
+  ego_combined <- if (length(dereg_genes) > 0) {
+    enrichGO(gene = dereg_genes, OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
+             ont = "BP", pvalueCutoff = 0.05, pAdjustMethod = "BH", readable = TRUE)
+  } else { NULL }
+  # Make dotplot
+  p <- if (!is.null(ego_combined) && nrow(ego_combined) > 0) {
+    dotplot(ego_combined, showCategory = 5) + ggtitle(paste(cell_type, "- GO BP"))
+  } else {
+    ggplot() + ggtitle(paste(cell_type, "- No Enrichment")) + theme_void()
+  }
+  print(p)
+}
+dev.off()
+
+
+
+```
+
+
+
+
 
 
 
@@ -76045,18 +77836,18 @@ sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2_MAST.sh # 41323739 ok
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2_default.sh # 41323740 ok
 
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2labelversion2_MAST.sh # 49025733 ok
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2labelversion2macrov2_MAST.sh # 56401427 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p14_CX_Version2labelversion2macrov2_MAST.sh # 56401427 ok
 
 
 
 # p35 CX - version2dim35kparam15res065
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CX_Version2labelversion1_MAST.sh # 51866628 ok
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CX_Version2labelversion1macrov2_MAST.sh # 56402196 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p35_CX_Version2labelversion1macrov2_MAST.sh # 56402196 ok
 
 
 # p180 CX - version2dim30kparam30res04
 sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CX_Version2labelversion1_MAST.sh # 54458292 fail not enough cells in L4_IT__Gabra6; rerun without L4_IT__Gabra6; 54738998 OK
-sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CX_Version2labelversion1macrov2_MAST.sh # 56402884 xxx
+sbatch scripts/DEG_allGenes_WT_Kcnc1_p180_CX_Version2labelversion1macrov2_MAST.sh # 56402884 ok
 
 
 
