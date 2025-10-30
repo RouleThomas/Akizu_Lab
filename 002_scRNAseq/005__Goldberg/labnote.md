@@ -35237,6 +35237,30 @@ fgsea_sets <- list(
   DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
 )
 
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+
+
 ## Rank genes based on FC
 genes <- Microglia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
@@ -35321,10 +35345,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List8gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List12gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List8.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List12.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
   "ImmatureGranule",
   "Granule",
@@ -35540,10 +35564,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List1gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List11gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List1_FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List11_FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
   "ImmatureGranule",
   "Granule",
@@ -40740,6 +40764,26 @@ fgsea_sets <- list(
 )
 
 
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
 
 
 
@@ -40831,10 +40875,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List8gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List12gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List8.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List12.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
 "Granule",
   "UBC",
@@ -44286,6 +44330,26 @@ fgsea_sets <- list(
   DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
 )
 
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
 
 
 
@@ -44375,10 +44439,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List8gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List12gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List8.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List12.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
   "Granule",
   "UBC",
@@ -50552,6 +50616,14 @@ FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red
 dev.off()
 
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-labelversion2-Slc17a7.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "Slc17a7", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-labelversion2-Gad1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "Gad1", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
 
 # WT vs Kcnc1
 DefaultAssay(WT_Kcnc1_p14_CX_1step.sct) <- "RNA"
@@ -51433,6 +51505,30 @@ fgsea_sets <- list(
   DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
 )
 
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+
+
 ## Rank genes based on FC
 genes <- Microglia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
@@ -51531,10 +51627,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List9gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List12gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List9.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List12.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -57272,6 +57368,13 @@ FeaturePlot(WT_Kcnc1_p35_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red
 dev.off()
 
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065-Slc17a7.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p35_CX_1step.sct, features = "Slc17a7", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CX_1step-version2dim35kparam15res065-Gad1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p35_CX_1step.sct, features = "Gad1", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+
 
 # WT vs Kcnc1
 DefaultAssay(WT_Kcnc1_p35_CX_1step.sct) <- "RNA"
@@ -58183,6 +58286,30 @@ fgsea_sets <- list(
   DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
 )
 
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+
+
 
 ## Rank genes based on FC
 genes <- Microglia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
@@ -58294,10 +58421,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List10gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List12gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List10.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List12.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -63759,6 +63886,12 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CX_1step-version2dim30kparam30r
 FeaturePlot(WT_Kcnc1_p180_CX_1step.sct, features = "Kcnc1", cols = c("grey", "red"), max.cutoff = 1)
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04-Slc17a7.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p180_CX_1step.sct, features = "Slc17a7", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CX_1step-version2dim30kparam30res04-Gad1.pdf", width=6, height=6)
+FeaturePlot(WT_Kcnc1_p180_CX_1step.sct, features = "Gad1", cols = c("grey", "red"), max.cutoff = 1)
+dev.off()
 
 # WT vs Kcnc1
 DefaultAssay(WT_Kcnc1_p180_CX_1step.sct) <- "RNA"
@@ -64563,6 +64696,27 @@ fgsea_sets <- list(
   DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
 )
 
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
 
 
 
@@ -64663,10 +64817,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CX_vversion2dim30kparam30res04_allGenes_MAST-List10gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CX_vversion2dim30kparam30res04_allGenes_MAST-List12gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-List10.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-List12.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
