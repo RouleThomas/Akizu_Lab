@@ -35515,6 +35515,35 @@ fgsea_sets <- list(
 
 
 
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
 
 # Save output table for all pathway and cluster
 ## Define the list of cluster types
@@ -35564,10 +35593,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List11gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List12gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List11_FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List12_FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
   "ImmatureGranule",
   "Granule",
@@ -40980,8 +41009,6 @@ dev.off()
 ############################################################
 
 
-XXXY HERE pursue plot
-
 # GSEA plot
 library("fgsea")
 
@@ -41134,10 +41161,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List1gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List12gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List1_FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List12_FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
 "Granule",
   "UBC",
@@ -44445,6 +44472,12 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
+############################################################
+##################### GSEA plot - FC only ####################
+############################################################
+library("fgsea")
+
+
 
 
 # GSEA plot
@@ -44733,6 +44766,251 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
+
+
+
+
+
+
+############################################################
+##################### GSEA plot - FC+pvalue ####################
+############################################################
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c(    "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoiroidPlexus")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+
+### List5 - Pathway
+fgsea_sets <- list(
+  REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_SYNTHESIS_RELEASE_REUPTAKE_AND_DEGRADATION.txt")$Genes,
+  REACTOME_GABA_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_RECEPTOR_ACTIVATION.txt")$Genes,
+  REACTOME_GABA_B_RECEPTOR_ACTIVATION = read_table(file = "output/Pathway/geneList_REACTOME_GABA_B_RECEPTOR_ACTIVATION.txt")$Genes,
+  BIOCARTA_GABA_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_GABA_PATHWAY.txt")$Genes,
+  REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_NEUROTRANSMITTER_RELEASE_CYCLE.txt")$Genes,
+  REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM = read_table(file = "output/Pathway/geneList_REACTOME_GLUTAMATE_AND_GLUTAMINE_METABOLISM.txt")$Genes
+)
+### List6 - GOBP - Glutamate1
+fgsea_sets <- list(
+  GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GLUTAMATERGIC.txt")$Genes,
+  GOBP_GLUTAMATE_CATABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_CATABOLIC_PROCESS.txt")$Genes
+)
+### List7 - GOBP - Glutamate2
+fgsea_sets <- list(
+  GOBP_GLUTAMATE_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_METABOLIC_PROCESS.txt")$Genes,
+  GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION.txt")$Genes,
+  GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATE_SECRETION_NEUROTRANSMISSION.txt")$Genes,
+  GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GLUTAMATERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_IONOTROPIC_GLUTAMATE_RECEPTOR_SIGNALING_PATHWAY.txt")$Genes
+)
+
+### List8 - GOBP - GABA
+fgsea_sets <- list(
+  GOBP_GABAERGIC_NEURON_DIFFERENTIATION = read_table(file = "output/Pathway/geneList_GOBP_GABAERGIC_NEURON_DIFFERENTIATION.txt")$Genes,
+  GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes,
+  GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC = read_table(file = "output/Pathway/geneList_GOBP_SYNAPTIC_TRANSMISSION_GABAERGIC.txt")$Genes
+)
+
+
+
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoiroidPlexus")
+
+
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  # Extract genes for the current cluster and compute ranking score
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    mutate(p_val_adj = ifelse(p_val_adj == 0, 1e-300, p_val_adj)) %>%  # Avoid log10(0)
+    mutate(ranking_score = avg_log2FC * -log10(p_val_adj)) %>%
+    arrange(desc(ranking_score)) %>% 
+    dplyr::select(gene, ranking_score)
+  ranks <- deframe(genes)
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List12gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List12_FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+final_results$cluster <- factor(final_results$cluster, levels = c(
+  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoiroidPlexus"
+))
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+
+
+
 
 
 
@@ -46883,6 +47161,122 @@ dev.off()
 
 
 
+
+#### GSEA selected terms CB p14 p35 p180
+
+Let's do GSEA on selected terms; using FC*pval: let's subjected to random!
+
+If using pval with FC: 
+- PathwaysOfNeurodegeneration (almsot nothing signif)
+- GOBP_NEUROINFLAMMATORY_RESPONSE (nothing signif)
+- GOBP_TRICARBOXYLIC_ACID_CYCLE  (almsot nothing signif)
+- WP_TCA_CYCLE (almsot nothing signif)
+
+
+
+
+
+```R
+
+# import
+
+
+############################################################
+##################### GSEA plot - FC+pvalue ####################
+############################################################
+
+
+## PathwaysOfNeurodegeneration - List1
+p14_CB_PathwaysOfNeurodegeneration = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List1gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="PathwaysOfNeurodegeneration", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia")) %>% add_column(time="p14")
+p35_CB_PathwaysOfNeurodegeneration = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List1gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="PathwaysOfNeurodegeneration", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))  %>% add_column(time="p35")
+p180_CB_PathwaysOfNeurodegeneration = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List1gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="PathwaysOfNeurodegeneration", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia")) %>% add_column(time="p180")
+
+
+
+## GOBP_TRICARBOXYLIC_ACID_CYCLE - List11
+p14_CB_GOBP_TRICARBOXYLIC_ACID_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List11gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="GOBP_TRICARBOXYLIC_ACID_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+p35_CB_GOBP_TRICARBOXYLIC_ACID_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List11gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="GOBP_TRICARBOXYLIC_ACID_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+p180_CB_GOBP_TRICARBOXYLIC_ACID_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List11gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="GOBP_TRICARBOXYLIC_ACID_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+
+
+## WP_TCA_CYCLE - List12
+p14_CB_WP_TCA_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List12gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="WP_TCA_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+p35_CB_WP_TCA_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List12gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="WP_TCA_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+p180_CB_WP_TCA_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List12gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="WP_TCA_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+
+
+
+
+# combine and filter neuronal cell types only
+
+CB_PathwaysOfNeurodegeneration = p14_CB_PathwaysOfNeurodegeneration %>%
+  bind_rows(p35_CB_PathwaysOfNeurodegeneration) %>%
+  bind_rows(p180_CB_PathwaysOfNeurodegeneration) %>%
+  mutate(
+    col = paste(cluster, time, sep = "_"),
+    # This will be used for coloring (NA = will not draw in the color layer)
+    NES_sig = ifelse(pval <= 0.05, NES, NA_real_)
+  )
+
+
+CB_PathwaysOfNeurodegeneration$cluster <- factor(CB_PathwaysOfNeurodegeneration$cluster, levels = c(
+  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",  "Astrocyte",  "BergmanGlia"
+))
+
+
+CB_PathwaysOfNeurodegeneration$time <- factor(CB_PathwaysOfNeurodegeneration$time, levels = c(
+  "p14", "p35", "p180"
+))
+
+
+
+# Column (cluster_time) order by cluster then time
+col_order <- CB_PathwaysOfNeurodegeneration %>%
+  distinct(cluster, time, col) %>%
+  arrange(cluster, time) %>%
+  pull(col)
+
+pdf("output/Pathway/heatmap_gsea_output_CBversion5-PathwaysOfNeurodegeneration-FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+ggplot() +
+  # Grey layer for non-significant (pval > 0.05)
+  geom_tile(
+    data = CB_PathwaysOfNeurodegeneration %>% dplyr::filter(is.na(NES_sig)),
+    aes(x = col, y = pathway),
+    fill = "grey80"
+  ) +
+  # Color layer for significant (pval <= 0.05)
+  geom_tile(
+    data = CB_PathwaysOfNeurodegeneration %>% dplyr::filter(!is.na(NES_sig)),
+    aes(x = col, y = pathway, fill = NES_sig)
+  ) +
+  # Blue–white–red with white at zero
+  scale_fill_gradient2(
+    name = "Norm. Enrichment Score",
+    low = "steelblue", mid = "white", high = "firebrick",
+    midpoint = 0, na.value = "grey80"
+  ) +
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+    panel.grid = element_blank(),
+    legend.position = "bottom"
+  )
+dev.off()
+
+
+
+
+
+
+```
 
 
 
@@ -51613,6 +52007,11 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
+############################################################
+##################### GSEA plot - FC only ####################
+############################################################
+
+
 # GSEA plot
 library("fgsea")
 
@@ -51885,6 +52284,356 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
+
+
+
+
+############################################################
+##################### GSEA plot - FC+pvalue ####################
+############################################################
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c(
+"L2L3_IT_immature",
+"L2_IT__Pdlim1",
+"L2L3_IT__Otof_1",
+"L2L3_IT__Otof_2",
+"L4L5_IT__Rorb",
+"L5_IT__Etv1_1",
+"L5_IT__Etv1_2",
+"L5_IT__Tshz2",
+"L5_PT__Pou3f1",
+"L6_IT__Cdh9",
+"L6__Car3",
+"L6_IT__Foxp2",
+"L6B__Pou6f2",
+"L5L6_NP__Tle4Stard5",
+
+"L5_IT_GABA__Adora2a",
+"L6_GABA__Foxp2",
+"L5L6_GABA__Reln",
+
+"GABA_immature_1",
+"GABA_immature_2",
+"GABA__Vipr2",
+"GABA__SstCalb2",
+"GABA__Vip",
+"GABA__NdnfLamp5",
+"GABA__Sst",
+"GABA__Pvalb",
+"GABA__Baiap3",
+"GABA__PvalbSt18",
+"GABA__NdnfKlhl1",
+
+"Microglia",
+"Astrocyte",
+"OPC",
+"Oligodendrocyte",
+"Meningeal",
+"Endothelial")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  # Extract genes for the current cluster and compute ranking score
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    mutate(p_val_adj = ifelse(p_val_adj == 0, 1e-300, p_val_adj)) %>%  # Avoid log10(0)
+    mutate(ranking_score = avg_log2FC * -log10(p_val_adj)) %>%
+    arrange(desc(ranking_score)) %>% 
+    dplyr::select(gene, ranking_score)
+  ranks <- deframe(genes)
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List12gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List12_FCpval.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+############################################################
+##################### GSEA plot - FC+pvalue - MACRO ####################
+############################################################
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c(
+"ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  # Extract genes for the current cluster and compute ranking score
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    mutate(p_val_adj = ifelse(p_val_adj == 0, 1e-300, p_val_adj)) %>%  # Avoid log10(0)
+    mutate(ranking_score = avg_log2FC * -log10(p_val_adj)) %>%
+    arrange(desc(ranking_score)) %>% 
+    dplyr::select(gene, ranking_score)
+  ranks <- deframe(genes)
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-List12gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-List12_FCpval.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -58422,6 +59171,13 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
+
+############################################################
+##################### GSEA plot - FC only ####################
+############################################################
+
+
+
 # GSEA plot
 library("fgsea")
 
@@ -58691,6 +59447,409 @@ dev.off()
 final_results$pathway <- factor(final_results$pathway, levels = c("PathwaysOfNeurodegeneration", "GOBP_NEURONAL_ACTION_POTENTIAL", "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")) 
 
 pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version2dim45kparam10res015_allGenes_MAST_ordered-List4.pdf", width=10, height=3)
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+############################################################
+##################### GSEA plot - FC+pvalue ####################
+############################################################
+
+
+
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c( "L2L3_IT__Otof_1",
+  "L2L3_IT__Otof_2",
+  "L2L3_IT__Reln",
+  "L2L3_IT__Tfap2d_1",
+  "L2L3_IT__Tfap2d_2",
+  "L2L3_IT__Cdhr1Ms4a15",
+  "L4L5_IT__Rorb_1",
+  "L4L5_IT__Rorb_2",
+  "L5_IT__Lypd1",
+  "L5_PT__Bcl11b",
+  "L5_IT__Tshz2",
+  "L5L6_IT__Tshz2",
+  "L5L6_IT",
+  "L5L6_NP__Slc17a8",
+  "L6_CT__Foxp2",
+  "L6B__Pou6f2",
+  "L6__Car3",
+  "L6_IT__Foxp2Gpr149_1",
+  "L6_IT__Foxp2Gpr149_2",
+  "L5_IT__Etv1_1",
+  "L6_IT__Synpo2Shox2",
+  "L6_IT__Gabra5",
+
+  "GABA_immature",
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5Ndnf",
+  "GABA__Calb2",
+  "GABA__Vcan",
+  "GABA__NdnfKlhl1",
+  "GABA_ThPax6",
+  "GABA__Igfbp4Pthlh",
+  "GABA__PvalbEgfl6",
+  "GABA__PvalbSix3",
+
+  "L5_IT_GABA__Adora2a",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Meningeal",
+  "Endothelial")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("L2L3_IT__Otof_1",
+  "L2L3_IT__Otof_2",
+  "L2L3_IT__Reln",
+  "L2L3_IT__Tfap2d_1",
+  "L2L3_IT__Tfap2d_2",
+  "L2L3_IT__Cdhr1Ms4a15",
+  "L4L5_IT__Rorb_1",
+  "L4L5_IT__Rorb_2",
+  "L5_IT__Lypd1",
+  "L5_PT__Bcl11b",
+  "L5_IT__Tshz2",
+  "L5L6_IT__Tshz2",
+  "L5L6_IT",
+  "L5L6_NP__Slc17a8",
+  "L6_CT__Foxp2",
+  "L6B__Pou6f2",
+  "L6__Car3",
+  "L6_IT__Foxp2Gpr149_1",
+  "L6_IT__Foxp2Gpr149_2",
+  "L5_IT__Etv1_1",
+  "L6_IT__Synpo2Shox2",
+  "L6_IT__Gabra5",
+
+  "GABA_immature",
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5Ndnf",
+  "GABA__Calb2",
+  "GABA__Vcan",
+  "GABA__NdnfKlhl1",
+  "GABA_ThPax6",
+  "GABA__Igfbp4Pthlh",
+  "GABA__PvalbEgfl6",
+  "GABA__PvalbSix3",
+
+  "L5_IT_GABA__Adora2a",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Meningeal",
+  "Endothelial")
+
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  # Extract genes for the current cluster and compute ranking score
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    mutate(p_val_adj = ifelse(p_val_adj == 0, 1e-300, p_val_adj)) %>%  # Avoid log10(0)
+    mutate(ranking_score = avg_log2FC * -log10(p_val_adj)) %>%
+    arrange(desc(ranking_score)) %>% 
+    dplyr::select(gene, ranking_score)
+  ranks <- deframe(genes)
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List12gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List12_FCpval.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+
+
+
+############################################################
+##################### GSEA plot - FC+pvalue macro ####################
+############################################################
+
+
+
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c("ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal")
+
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  # Extract genes for the current cluster and compute ranking score
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    mutate(p_val_adj = ifelse(p_val_adj == 0, 1e-300, p_val_adj)) %>%  # Avoid log10(0)
+    mutate(ranking_score = avg_log2FC * -log10(p_val_adj)) %>%
+    arrange(desc(ranking_score)) %>% 
+    dplyr::select(gene, ranking_score)
+  ranks <- deframe(genes)
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-List12gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-List12_FCpval.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
   geom_tile(color = "black") +  # Add black contour to each tile
   theme_bw() +  # Use black-white theme for cleaner look
@@ -64845,6 +66004,14 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
+############################################################
+##################### GSEA plot - FC only ####################
+############################################################
+
+
+
+
+
 # GSEA plot
 library("fgsea")
 
@@ -65108,6 +66275,394 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
+
+
+
+
+############################################################
+##################### GSEA plot - FC+pvalue ####################
+############################################################
+
+
+
+
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c(  "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+#  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c(  "L2L3_IT__Otof",
+  "L2L3_IT__Abi3bp",
+  "L2L3_IT__Reln",
+#  "L4_IT__Gabra6",
+  "L4L5_IT__Rorb",
+  "L5_IT_GABA__Adora2a",
+  "L5_ET__L3mbtl4",
+  "L5_IT__Tshz2",
+  "Mix_IT__Tshz2_1",
+  "Mix_IT__Tshz2_2",
+  "L5L6_NP__Tle4Stard5",
+  "L5L6_IT__Osr1",
+  "L5L6_NP__Slc17a8",
+  "L6__Car3",
+  "L6_CT__Foxp2Syt6",
+  "L6_GABA__Foxp2",
+
+  "GABA__Baiap3",
+  "GABA__Vipr2",
+  "GABA__Pvalb",
+  "GABA__Vip",
+  "GABA__Sst",
+  "GABA__Lamp5",
+  "GABA__Calb2",
+  "GABA__NdnfKlhl1",
+  "GABA__Igfbpl1",
+
+  "Microglia",
+  "Astrocyte",
+  "OPC",
+  "Oligodendrocyte",
+  "Endothelial",
+  "Meningeal")
+
+
+
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  # Extract genes for the current cluster and compute ranking score
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    mutate(p_val_adj = ifelse(p_val_adj == 0, 1e-300, p_val_adj)) %>%  # Avoid log10(0)
+    mutate(ranking_score = avg_log2FC * -log10(p_val_adj)) %>%
+    arrange(desc(ranking_score)) %>% 
+    dplyr::select(gene, ranking_score)
+  ranks <- deframe(genes)
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CX_vversion2dim30kparam30res04_allGenes_MAST-List12gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CX_version2dim30kparam30res04_allGenes_MAST-List12_FCpval.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+
+
+############################################################
+##################### GSEA plot - FC+pvalue macro ####################
+############################################################
+
+
+
+
+
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c(  "ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+### List2
+fgsea_sets <- list(
+  GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION = read_table(file = "output/Pathway/geneList_GOBP_NEURON_NEURON_SYNAPTIC_TRANSMISSION.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  GOBP_NEURONAL_SIGNAL_TRANSDUCTION = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_SIGNAL_TRANSDUCTION.txt")$Genes,
+  REACTOME_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_POTASSIUM_CHANNELS.txt")$Genes,
+  REACTOME_ION_CHANNEL_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_ION_CHANNEL_TRANSPORT.txt")$Genes
+)
+### List3
+fgsea_sets <- list(
+  REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING = read_table(file = "output/Pathway/geneList_REACTOME_PRESYNAPTIC_DEPOLARIZATION_AND_CALCIUM_CHANNEL_OPENING.txt")$Genes,
+  REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS = read_table(file = "output/Pathway/geneList_REACTOME_NA_CL_DEPENDENT_NEUROTRANSMITTER_TRANSPORTERS.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes,
+  REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS = read_table(file = "output/Pathway/geneList_REACTOME_VOLTAGE_GATED_POTASSIUM_CHANNELS.txt")$Genes
+)
+### List4
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURONAL_ACTION_POTENTIAL = read_table(file = "output/Pathway/geneList_GOBP_NEURONAL_ACTION_POTENTIAL.txt")$Genes,
+  REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION = read_table(file = "output/Pathway/geneList_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION.txt")$Genes
+)
+### List9 - DAM microglia (from AMPD2 paper)
+fgsea_sets <- list(
+  DAM_microglia = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v2.txt",  col_names = FALSE)$X1,
+  DAM_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_top50_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_v2.txt",  col_names = FALSE)$X1,
+  homeostatic_microglia_top50_v2 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/homeostatic_microglia_top50_v2.txt",  col_names = FALSE)$X1
+)
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c(  "ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"
+)
+
+
+
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  # Extract genes for the current cluster and compute ranking score
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    mutate(p_val_adj = ifelse(p_val_adj == 0, 1e-300, p_val_adj)) %>%  # Avoid log10(0)
+    mutate(ranking_score = avg_log2FC * -log10(p_val_adj)) %>%
+    arrange(desc(ranking_score)) %>% 
+    dplyr::select(gene, ranking_score)
+  ranks <- deframe(genes)
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-List12gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-List12_FCpval.pdf", width=15, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$padj <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
 
 
 
@@ -68951,6 +70506,128 @@ dev.off()
 
 
 
+
+
+#### GSEA selected terms CX p14 p35 p180
+
+Let's do GSEA on selected terms; using FC*pval: let's subjected to random!
+
+If using pval with FC: 
+- PathwaysOfNeurodegeneration (almsot nothing signif)
+- GOBP_NEUROINFLAMMATORY_RESPONSE (nothing signif)
+- GOBP_TRICARBOXYLIC_ACID_CYCLE  (almsot nothing signif)
+- WP_TCA_CYCLE (almsot nothing signif)
+
+
+
+
+
+```R
+
+# import
+
+
+############################################################
+##################### GSEA plot - FC+pvalue ####################
+############################################################
+
+
+## PathwaysOfNeurodegeneration - List1
+p14_CX_PathwaysOfNeurodegeneration = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2macrov2_allGenes_MAST-List1gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="PathwaysOfNeurodegeneration", cluster %in% c("ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal")) %>% add_column(time="p14")
+p35_CX_PathwaysOfNeurodegeneration = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065macrov2_allGenes_MAST-List1gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="PathwaysOfNeurodegeneration", cluster %in% c("ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal"))  %>% add_column(time="p35")
+p180_CX_PathwaysOfNeurodegeneration = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p180_CX_version2dim30kparam30res04macrov2_allGenes_MAST-List1gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="PathwaysOfNeurodegeneration", cluster %in% c("ExcN", "InhN", "Microglia", "Astrocyte", "OPC", "Oligodendrocyte", "Endothelial", "Meningeal")) %>% add_column(time="p180")
+
+
+
+## GOBP_TRICARBOXYLIC_ACID_CYCLE - List11
+p14_CB_GOBP_TRICARBOXYLIC_ACID_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List11gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="GOBP_TRICARBOXYLIC_ACID_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+p35_CB_GOBP_TRICARBOXYLIC_ACID_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List11gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="GOBP_TRICARBOXYLIC_ACID_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+p180_CB_GOBP_TRICARBOXYLIC_ACID_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List11gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="GOBP_TRICARBOXYLIC_ACID_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+
+
+## WP_TCA_CYCLE - List12
+p14_CB_WP_TCA_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List12gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="WP_TCA_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+p35_CB_WP_TCA_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List12gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="WP_TCA_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+p180_CB_WP_TCA_CYCLE = readr::read_tsv("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List12gene_FCpval.txt") %>% as_tibble() %>% dplyr::filter(pathway =="WP_TCA_CYCLE", cluster %in% c("Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi",  "Astrocyte",  "BergmanGlia"))
+
+
+
+
+# combine and filter neuronal cell types only
+
+CB_PathwaysOfNeurodegeneration = p14_CB_PathwaysOfNeurodegeneration %>%
+  bind_rows(p35_CB_PathwaysOfNeurodegeneration) %>%
+  bind_rows(p180_CB_PathwaysOfNeurodegeneration) %>%
+  mutate(
+    col = paste(cluster, time, sep = "_"),
+    # This will be used for coloring (NA = will not draw in the color layer)
+    NES_sig = ifelse(pval <= 0.05, NES, NA_real_)
+  )
+
+
+CB_PathwaysOfNeurodegeneration$cluster <- factor(CB_PathwaysOfNeurodegeneration$cluster, levels = c(
+  "Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",  "Astrocyte",  "BergmanGlia"
+))
+
+
+CB_PathwaysOfNeurodegeneration$time <- factor(CB_PathwaysOfNeurodegeneration$time, levels = c(
+  "p14", "p35", "p180"
+))
+
+
+
+# Column (cluster_time) order by cluster then time
+col_order <- CB_PathwaysOfNeurodegeneration %>%
+  distinct(cluster, time, col) %>%
+  arrange(cluster, time) %>%
+  pull(col)
+
+pdf("output/Pathway/heatmap_gsea_output_CBversion5-PathwaysOfNeurodegeneration-FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+ggplot() +
+  # Grey layer for non-significant (pval > 0.05)
+  geom_tile(
+    data = CB_PathwaysOfNeurodegeneration %>% dplyr::filter(is.na(NES_sig)),
+    aes(x = col, y = pathway),
+    fill = "grey80"
+  ) +
+  # Color layer for significant (pval <= 0.05)
+  geom_tile(
+    data = CB_PathwaysOfNeurodegeneration %>% dplyr::filter(!is.na(NES_sig)),
+    aes(x = col, y = pathway, fill = NES_sig)
+  ) +
+  # Blue–white–red with white at zero
+  scale_fill_gradient2(
+    name = "Norm. Enrichment Score",
+    low = "steelblue", mid = "white", high = "firebrick",
+    midpoint = 0, na.value = "grey80"
+  ) +
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+    panel.grid = element_blank(),
+    legend.position = "bottom"
+  )
+dev.off()
+
+
+
+
+
+############################################################
+##################### GSEA plot - FC only ####################
+############################################################
+
+
+
+```
 
 
 
