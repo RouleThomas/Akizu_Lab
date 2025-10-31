@@ -40655,6 +40655,13 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 
+
+############################################################
+##################### GSEA plot - FC only ####################
+############################################################
+library("fgsea")
+
+
 # GSEA plot
 library("fgsea")
 
@@ -40961,6 +40968,226 @@ ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) +
             size=2) +
   coord_fixed()  # Force aspect ratio of the plot to be 1:1
 dev.off()
+
+
+
+
+
+
+
+############################################################
+##################### GSEA plot - FC+pvalue ####################
+############################################################
+
+
+XXXY HERE pursue plot
+
+# GSEA plot
+library("fgsea")
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c(    "Granule",
+  "MLI1",
+  "CerebellarNuclei",
+  "MLI2",
+  "BergmanGlia",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "UBC",
+  "MixNeurons",
+  "ChoroidPlexus",
+  "Meningeal",
+  "Endothelial",
+  "Purkinje",
+  "OPC")
+# Loop over each cluster type to read data and assign to a variable
+for (cluster in cluster_types) {
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  data <- read.delim(file_path, header = TRUE, row.names = 1)
+  assign(cluster, data)
+}
+
+## load list of genes to test
+### List1
+fgsea_sets <- list(
+  PathwaysOfNeurodegeneration = read_table(file = "output/Pathway/geneList_mmu05022.txt")$Genes,
+  GOBP_NEURON_INTRINSIC_APOPTOTIC_SIGNALING_PATHWAY_IN_RESPONSE_TO_OXIDATIVE_STRESS = read_table(file = "output/Pathway/geneList_GOBP_NEURON_INTRINSIC_APOPTOTIC.txt")$Genes,
+  GOBP_NEUROINFLAMMATORY_RESPONSE = read_table(file = "output/Pathway/geneList_GOBP_NEUROINFLAMMATORY_RESPONSE.txt")$Genes
+)
+
+
+
+### List10 - DAM microglia (adapted from AMPD2 paper; isolate padj 0.05(log10(1.4) and positive FC)
+fgsea_sets <- list(
+  DAM_microglia_v3_top50 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top50.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top100 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top100.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top200 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top200.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top300 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top300.txt",  col_names = FALSE)$X1,
+  DAM_microglia_v3_top390FCOver1 = read_table(file = "../../003_AMP2/001__RNAseq/output/gsea/DAM_microglia_v3_top390FCOver1.txt",  col_names = FALSE)$X1
+)
+
+
+### List11 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_REACTIVE_OXYGEN_SPECIES_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_MITOCHONDRIAL_TRANSLATION = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_TRANSLATION.txt")$Gene,
+  GOBP_TRICARBOXYLIC_ACID_CYCLE = read_table(file = "output/Pathway/geneList_GOBP_TRICARBOXYLIC_ACID_CYCLE.txt")$Gene,
+  GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY = read_table(file = "output/Pathway/geneList_GOBP_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY.txt")$Gene,
+  GOBP_ATP_METABOLIC_PROCESS = read_table(file = "output/Pathway/geneList_GOBP_ATP_METABOLIC_PROCESS.txt")$Gene,
+  GOBP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_GOBP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+### List12 - mitochondria energy usage - GO
+fgsea_sets <- list(
+  REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_CALCIUM_ION_TRANSPORT.txt")$Gene,
+  REACTOME_MITOCHONDRIAL_BIOGENESIS = read_table(file = "output/Pathway/geneList_REACTOME_MITOCHONDRIAL_BIOGENESIS.txt")$Gene,
+  WP_MITOCHONDRIAL_GENE_EXPRESSION = read_table(file = "output/Pathway/geneList_WP_MITOCHONDRIAL_GENE_EXPRESSION.txt")$Gene,
+  WP_TCA_CYCLE = read_table(file = "output/Pathway/geneList_WP_TCA_CYCLE.txt")$Gene,
+  REACTOME_RESPIRATORY_ELECTRON_TRANSPORT = read_table(file = "output/Pathway/geneList_REACTOME_RESPIRATORY_ELECTRON_TRANSPORT.txt")$Gene,
+  WP_OXIDATIVE_PHOSPHORYLATION = read_table(file = "output/Pathway/geneList_WP_OXIDATIVE_PHOSPHORYLATION.txt")$Gene
+)
+
+
+
+
+## Rank genes based on FC
+genes <- BergmanGlia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+  rownames_to_column(var = "gene") %>%
+  arrange(desc(avg_log2FC)) %>% 
+  dplyr::select(gene, avg_log2FC)
+
+ranks <- deframe(genes)
+head(ranks)
+## Run GSEA
+
+fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 1000)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(ES))
+fgseaResTidy %>% 
+  dplyr::select(-leadingEdge, -NES, -nMoreExtreme) %>% 
+  arrange(padj) %>% 
+  head()
+
+
+## plot GSEA
+pdf("output/Pathway/GSEA_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-DAM_microglia_v3_top390FCOver1-BergmanGlia_FCpval.pdf", width=3, height=2)
+plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
+               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-BergmanGlia") +
+               theme_bw()
+dev.off()
+## command to show leading edge genes
+fgseaResTidy %>%
+  filter(pathway == "DAM_microglia_v3_top390FCOver1") %>%
+  pull(leadingEdge) %>%
+  .[[1]]  
+
+
+
+# Save output table for all pathway and cluster
+## Define the list of cluster types
+cluster_types <- c(  "Granule",
+  "MLI1",
+  "CerebellarNuclei",
+  "MLI2",
+  "BergmanGlia",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "UBC",
+  "MixNeurons",
+  "ChoroidPlexus",
+  "Meningeal",
+  "Endothelial",
+  "Purkinje",
+  "OPC")
+
+## Initialize an empty list to store the results for each cluster type
+all_results <- list()
+## Loop over each cluster type
+for (cluster in cluster_types) {
+  # Extract genes for the current cluster and compute ranking score
+  genes <- get(cluster) %>% 
+    rownames_to_column(var = "gene") %>%
+    mutate(p_val_adj = ifelse(p_val_adj == 0, 1e-300, p_val_adj)) %>%  # Avoid log10(0)
+    mutate(ranking_score = avg_log2FC * -log10(p_val_adj)) %>%
+    arrange(desc(ranking_score)) %>% 
+    dplyr::select(gene, ranking_score)
+  ranks <- deframe(genes)
+  # Run GSEA for the current cluster
+  fgseaRes <- fgsea(fgsea_sets, stats = ranks, nperm = 10000)
+  fgseaResTidy <- fgseaRes %>%
+    as_tibble() %>%
+    arrange(desc(ES))
+  # Extract summary table and add cluster column
+  fgseaResTidy_summary = fgseaResTidy %>% 
+    dplyr::select(pathway, pval, padj, ES, size, NES, leadingEdge) %>%
+    mutate(cluster = cluster) %>%
+    arrange(padj) %>% 
+    head()
+  # Store results in the list
+  all_results[[cluster]] <- fgseaResTidy_summary
+}
+## Combine results from all cluster types into one table
+final_results <- bind_rows(all_results, .id = "cluster") %>%
+  mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
+
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List1gene_FCpval.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+
+# Heatmap all GSEA
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List1_FCpval.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+final_results$cluster <- factor(final_results$cluster, levels = c(
+"Granule",
+  "UBC",
+  "CerebellarNuclei",
+  "MixNeurons",
+  "Purkinje",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi",
+  "Astrocyte",
+  "BergmanGlia",
+  "OPC",
+  "Endothelial",
+  "Meningeal",
+  "ChoroidPlexus"
+))
+ggplot(final_results, aes(x=cluster, y=pathway, fill=NES)) + 
+  geom_tile(color = "black") +  # Add black contour to each tile
+  theme_bw() +  # Use black-white theme for cleaner look
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 6, vjust = 0.5),
+    axis.text.y = element_text(size = 8),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_blank(),
+    legend.position = "bottom"
+  ) +
+  scale_fill_gradient2(low="#1f77b4", mid="white", high="#d62728", midpoint=0, name="Norm. Enrichment\nScore") +
+  geom_text(aes(label=sprintf("%.2f", NES)), 
+            color = ifelse(final_results$pval <= 0.05, "black", "grey50"),  # change btween pvalue, qvalue,p.adjust
+            size=2) +
+  coord_fixed()  # Force aspect ratio of the plot to be 1:1
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -50646,6 +50873,12 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50re
 FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CX_1step-version2dim30kparam50res07-Cox6c-labelversion2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = c("Cox6c"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
 
 
 # Vln Plot WT vs Kcnc1
@@ -51142,62 +51375,34 @@ dev.off()
 
 
 
-XXXY HERE BELOW NOT MOD
-
-
 # GSEA output colored in a UMAP
-## Pathway of neurodegeneration
+## GOBP_OXIDATIVE_PHOSPHORYLATION
 
-p14_correct_List4_PathwaysOfNeurodegeneration <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07_allGenes_MAST-List4gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "PathwaysOfNeurodegeneration")
+p14_List11_GOBP_OXIDATIVE_PHOSPHORYLATION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07labelversion2_allGenes_MAST-List11gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "GOBP_OXIDATIVE_PHOSPHORYLATION")
 ## Add NES and pval information to the Seurat object metadata
-WT_Kcnc1_p14_CX_1step.sct@meta.data$NES <- p14_correct_List4_PathwaysOfNeurodegeneration$NES[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
-                                                                       p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
-WT_Kcnc1_p14_CX_1step.sct@meta.data$pval <- p14_correct_List4_PathwaysOfNeurodegeneration$pval[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
-                                                                         p14_correct_List4_PathwaysOfNeurodegeneration$cluster)]
+WT_Kcnc1_p14_CX_1step.sct@meta.data$NES <- p14_List11_GOBP_OXIDATIVE_PHOSPHORYLATION$NES[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
+                                                                       p14_List11_GOBP_OXIDATIVE_PHOSPHORYLATION$cluster)]
+WT_Kcnc1_p14_CX_1step.sct@meta.data$padj <- p14_List11_GOBP_OXIDATIVE_PHOSPHORYLATION$padj[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
+                                                                         p14_List11_GOBP_OXIDATIVE_PHOSPHORYLATION$cluster)]
 ## Prepare the NES values for visualization
 ## Color clusters with pval < 0.05 as grey
-WT_Kcnc1_p14_CX_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CX_1step.sct@meta.data$pval > 0.05, NA, 
+WT_Kcnc1_p14_CX_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CX_1step.sct@meta.data$padj > 0.05, NA, 
                                                           WT_Kcnc1_p14_CX_1step.sct@meta.data$NES)                                                       
 ## Extract UMAP coordinates and cluster centers
 umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CX_1step.sct@reductions$umap@cell.embeddings)
 umap_coordinates$cluster <- WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot
 cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
-  left_join(p14_correct_List4_PathwaysOfNeurodegeneration, by = c("cluster" = "cluster"))
+  left_join(p14_List11_GOBP_OXIDATIVE_PHOSPHORYLATION, by = c("cluster" = "cluster"))
 ## Format NES values to two decimal places
 cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
 ## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CX_1step_MAST_PathwaysOfNeurodegeneration_version2dim30kparam50res07.pdf", width = 6, height = 6)
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CX_1step_MAST_GOBP_OXIDATIVE_PHOSPHORYLATIONpadj_version2dim30kparam50res07labelversion2.pdf", width = 6, height = 6)
 FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
-  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+  geom_text(data = cluster_centers %>% filter(padj<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
             size = 4, color = "black", fontface = "bold")
 dev.off()
 
-## REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION
-p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CX_version2dim30kparam50res07_allGenes_MAST-List4gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION")
-## Add NES and pval information to the Seurat object metadata
-WT_Kcnc1_p14_CX_1step.sct@meta.data$NES <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$NES[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
-                                                                       p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
-WT_Kcnc1_p14_CX_1step.sct@meta.data$pval <- p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$pval[match(WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot, 
-                                                                         p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION$cluster)]
-## Prepare the NES values for visualization
-## Color clusters with pval < 0.05 as grey
-WT_Kcnc1_p14_CX_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CX_1step.sct@meta.data$pval > 0.05, NA, 
-                                                          WT_Kcnc1_p14_CX_1step.sct@meta.data$NES)                                                       
-## Extract UMAP coordinates and cluster centers
-umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CX_1step.sct@reductions$umap@cell.embeddings)
-umap_coordinates$cluster <- WT_Kcnc1_p14_CX_1step.sct@meta.data$cluster.annot
-cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
-  left_join(p14_correct_List3_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION, by = c("cluster" = "cluster"))
-## Format NES values to two decimal places
-cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
-## Generate the UMAP plot with FeaturePlot
-pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CX_1step_MAST_REACTOME_NEUROTRANSMITTER_RECEPTORS_AND_POSTSYNAPTIC_SIGNAL_TRANSMISSION_version2dim30kparam50res07.pdf", width = 6, height = 6)
-FeaturePlot(WT_Kcnc1_p14_CX_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
-  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
-  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
-            size = 4, color = "black", fontface = "bold")
-dev.off()
 
 
 
@@ -58003,6 +58208,41 @@ FeaturePlot(WT_Kcnc1_p35_CX_1step.sct, features = "NES_colored", pt.size = 0.5, 
   geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
             size = 4, color = "black", fontface = "bold")
 dev.off()
+
+
+
+
+
+## GOBP_OXIDATIVE_PHOSPHORYLATION
+p35_correct_List11_GOBP_OXIDATIVE_PHOSPHORYLATION <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CX_version2dim35kparam15res065_allGenes_MAST-List11gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "GOBP_OXIDATIVE_PHOSPHORYLATION")
+
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p35_CX_1step.sct@meta.data$NES <- p35_correct_List11_GOBP_OXIDATIVE_PHOSPHORYLATION$NES[match(WT_Kcnc1_p35_CX_1step.sct@meta.data$cluster.annot, 
+                                                                       p35_correct_List11_GOBP_OXIDATIVE_PHOSPHORYLATION$cluster)]
+WT_Kcnc1_p35_CX_1step.sct@meta.data$pval <- p35_correct_List11_GOBP_OXIDATIVE_PHOSPHORYLATION$pval[match(WT_Kcnc1_p35_CX_1step.sct@meta.data$cluster.annot, 
+                                                                         p35_correct_List11_GOBP_OXIDATIVE_PHOSPHORYLATION$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p35_CX_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p35_CX_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p35_CX_1step.sct@meta.data$NES)                                                       
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p35_CX_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p35_CX_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p35_correct_List11_GOBP_OXIDATIVE_PHOSPHORYLATION, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CX_1step_MAST_GOBP_OXIDATIVE_PHOSPHORYLATION_version2dim35kparam15res065.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p35_CX_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
 
 
 
