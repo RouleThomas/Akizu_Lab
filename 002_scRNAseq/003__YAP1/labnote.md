@@ -12952,6 +12952,14 @@ rsconnect::deployApp('shinyApp_Humangastruloid72hr_dim25kparam50res07')
 
 
 
+
+
+
+
+
+
+
+
 ```
 
 --> Shiny apps:
@@ -34123,6 +34131,43 @@ rsconnect::deployApp('shinyApp_GASTRU_72h_merge')
 
 
 
+
+# Data import GASTRU_24h_merge (using past QC for UN and DASA)
+GASTRU_24h_merge_QCkeptUNDASA <- readRDS(file = "output/seurat/GASTRU_24h_merge-dim25kparam30res03_QCkeptUNDASA.rds")
+DefaultAssay(GASTRU_24h_merge_QCkeptUNDASA) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(GASTRU_24h_merge_QCkeptUNDASA)
+
+makeShinyApp(GASTRU_24h_merge_QCkeptUNDASA, scConf, gene.mapping = TRUE,
+             shiny.title = "GASTRU_24h_merge_QCkeptUNDASA",
+             shiny.dir = "shinyApp_GASTRU_24h_merge_QCkeptUNDASA/") 
+
+rsconnect::deployApp('shinyApp_GASTRU_24h_merge_QCkeptUNDASA')
+
+
+
+
+
+# Data import GASTRU_72h_merge (using past QC for UN and DASA)
+GASTRU_72h_merge_QCkeptUNDASA <- readRDS(file = "output/seurat/GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA.rds")
+DefaultAssay(GASTRU_72h_merge_QCkeptUNDASA) <- "RNA" # 
+
+# Generate Shiny app V1
+scConf = createConfig(GASTRU_72h_merge_QCkeptUNDASA)
+
+makeShinyApp(GASTRU_72h_merge_QCkeptUNDASA, scConf, gene.mapping = TRUE,
+             shiny.title = "GASTRU_72h_merge_QCkeptUNDASA",
+             shiny.dir = "shinyApp_GASTRU_72h_merge_QCkeptUNDASA/") 
+
+rsconnect::deployApp('shinyApp_GASTRU_72h_merge_QCkeptUNDASA')
+
+
+
+
+
+
+
 ```
 
 --> Shiny apps:
@@ -36002,6 +36047,440 @@ dev.off()
 
 
 
+### 24hrs UNTREATED AND DASA (with past QC), XMU
+
+--> Keep the simple merge version, but **use the previous QC filtering for UNTREATED, and DASA.**
+  --> Import integrated UN/DASA and split samples and collect raw counts (ie. just to collect cells QCPass)
+
+
+```bash
+conda activate scRNAseqV3
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+set.seed(42)
+
+# import clean samples
+## UNTREATED and DASA
+humangastruloid24hr.combined.sct <- readRDS(file = "output/seurat/humangastruloid24hr.combined.sct_25dim.rds")
+### Split by condition
+humangastruloid24hr.list <- SplitObject(humangastruloid24hr.combined.sct, split.by = "orig.ident")
+names(humangastruloid24hr.list)
+
+GASTRU_24h_UN = humangastruloid24hr.list[["UNTREATED24hr"]]
+GASTRU_24h_DASA = humangastruloid24hr.list[["DASATINIB24hr"]]
+#### Remove all past analysis (reductions, variable features...)
+DefaultAssay(GASTRU_24h_UN) <- "RNA"
+GASTRU_24h_UN@assays <- list(RNA = GASTRU_24h_UN@assays$RNA)
+GASTRU_24h_UN@reductions <- list()   # remove PCA, UMAP, etc.
+GASTRU_24h_UN@graphs <- list()       # remove neighbor graphs
+GASTRU_24h_UN@misc <- list()     
+
+DefaultAssay(GASTRU_24h_DASA) <- "RNA"
+GASTRU_24h_DASA@assays <- list(RNA = GASTRU_24h_DASA@assays$RNA)
+GASTRU_24h_DASA@reductions <- list()   # remove PCA, UMAP, etc.
+GASTRU_24h_DASA@graphs <- list()       # remove neighbor graphs
+GASTRU_24h_DASA@misc <- list()    
+
+## XMU
+GASTRU_24h_XMU <- readRDS(file = "output/seurat/GASTRU_24h_XMU-QCPass.rds")
+
+
+GASTRU_24h_UN[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_UN, pattern = "^MT-")
+GASTRU_24h_UN[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_UN, pattern = "^RP[SL]")
+GASTRU_24h_DASA[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_DASA, pattern = "^MT-")
+GASTRU_24h_DASA[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_DASA, pattern = "^RP[SL]")
+GASTRU_24h_XMU[["percent.mt"]] <- PercentageFeatureSet(GASTRU_24h_XMU, pattern = "^MT-")
+GASTRU_24h_XMU[["percent.rb"]] <- PercentageFeatureSet(GASTRU_24h_XMU, pattern = "^RP[SL]")
+
+## Optimal parameter 25 dim
+GASTRU_24h_UN <- SCTransform(GASTRU_24h_UN, method = "glmGamPoi", ncells = 7331, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 25, verbose = FALSE)
+GASTRU_24h_DASA <- SCTransform(GASTRU_24h_DASA, method = "glmGamPoi", ncells = 6613, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 25, verbose = FALSE)
+GASTRU_24h_XMU <- SCTransform(GASTRU_24h_XMU, method = "glmGamPoi", ncells = 4058, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 25, verbose = FALSE)
+
+GASTRU_24h_UN$condition <- "UNTREATED"
+GASTRU_24h_DASA$condition <- "DASATINIB"
+GASTRU_24h_XMU$condition <- "XMU"
+
+GASTRU_24h_UN$time <- "24hr"
+GASTRU_24h_DASA$time <- "24hr"
+GASTRU_24h_XMU$time <- "24hr"
+
+DefaultAssay(GASTRU_24h_UN) <- "SCT"
+DefaultAssay(GASTRU_24h_DASA) <- "SCT"
+DefaultAssay(GASTRU_24h_XMU) <- "SCT"
+
+### Merge the SCT assay
+GASTRU_24h_merge = merge(
+  x = GASTRU_24h_UN,
+  y = c(GASTRU_24h_DASA, GASTRU_24h_XMU),
+  add.cell.ids = NULL,
+  merge.data = TRUE
+)
+
+
+VariableFeatures(GASTRU_24h_merge[["SCT"]]) <- rownames(GASTRU_24h_merge[["SCT"]]@scale.data)
+
+
+#### UMAP
+DefaultAssay(GASTRU_24h_merge) <- "SCT"
+
+GASTRU_24h_merge <- RunPCA(GASTRU_24h_merge, verbose = FALSE, npcs = 25)
+GASTRU_24h_merge <- RunUMAP(GASTRU_24h_merge, reduction = "pca", dims = 1:25, verbose = FALSE)
+GASTRU_24h_merge <- FindNeighbors(GASTRU_24h_merge, reduction = "pca", k.param = 30, dims = 1:25)
+GASTRU_24h_merge <- FindClusters(GASTRU_24h_merge, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+GASTRU_24h_merge$condition <- factor(GASTRU_24h_merge$condition, levels = c("UNTREATED", "DASATINIB", "XMU")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_GASTRU_24h_merge-dim25kparam30res03_QCkeptUNDASA.pdf", width=7, height=6)
+DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, group.by = "condition")
+dev.off()
+
+
+pdf("output/seurat/UMAP_GASTRU_24h_merge-dim25kparam30res03_QCkeptUNDASA-splitCondition.pdf", width=14, height=6)
+DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+
+pdf("output/seurat/UMAP_GASTRU_24h_merge-dim25kparam30res03_QCkeptUNDASA-seurat_clusters.pdf", width=7, height=6)
+DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, group.by = "seurat_clusters")
+dev.off()
+
+pdf("output/seurat/UMAP_GASTRU_24h_merge-dim25kparam30res03_QCkeptUNDASA-splitConditionGroupPhase.pdf", width=14, height=6)
+DimPlot(GASTRU_24h_merge, reduction = "umap", label=TRUE, split.by = "condition", group.by = "Phase",
+  cols = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) 
+dev.off()
+
+# SAVE OUTPUT ########################################################
+#saveRDS(GASTRU_24h_merge, file = "output/seurat/GASTRU_24h_merge-dim25kparam30res03_QCkeptUNDASA.rds")
+GASTRU_24h_merge <- readRDS(file = "output/seurat/GASTRU_24h_merge-dim25kparam30res03_QCkeptUNDASA.rds")
+
+######################################################################
+
+
+
+# Unbiased cell type marker genes
+Idents(GASTRU_24h_merge) <- "seurat_clusters"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(GASTRU_24h_merge, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_GASTRU_24h_merge-dim25kparam30res03_QCkeptUNDASA-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+
+
+XXXXY HER EBELOW NOT MOD!!!
+
+
+
+
+
+
+
+# Cell cycle proportion per cluster
+## Using numeric cluster annotation
+plot_cell_cycle_per_cluster <- function(GASTRU_24h_merge, output_dir) {
+  clusters <- unique(GASTRU_24h_merge$seurat_clusters)
+  # Extract the condition per cell and bind to metadata
+  GASTRU_24h_merge$condition <- factor(GASTRU_24h_merge$condition,
+                                       levels = c("UNTREATED", "DASATINIB", "XMU"))
+  for (cluster in clusters) {
+    data <- GASTRU_24h_merge@meta.data %>%
+      dplyr::filter(seurat_clusters == cluster) %>%
+      group_by(condition, Phase) %>%
+      summarise(count = n(), .groups = "drop") %>%
+      group_by(condition) %>%
+      mutate(proportion = count / sum(count)) %>%
+      ungroup()
+    plot <- ggplot(data, aes(x = condition, y = proportion, fill = Phase)) +
+      geom_bar(stat = "identity", position = "fill") +
+      scale_y_continuous(labels = scales::percent) +
+      labs(title = paste("Cluster", cluster), x = "Genotype", y = "Proportion (%)") +
+      theme_bw() +
+      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+      geom_text(aes(label = scales::percent(proportion, accuracy = 0.1)),
+                position = position_fill(vjust = 0.5), size = 5)
+    # Save plot to PDF
+    pdf(paste0(output_dir, "cellCycle_Cluster-GASTRU_24h_merge-dim20kparam30res03-", cluster, ".pdf"), width = 4, height = 5)
+    print(plot)
+    dev.off()
+  }
+}
+plot_cell_cycle_per_cluster(GASTRU_24h_merge, output_dir = "output/seurat/")
+
+
+
+
+# Count how many cells express CDX2 and GATA6
+## COUNT 
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+
+GASTRU_24h_merge_UNTREATED <- subset(GASTRU_24h_merge, condition == "UNTREATED")
+GASTRU_24h_merge_DASATINIB <- subset(GASTRU_24h_merge, condition == "DASATINIB")
+GASTRU_24h_merge_XMU <- subset(GASTRU_24h_merge, condition == "XMU")
+
+
+
+
+
+coexpr_stats <- function(obj, g1, g2, cells = NULL,
+                         assay = DefaultAssay(obj), slot = "data",
+                         thresh = 0, digits = 2) {
+  if (is.null(cells)) cells <- colnames(obj)
+  E <- GetAssayData(obj, assay = assay, slot = slot)[c(g1, g2), cells, drop = FALSE]
+  g1p <- E[g1, ] > thresh
+  g2p <- E[g2, ] > thresh
+
+  counts <- c(
+    g1_only = sum(g1p & !g2p),
+    g2_only = sum(!g1p & g2p),
+    both    = sum(g1p & g2p),
+    none    = sum(!g1p & !g2p)
+  )
+  total <- length(cells)
+
+  data.frame(
+    category = names(counts),
+    nCells   = as.integer(counts),
+    percent  = round(100 * counts / total, digits),
+    total    = total,
+    row.names = NULL,
+    check.names = FALSE
+  )
+}
+bind_rows(
+  coexpr_stats(GASTRU_24h_merge_UNTREATED, "GATA6", "CDX2") %>% mutate(condition = "UNTREATED"),
+  coexpr_stats(GASTRU_24h_merge_DASATINIB, "GATA6", "CDX2") %>% mutate(condition = "DASATINIB"),
+  coexpr_stats(GASTRU_24h_merge_XMU,       "GATA6", "CDX2") %>% mutate(condition = "XMU")
+) %>%
+  select(condition, category, nCells, percent, total)
+  
+
+
+## PLOT 
+
+
+
+
+g1 <- "GATA6"; g2 <- "CDX2"
+E  <- FetchData(GASTRU_24h_merge_XMU, vars = c(g1, g2))
+c1 <- quantile(E[[g1]], 0.95, na.rm = TRUE)
+c2 <- quantile(E[[g2]], 0.95, na.rm = TRUE)
+pdf("output/seurat/GASTRU_24h_merge_XMU-dim20kparam30res03-coexprGATA6CDX2.pdf",
+    width = 14, height = 6)
+FeaturePlot(
+  GASTRU_24h_merge_XMU,
+  features = c(g1, g2),
+  reduction = "umap",
+  blend = TRUE,
+  blend.threshold = 0,
+  cols = c("red", "green"),     # <- use cols, not cols.blend
+  min.cutoff = c(0, 0),
+  max.cutoff = c(c1, c2),
+  pt.size = 0.9,
+  order = TRUE
+)
+dev.off()
+
+
+## STAT 
+compare_both <- function(obj1, obj2, g1, g2, name1, name2) {
+  # Boolean vectors: gene > 0
+  expr1 <- FetchData(obj1, vars = c(g1, g2)) > 0
+  expr2 <- FetchData(obj2, vars = c(g1, g2)) > 0
+  
+  both1 <- sum(expr1[, g1] & expr1[, g2])
+  both2 <- sum(expr2[, g1] & expr2[, g2])
+  
+  other1 <- ncol(obj1) - both1
+  other2 <- ncol(obj2) - both2
+  
+  tbl <- matrix(c(both1, other1,
+                  both2, other2),
+                nrow = 2, byrow = TRUE,
+                dimnames = list(c(name1, name2),
+                                c("both", "not_both")))
+  
+  fisher <- fisher.test(tbl)
+  
+  list(table = tbl, fisher = fisher)
+}
+
+# Run comparisons
+unt_vs_dasa <- compare_both(GASTRU_24h_merge_UNTREATED, GASTRU_24h_merge_DASATINIB,
+                            "GATA6", "CDX2", "UNTREATED", "DASATINIB")
+
+unt_vs_xmu  <- compare_both(GASTRU_24h_merge_UNTREATED, GASTRU_24h_merge_XMU,
+                            "GATA6", "CDX2", "UNTREATED", "XMU")
+
+# View results
+unt_vs_dasa$table
+unt_vs_dasa$fisher
+
+unt_vs_xmu$table
+unt_vs_xmu$fisher
+
+
+
+# Raw p-values
+pvals <- c(unt_vs_dasa$fisher$p.value,
+           unt_vs_xmu$fisher$p.value)
+
+# Adjusted p-values (Bonferroni)
+padj_bonf <- p.adjust(pvals, method = "bonferroni")
+
+# Adjusted p-values (FDR)
+padj_fdr  <- p.adjust(pvals, method = "BH")
+
+data.frame(
+  comparison = c("UNTREATED vs DASATINIB", "UNTREATED vs XMU"),
+  pval_raw   = signif(pvals, 3),
+  pval_Bonf  = signif(padj_bonf, 3),
+  pval_FDR   = signif(padj_fdr, 3)
+)
+
+
+
+# Unbiased cell type marker genes
+Idents(GASTRU_24h_merge) <- "seurat_clusters"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(GASTRU_24h_merge, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_GASTRU_24h_merge-dim20kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+
+# Check some genes
+
+
+
+
+# UNTREATED vs DASA vs XMU
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+DefaultAssay(GASTRU_24h_merge) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_GASTRU_24h_merge-dim20kparam30res03-CDX2-split.pdf", width=10, height=5)
+FeaturePlot(GASTRU_24h_merge, features = c("CDX2"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_GASTRU_24h_merge-dim20kparam30res03-GATA6-split.pdf", width=10, height=5)
+FeaturePlot(GASTRU_24h_merge, features = c("GATA6"), max.cutoff = 5, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
+
+
+
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+
+## what genes change in different conditions for cells of the same type
+
+GASTRU_24h_merge$celltype.stim <- paste(GASTRU_24h_merge$seurat_clusters, GASTRU_24h_merge$condition,
+    sep = "-")
+Idents(GASTRU_24h_merge) <- "celltype.stim"
+
+# use RNA corrected count for DEGs
+## GASTRU_24h_merge <- PrepSCTFindMarkers(GASTRU_24h_merge)
+
+
+## Automation::
+cell_types <- c("1",
+  "2",
+  "3",
+  "4",
+  "5",
+  #"6", # not in DASA
+  #"7", # not in DASA
+  #"8", # not in DASA
+  "9")
+
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "DASATINIB24hrmerge_dim20kparam30res03.response", sep = ".")
+  ident_1 <- paste(cell_type, "-DASATINIB", sep = "")
+  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+
+  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  
+  print(head(response, n = 15))
+  
+  file_name <- paste("output/seurat/", cell_type, "-DASATINIBresponse24hrmerge_dim20kparam30res03.txt", sep = "")
+  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+}
+
+
+cell_types <- c("1"
+ # "2",
+ #  "3",
+  # "4",
+  # "5",
+  # "6", 
+ #  "7", 
+ #  "8",
+  # "9")
+)
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "XMU24hrmerge_dim20kparam30res03.response", sep = ".")
+  ident_1 <- paste(cell_type, "-XMU", sep = "")
+  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+
+  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  
+  print(head(response, n = 15))
+  
+  file_name <- paste("output/seurat/", cell_type, "-XMUresponse24hrmerge_dim20kparam30res03.txt", sep = "")
+  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+}
+
+
+```
+
+
+--> Seems comparable to using new QC for UN and DASA...
+
 
 
 
@@ -37095,6 +37574,438 @@ dev.off()
 --> Same as for 24hrs; except the *treshold of marekr genes decreased to* `min.pct = 0.15, logfc.threshold = 0.15` was `min.pct = 0.25, logfc.threshold = 0.25` for 24hrs. 
   --> Was necessary to obtain at least 100 marker genes
 
+
+
+### 72hrs UNTREATED AND DASA (with past QC), XMU
+
+--> Keep the simple merge version, but **use the previous QC filtering for UNTREATED, and DASA.**
+  --> Import integrated UN/DASA and split samples and collect raw counts (ie. just to collect cells QCPass)
+
+
+```bash
+conda activate scRNAseqV3
+```
+
+
+
+```R
+# install.packages('SoupX')
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+
+set.seed(42)
+
+# import clean samples
+## UNTREATED and DASA
+humangastruloid.combined.sct <- readRDS(file = "output/seurat/humangastruloid.combined.sct_V2-dim25kparam15res02.rds")
+### Split by condition
+humangastruloid72hr.list <- SplitObject(humangastruloid.combined.sct, split.by = "orig.ident")
+names(humangastruloid72hr.list)
+
+GASTRU_72h_UN = humangastruloid72hr.list[["UNTREATED72hr"]]
+GASTRU_72h_DASA = humangastruloid72hr.list[["DASATINIB72hr"]]
+#### Remove all past analysis (reductions, variable features...)
+DefaultAssay(GASTRU_72h_UN) <- "RNA"
+GASTRU_72h_UN@assays <- list(RNA = GASTRU_72h_UN@assays$RNA)
+GASTRU_72h_UN@reductions <- list()   # remove PCA, UMAP, etc.
+GASTRU_72h_UN@graphs <- list()       # remove neighbor graphs
+GASTRU_72h_UN@misc <- list()     
+
+DefaultAssay(GASTRU_72h_DASA) <- "RNA"
+GASTRU_72h_DASA@assays <- list(RNA = GASTRU_72h_DASA@assays$RNA)
+GASTRU_72h_DASA@reductions <- list()   # remove PCA, UMAP, etc.
+GASTRU_72h_DASA@graphs <- list()       # remove neighbor graphs
+GASTRU_72h_DASA@misc <- list()    
+
+## XMU
+GASTRU_72h_XMU <- readRDS(file = "output/seurat/GASTRU_72h_XMU-QCPass.rds")
+
+
+GASTRU_72h_UN[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_UN, pattern = "^MT-")
+GASTRU_72h_UN[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_UN, pattern = "^RP[SL]")
+GASTRU_72h_DASA[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_DASA, pattern = "^MT-")
+GASTRU_72h_DASA[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_DASA, pattern = "^RP[SL]")
+GASTRU_72h_XMU[["percent.mt"]] <- PercentageFeatureSet(GASTRU_72h_XMU, pattern = "^MT-")
+GASTRU_72h_XMU[["percent.rb"]] <- PercentageFeatureSet(GASTRU_72h_XMU, pattern = "^RP[SL]")
+
+## Optimal parameter 25 dim
+GASTRU_72h_UN <- SCTransform(GASTRU_72h_UN, method = "glmGamPoi", ncells = 5713, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 25, verbose = FALSE)
+GASTRU_72h_DASA <- SCTransform(GASTRU_72h_DASA, method = "glmGamPoi", ncells = 7148, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 25, verbose = FALSE)
+GASTRU_72h_XMU <- SCTransform(GASTRU_72h_XMU, method = "glmGamPoi", ncells = 1219, vars.to.regress = c("nCount_RNA", "percent.mt","percent.rb","S.Score","G2M.Score"), verbose = TRUE, variable.features.n = 3000) %>% 
+    RunPCA(npcs = 25, verbose = FALSE)
+
+GASTRU_72h_UN$condition <- "UNTREATED"
+GASTRU_72h_DASA$condition <- "DASATINIB"
+GASTRU_72h_XMU$condition <- "XMU"
+
+GASTRU_72h_UN$time <- "72hr"
+GASTRU_72h_DASA$time <- "72hr"
+GASTRU_72h_XMU$time <- "72hr"
+
+DefaultAssay(GASTRU_72h_UN) <- "SCT"
+DefaultAssay(GASTRU_72h_DASA) <- "SCT"
+DefaultAssay(GASTRU_72h_XMU) <- "SCT"
+
+### Merge the SCT assay
+GASTRU_72h_merge = merge(
+  x = GASTRU_72h_UN,
+  y = c(GASTRU_72h_DASA, GASTRU_72h_XMU),
+  add.cell.ids = NULL,
+  merge.data = TRUE
+)
+
+
+VariableFeatures(GASTRU_72h_merge[["SCT"]]) <- rownames(GASTRU_72h_merge[["SCT"]]@scale.data)
+
+
+#### UMAP
+DefaultAssay(GASTRU_72h_merge) <- "SCT"
+
+GASTRU_72h_merge <- RunPCA(GASTRU_72h_merge, verbose = FALSE, npcs = 25)
+GASTRU_72h_merge <- RunUMAP(GASTRU_72h_merge, reduction = "pca", dims = 1:25, verbose = FALSE)
+GASTRU_72h_merge <- FindNeighbors(GASTRU_72h_merge, reduction = "pca", k.param = 30, dims = 1:25)
+GASTRU_72h_merge <- FindClusters(GASTRU_72h_merge, resolution = 0.3, verbose = FALSE, algorithm = 4, method = "igraph") # method = "igraph" needed for large nb of cells
+
+
+GASTRU_72h_merge$condition <- factor(GASTRU_72h_merge$condition, levels = c("UNTREATED", "DASATINIB", "XMU")) # Reorder untreated 1st
+
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA.pdf", width=7, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, group.by = "condition")
+dev.off()
+
+
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA-splitCondition.pdf", width=14, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, split.by = "condition")
+dev.off()
+
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA-seurat_clusters.pdf", width=7, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, group.by = "seurat_clusters")
+dev.off()
+
+pdf("output/seurat/UMAP_GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA-splitConditionGroupPhase.pdf", width=14, height=6)
+DimPlot(GASTRU_72h_merge, reduction = "umap", label=TRUE, split.by = "condition", group.by = "Phase",
+  cols = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) 
+dev.off()
+
+# SAVE OUTPUT ########################################################
+#saveRDS(GASTRU_72h_merge, file = "output/seurat/GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA.rds")
+GASTRU_72h_merge <- readRDS(file = "output/seurat/GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA.rds")
+
+######################################################################
+
+
+
+# Unbiased cell type marker genes
+Idents(GASTRU_72h_merge) <- "seurat_clusters"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(GASTRU_72h_merge) <- "RNA"
+GASTRU_72h_merge <- NormalizeData(GASTRU_72h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge)
+GASTRU_72h_merge <- ScaleData(GASTRU_72h_merge, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(GASTRU_72h_merge, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+
+
+XXXXY HER EBELOW NOT MOD!!!
+
+
+
+
+
+
+
+# Cell cycle proportion per cluster
+## Using numeric cluster annotation
+plot_cell_cycle_per_cluster <- function(GASTRU_24h_merge, output_dir) {
+  clusters <- unique(GASTRU_24h_merge$seurat_clusters)
+  # Extract the condition per cell and bind to metadata
+  GASTRU_24h_merge$condition <- factor(GASTRU_24h_merge$condition,
+                                       levels = c("UNTREATED", "DASATINIB", "XMU"))
+  for (cluster in clusters) {
+    data <- GASTRU_24h_merge@meta.data %>%
+      dplyr::filter(seurat_clusters == cluster) %>%
+      group_by(condition, Phase) %>%
+      summarise(count = n(), .groups = "drop") %>%
+      group_by(condition) %>%
+      mutate(proportion = count / sum(count)) %>%
+      ungroup()
+    plot <- ggplot(data, aes(x = condition, y = proportion, fill = Phase)) +
+      geom_bar(stat = "identity", position = "fill") +
+      scale_y_continuous(labels = scales::percent) +
+      labs(title = paste("Cluster", cluster), x = "Genotype", y = "Proportion (%)") +
+      theme_bw() +
+      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+      geom_text(aes(label = scales::percent(proportion, accuracy = 0.1)),
+                position = position_fill(vjust = 0.5), size = 5)
+    # Save plot to PDF
+    pdf(paste0(output_dir, "cellCycle_Cluster-GASTRU_24h_merge-dim20kparam30res03-", cluster, ".pdf"), width = 4, height = 5)
+    print(plot)
+    dev.off()
+  }
+}
+plot_cell_cycle_per_cluster(GASTRU_24h_merge, output_dir = "output/seurat/")
+
+
+
+
+# Count how many cells express CDX2 and GATA6
+## COUNT 
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+
+GASTRU_24h_merge_UNTREATED <- subset(GASTRU_24h_merge, condition == "UNTREATED")
+GASTRU_24h_merge_DASATINIB <- subset(GASTRU_24h_merge, condition == "DASATINIB")
+GASTRU_24h_merge_XMU <- subset(GASTRU_24h_merge, condition == "XMU")
+
+
+
+
+
+coexpr_stats <- function(obj, g1, g2, cells = NULL,
+                         assay = DefaultAssay(obj), slot = "data",
+                         thresh = 0, digits = 2) {
+  if (is.null(cells)) cells <- colnames(obj)
+  E <- GetAssayData(obj, assay = assay, slot = slot)[c(g1, g2), cells, drop = FALSE]
+  g1p <- E[g1, ] > thresh
+  g2p <- E[g2, ] > thresh
+
+  counts <- c(
+    g1_only = sum(g1p & !g2p),
+    g2_only = sum(!g1p & g2p),
+    both    = sum(g1p & g2p),
+    none    = sum(!g1p & !g2p)
+  )
+  total <- length(cells)
+
+  data.frame(
+    category = names(counts),
+    nCells   = as.integer(counts),
+    percent  = round(100 * counts / total, digits),
+    total    = total,
+    row.names = NULL,
+    check.names = FALSE
+  )
+}
+bind_rows(
+  coexpr_stats(GASTRU_24h_merge_UNTREATED, "GATA6", "CDX2") %>% mutate(condition = "UNTREATED"),
+  coexpr_stats(GASTRU_24h_merge_DASATINIB, "GATA6", "CDX2") %>% mutate(condition = "DASATINIB"),
+  coexpr_stats(GASTRU_24h_merge_XMU,       "GATA6", "CDX2") %>% mutate(condition = "XMU")
+) %>%
+  select(condition, category, nCells, percent, total)
+  
+
+
+## PLOT 
+
+
+
+
+g1 <- "GATA6"; g2 <- "CDX2"
+E  <- FetchData(GASTRU_24h_merge_XMU, vars = c(g1, g2))
+c1 <- quantile(E[[g1]], 0.95, na.rm = TRUE)
+c2 <- quantile(E[[g2]], 0.95, na.rm = TRUE)
+pdf("output/seurat/GASTRU_24h_merge_XMU-dim20kparam30res03-coexprGATA6CDX2.pdf",
+    width = 14, height = 6)
+FeaturePlot(
+  GASTRU_24h_merge_XMU,
+  features = c(g1, g2),
+  reduction = "umap",
+  blend = TRUE,
+  blend.threshold = 0,
+  cols = c("red", "green"),     # <- use cols, not cols.blend
+  min.cutoff = c(0, 0),
+  max.cutoff = c(c1, c2),
+  pt.size = 0.9,
+  order = TRUE
+)
+dev.off()
+
+
+## STAT 
+compare_both <- function(obj1, obj2, g1, g2, name1, name2) {
+  # Boolean vectors: gene > 0
+  expr1 <- FetchData(obj1, vars = c(g1, g2)) > 0
+  expr2 <- FetchData(obj2, vars = c(g1, g2)) > 0
+  
+  both1 <- sum(expr1[, g1] & expr1[, g2])
+  both2 <- sum(expr2[, g1] & expr2[, g2])
+  
+  other1 <- ncol(obj1) - both1
+  other2 <- ncol(obj2) - both2
+  
+  tbl <- matrix(c(both1, other1,
+                  both2, other2),
+                nrow = 2, byrow = TRUE,
+                dimnames = list(c(name1, name2),
+                                c("both", "not_both")))
+  
+  fisher <- fisher.test(tbl)
+  
+  list(table = tbl, fisher = fisher)
+}
+
+# Run comparisons
+unt_vs_dasa <- compare_both(GASTRU_24h_merge_UNTREATED, GASTRU_24h_merge_DASATINIB,
+                            "GATA6", "CDX2", "UNTREATED", "DASATINIB")
+
+unt_vs_xmu  <- compare_both(GASTRU_24h_merge_UNTREATED, GASTRU_24h_merge_XMU,
+                            "GATA6", "CDX2", "UNTREATED", "XMU")
+
+# View results
+unt_vs_dasa$table
+unt_vs_dasa$fisher
+
+unt_vs_xmu$table
+unt_vs_xmu$fisher
+
+
+
+# Raw p-values
+pvals <- c(unt_vs_dasa$fisher$p.value,
+           unt_vs_xmu$fisher$p.value)
+
+# Adjusted p-values (Bonferroni)
+padj_bonf <- p.adjust(pvals, method = "bonferroni")
+
+# Adjusted p-values (FDR)
+padj_fdr  <- p.adjust(pvals, method = "BH")
+
+data.frame(
+  comparison = c("UNTREATED vs DASATINIB", "UNTREATED vs XMU"),
+  pval_raw   = signif(pvals, 3),
+  pval_Bonf  = signif(padj_bonf, 3),
+  pval_FDR   = signif(padj_fdr, 3)
+)
+
+
+
+# Unbiased cell type marker genes
+Idents(GASTRU_24h_merge) <- "seurat_clusters"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(GASTRU_24h_merge, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_GASTRU_24h_merge-dim20kparam30res03-all_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+
+# Check some genes
+
+
+
+
+# UNTREATED vs DASA vs XMU
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+DefaultAssay(GASTRU_24h_merge) <- "SCT"
+
+pdf("output/seurat/FeaturePlot_SCT_GASTRU_24h_merge-dim20kparam30res03-CDX2-split.pdf", width=10, height=5)
+FeaturePlot(GASTRU_24h_merge, features = c("CDX2"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_GASTRU_24h_merge-dim20kparam30res03-GATA6-split.pdf", width=10, height=5)
+FeaturePlot(GASTRU_24h_merge, features = c("GATA6"), max.cutoff = 5, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
+
+
+
+
+# differential expressed genes across conditions
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+
+DefaultAssay(GASTRU_24h_merge) <- "RNA"
+
+GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_24h_merge)
+GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+
+
+## what genes change in different conditions for cells of the same type
+
+GASTRU_24h_merge$celltype.stim <- paste(GASTRU_24h_merge$seurat_clusters, GASTRU_24h_merge$condition,
+    sep = "-")
+Idents(GASTRU_24h_merge) <- "celltype.stim"
+
+# use RNA corrected count for DEGs
+## GASTRU_24h_merge <- PrepSCTFindMarkers(GASTRU_24h_merge)
+
+
+## Automation::
+cell_types <- c("1",
+  "2",
+  "3",
+  "4",
+  "5",
+  #"6", # not in DASA
+  #"7", # not in DASA
+  #"8", # not in DASA
+  "9")
+
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "DASATINIB24hrmerge_dim20kparam30res03.response", sep = ".")
+  ident_1 <- paste(cell_type, "-DASATINIB", sep = "")
+  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+
+  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  
+  print(head(response, n = 15))
+  
+  file_name <- paste("output/seurat/", cell_type, "-DASATINIBresponse24hrmerge_dim20kparam30res03.txt", sep = "")
+  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+}
+
+
+cell_types <- c("1"
+ # "2",
+ #  "3",
+  # "4",
+  # "5",
+  # "6", 
+ #  "7", 
+ #  "8",
+  # "9")
+)
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "XMU24hrmerge_dim20kparam30res03.response", sep = ".")
+  ident_1 <- paste(cell_type, "-XMU", sep = "")
+  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+
+  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
+  
+  print(head(response, n = 15))
+  
+  file_name <- paste("output/seurat/", cell_type, "-XMUresponse24hrmerge_dim20kparam30res03.txt", sep = "")
+  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+}
+
+
+```
 
 
 

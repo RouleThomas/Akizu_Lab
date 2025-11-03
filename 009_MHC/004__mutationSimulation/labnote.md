@@ -577,6 +577,34 @@ Issue from `## Annotation summary plot` scripts; when computing the stop; I incl
 
 
 
+## Check why so many missing in dbNSFP5 score
+
+Version `_v3` gave a lot of Missing mutation: mutation without a score; notably for SIFT4G, HDIV (and CADD, but far less)
+
+
+
+```bash
+conda activate mutsim
+
+python scripts/audit_dbnsfp_hits.py ref/dbNSFP5.2a_grch38.gz results_v3/SBS90/n_4000/rep_01.annot.parquet
+#--> No region hit: chr2:74523421 C > A 
+
+# Double check by looking at the dbNSFP5
+tabix ref/dbNSFP5.2a_grch38.gz 2:74523421-74523421 #--> nothing!
+
+
+
+# CHECK SIFT4G
+python scripts/audit_sift4g.py ref/dbNSFP5.2a_grch38.gz results_v3/SBS90/n_4000/rep_01.annot.parquet
+
+
+
+```
+
+--> SIFT4G is for non-synonymous only (ie. no score for synonymous mutation)
+
+
+
 
 
 

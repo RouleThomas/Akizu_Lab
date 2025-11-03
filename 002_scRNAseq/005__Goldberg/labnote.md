@@ -34581,6 +34581,52 @@ dev.off()
 #--> clear induction of DAM micrglia markers for: Apoe, Ctsd, Prdx1
 
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-delayMaturationList.pdf", width=10, height=15)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Mki67", "Atoh1", "Neurod1", "Dcx", "Gabra6", "Grin2c"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
+# Granule cells isolation - use same cells as in the pseudotime
+library("SingleCellExperiment") # for reducedDims
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam15res03.sct_V1_numeric.rds") # 
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # According to condiments workflow
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("6", "1", "4")]
+table(Part_Granule$seurat_clusters) # to double check
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Granule)$UMAP),
+  as.data.frame(colData(Part_Granule)[, -3])
+  ) %>%
+  sample_frac(1)
+umap_coords <- reducedDims(Part_Granule)$UMAP
+selected_cells <-  umap_coords[,1] > 3 & umap_coords[,2] < 8 & umap_coords[,2] > -10
+Part_Granule_subset <- Part_Granule[, selected_cells]
+
+Part_Granule_subset_seurat <- as.Seurat(
+  Part_Granule_subset
+)
+DefaultAssay(Part_Granule_subset_seurat) <- "RNA"
+
+Part_Granule_subset_seurat <- NormalizeData(Part_Granule_subset_seurat, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(Part_Granule_subset_seurat)
+Part_Granule_subset_seurat <- ScaleData(Part_Granule_subset_seurat, features = all.genes) # zero-centres and scales it
+
+DefaultAssay(Part_Granule_subset_seurat) <- "RNA"
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-granuleOnly-version5dim40kparam15res015-Dcx.pdf", width=10, height=6)
+FeaturePlot(Part_Granule_subset_seurat, features = c("Dcx"), max.cutoff = 0.75, cols = c("grey", "red"), split.by = "condition", pt.size = 0.75)
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-granuleOnly-version5dim40kparam15res015-Grin2c.pdf", width=10, height=6)
+FeaturePlot(Part_Granule_subset_seurat, features = c("Grin2c"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition", pt.size = 0.75)
+dev.off()
+
+
+
+
+
 
 # Vln Plot WT vs Kcnc1
 
@@ -35811,6 +35857,122 @@ for (gene in genes_of_interest) {
 dev.off()
 
 
+
+
+
+##################################################
+# Cell cycle proportion per cluster ##############
+##################################################
+
+
+## Using numeric cluster annotation - no stat
+
+
+plot_cell_cycle_per_cluster <- function(WT_Kcnc1_p14_CB_1step.sct, output_dir) {
+  clusters <- unique(WT_Kcnc1_p14_CB_1step.sct$cluster.annot)
+  for (cluster in clusters) {
+    data <- WT_Kcnc1_p14_CB_1step.sct@meta.data %>%
+      dplyr::filter(cluster.annot == cluster) %>%
+      group_by(condition, Phase) %>%
+      summarise(count = n()) %>%
+      ungroup() %>%
+      group_by(condition) %>%
+      mutate(proportion = count / sum(count)) %>%
+      ungroup()
+
+    plot <- ggplot(data, aes(x = condition, y = proportion, fill = Phase)) +
+      geom_bar(stat = "identity", position = "fill") +
+      scale_y_continuous(labels = scales::percent) +
+      labs(title = paste("Cluster", cluster), x = "Genotype", y = "Proportion (%)") +
+      theme_bw() +
+      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+      geom_text(aes(label = scales::percent(proportion, accuracy = 0.1)), 
+                position = position_fill(vjust = 0.5), size = 5)
+
+    # Save plot to PDF
+    pdf(paste0(output_dir, "cellCycle_Cluster_version5dim40kparam15res015_", cluster, ".pdf"), width = 5, height = 6)
+    print(plot)
+    dev.off()
+  }
+}
+plot_cell_cycle_per_cluster(WT_Kcnc1_p14_CB_1step.sct, output_dir = "output/seurat/")
+
+## Using numeric cluster annotation - with stat
+plot_cell_cycle_per_cluster <- function(seu, output_dir) {
+  library(dplyr)
+  library(ggplot2)
+  library(scales)
+  dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+  clusters <- unique(seu$cluster.annot)
+
+  for (cluster in clusters) {
+
+    # ---- per-replicate proportions ----
+    df <- seu@meta.data %>%
+      filter(cluster.annot == cluster) %>%
+      group_by(orig.ident, condition, Phase) %>%
+      summarise(count = n(), .groups = "drop") %>%
+      group_by(orig.ident, condition) %>%
+      mutate(proportion = count / sum(count)) %>%
+      ungroup()
+
+    # guard: only keep WT/Kcnc1
+    df <- df %>% filter(condition %in% c("WT", "Kcnc1"))
+
+    # ---- stats per Phase (no list columns) ----
+    stats <- df %>%
+      group_by(Phase) %>%
+      summarise(
+        WT_mean   = mean(proportion[condition == "WT"]),
+        WT_sd     = sd(proportion[condition == "WT"]),
+        Kcnc1_mean= mean(proportion[condition == "Kcnc1"]),
+        Kcnc1_sd  = sd(proportion[condition == "Kcnc1"]),
+        p_value   = tryCatch(
+          wilcox.test(proportion ~ condition, data = cur_data())$p.value,
+          error = function(e) NA_real_
+        ),
+        .groups = "drop"
+      ) %>%
+      mutate(p_adj = p.adjust(p_value, method = "BH"),
+             sig_label = case_when(
+               p_adj < 0.001 ~ "***",
+               p_adj < 0.01  ~ "**",
+               p_adj < 0.05  ~ "*",
+               TRUE          ~ "ns"
+             ))
+
+    # ---- plotting (mean stacked %) ----
+    plot_data <- df %>%
+      group_by(condition, Phase) %>%
+      summarise(mean_prop = mean(proportion), .groups = "drop")
+
+    p <- ggplot(plot_data, aes(x = condition, y = mean_prop, fill = Phase)) +
+      geom_bar(stat = "identity", position = "fill") +
+      scale_y_continuous(labels = percent) +
+      labs(title = paste("Cluster", cluster), x = "Genotype", y = "Proportion (%)") +
+      theme_bw() +
+      scale_fill_manual(values = c("G1" = "#1f77b4", "G2M" = "#ff7f0e", "S" = "#2ca02c")) +
+      geom_text(aes(label = scales::percent(mean_prop, accuracy = 0.1)),
+                position = position_fill(vjust = 0.5), size = 5)
+
+    # annotate one line per Phase with adj p
+    ann_text <- paste0(stats$Phase, ": ", stats$sig_label, " (BH p=", signif(stats$p_adj, 2), ")")
+    p <- p + annotate("text", x = 1.5, y = seq(1.14, 1.06, length.out = nrow(stats)),
+                      label = ann_text, size = 3.8)
+
+    # ---- save ----
+    pdf(file.path(output_dir, paste0("cellCycle_cluster_", cluster, "_withStats.pdf")),
+        width = 5, height = 6)
+    print(p)
+    dev.off()
+
+    write.csv(stats,
+              file = file.path(output_dir, paste0("cellCycle_cluster_", cluster, "_stats.csv")),
+              row.names = FALSE)
+  }
+}
+plot_cell_cycle_per_cluster(WT_Kcnc1_p14_CB_1step.sct, output_dir = "output/seurat/")
 
 
 ```
@@ -73732,7 +73894,7 @@ dev.off()
 
 ## show only one gene ##################
 ## gene expr over time with SE
-target_gene <- "Gabra6"   # <<< change here
+target_gene <- "Grin2c"   # <<< change here
 yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
 stopifnot(length(yhat_cell) == ncol(traj1))
 
