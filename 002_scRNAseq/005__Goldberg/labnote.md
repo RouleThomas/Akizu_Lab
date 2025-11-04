@@ -39813,6 +39813,11 @@ pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCEpseudotime
 plotReducedDim(Granule_sce, colour_by="orig.ident", dimred = "PCA") 
 dev.off()
 
+pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCEpseudotime_origident_sep.pdf", width=10, height=6)
+plotReducedDim(Granule_sce, colour_by="orig.ident", dimred = "PCA")  + facet_wrap(~ I(colData(Granule_sce)$orig.ident))
+dev.off()
+
+
 pdf("output/miloR/plotReducedDim-p14_CB_Granule_sce_dim30-ReProcessSCEpseudotime_pseudotime_bin_2.pdf", width=5, height=3)
 plotReducedDim(Granule_sce, colour_by="pseudotime_bin_2", dimred = "PCA") +
   scale_colour_manual(values = setNames(viridis(length(c("bin_0_2","bin_2_4","bin_4_6","bin_6_8",
@@ -40016,6 +40021,198 @@ set.seed(42)
 
 
 --> miloR analsyis show less mature granule cells in Kcnc1 as compared to WT. PCA organization is in agreement with pseudotime and granule maturation!
+  --> After more carefully analysis, it s the oppopiste: more mature Kcnc1 granule.. **Analysis was weeird and I had to fine tune many paramters; let s say no changes of granle cell proportion!**
+
+
+
+
+
+###### run miloR on all p14 cells - PCA analyzed
+
+
+- Let's use all cells
+- Use PCA!
+
+
+
+
+
+
+
+```bash
+conda activate miloR
+```
+
+
+```R
+
+#packages
+library("Seurat")
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+set.seed(42)
+
+
+# Load seurat obj
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+set.seed(42)
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+
+
+# Re vizualize data
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-UMAP_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-UMAP_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP", colour_by="cluster.annot")
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-PCA_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-PCA_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA", colour_by="cluster.annot")
+dev.off()
+
+
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="condition", dimred = "PCA") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-origident.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA") 
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-origident_sep.pdf", width=10, height=6)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA")  + facet_wrap(~ I(colData(WT_Kcnc1_CB)$orig.ident))
+dev.off()
+
+
+
+#####################################################
+# Differential abundance testing VERSION1 ####################
+#####################################################
+
+# create Milo object
+
+WT_Kcnc1_CB_milo <- Milo(WT_Kcnc1_CB)
+WT_Kcnc1_CB_milo
+
+
+## Construct KNN graph
+WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 20, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+
+
+
+
+## Defining representative neighbourhoods on the KNN graph
+WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 20, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-k20d40.pdf", width=5, height=3)
+plotNhoodSizeHist(WT_Kcnc1_CB_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+WT_Kcnc1_CB_milo <- countCells(WT_Kcnc1_CB_milo, meta.data = as.data.frame(colData(WT_Kcnc1_CB_milo)), sample="orig.ident")
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_Condition-k20d40.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_Condition-k20d40.pdf", width=3, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) + ## Mark significance threshold (10% FDR)
+  theme_bw()
+dev.off()
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition", "replicate")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ replicate + condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap", reduced.dim = "PCA") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_ReplicateCondition-k20d40.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_ReplicateCondition-k20d40.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+#--> No signifcant changes for with and without replicate in design... But better than SCTransform...
+
+
+
+```
+
+
+--> No signficnat changes for p14 time points (tested different k values; with and without batch effect)
+
+
+
+
+
 
 
 
@@ -43800,6 +43997,241 @@ dev.off()
 
 
 
+##### miloR on all p35 cells - PCA analyzed
+
+
+- Let's use all cells
+- Use PCA!
+
+
+
+
+
+
+
+```bash
+conda activate miloR
+```
+
+
+```R
+
+#packages
+library("Seurat")
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+set.seed(42)
+
+
+# Load seurat obj
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245.sct_V1_label.rds") # 
+set.seed(42)
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p35_CB_1step.sct, assay = "RNA")
+
+
+# Re vizualize data
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-UMAP_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-UMAP_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP", colour_by="cluster.annot")
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-PCA_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-PCA_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA", colour_by="cluster.annot")
+dev.off()
+
+
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="condition", dimred = "PCA") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-origident.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA") 
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-origident_sep.pdf", width=10, height=6)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA")  + facet_wrap(~ I(colData(WT_Kcnc1_CB)$orig.ident))
+dev.off()
+
+
+
+#####################################################
+# Differential abundance testing VERSION1 ####################
+#####################################################
+
+# create Milo object
+
+WT_Kcnc1_CB_milo <- Milo(WT_Kcnc1_CB)
+WT_Kcnc1_CB_milo
+
+
+## Construct KNN graph
+WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 100, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+
+
+
+
+## Defining representative neighbourhoods on the KNN graph
+WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 100, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-k20d40.pdf", width=5, height=3)
+plotNhoodSizeHist(WT_Kcnc1_CB_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+WT_Kcnc1_CB_milo <- countCells(WT_Kcnc1_CB_milo, meta.data = as.data.frame(colData(WT_Kcnc1_CB_milo)), sample="orig.ident")
+
+
+
+
+
+
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_Condition-k20d40.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_Condition-k20d40.pdf", width=3, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) + ## Mark significance threshold (10% FDR)
+  theme_bw()
+dev.off()
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition", "replicate")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ replicate + condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap", reduced.dim = "PCA") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+#--> Signif with k100d40
+
+
+# plot
+WT_Kcnc1_CB_milo <- buildNhoodGraph(WT_Kcnc1_CB_milo)
+
+
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40-PCA.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "PCA", alpha = 0.1)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40-UMAP.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)
+dev.off()
+
+
+
+
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "cluster.annot")
+
+
+head(da_results)
+
+pdf("output/miloR/plotDAbeeswarm-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.pdf", width=5, height=5)
+plotDAbeeswarm(da_results, group.by = "cluster.annot",alpha=0.1)
+dev.off()
+
+
+#--> Show signif changes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+--> Significant changes for p35 time points (ie. effect only when integrating replicate; and with k100; but I did not change parameters as much so should be true!)
+
+
+
+
+
+
+
+
 
 
 
@@ -47319,6 +47751,468 @@ dev.off()
 
 
 ```
+
+
+
+
+
+
+
+
+
+##### miloR on all p180 cells - PCA analyzed
+
+
+- Let's use all cells
+- Use PCA!
+
+
+
+
+
+
+
+```bash
+conda activate miloR
+```
+
+
+```R
+
+#packages
+library("Seurat")
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+set.seed(42)
+
+
+# Load seurat obj
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115.sct_V1_label.rds") # 
+set.seed(42)
+
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p180_CB_1step.sct, assay = "RNA")
+
+
+# Re vizualize data
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-UMAP_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-UMAP_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP", colour_by="cluster.annot")
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-PCA_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-PCA_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA", colour_by="cluster.annot")
+dev.off()
+
+
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="condition", dimred = "PCA") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-origident.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA") 
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-origident_sep.pdf", width=10, height=6)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA")  + facet_wrap(~ I(colData(WT_Kcnc1_CB)$orig.ident))
+dev.off()
+
+
+
+#####################################################
+# Differential abundance testing VERSION1 ####################
+#####################################################
+
+# create Milo object
+
+WT_Kcnc1_CB_milo <- Milo(WT_Kcnc1_CB)
+WT_Kcnc1_CB_milo
+
+
+## Construct KNN graph
+WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 100, d = 20, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+
+
+
+
+## Defining representative neighbourhoods on the KNN graph
+WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 100, d=20, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-k100d20.pdf", width=5, height=3)
+plotNhoodSizeHist(WT_Kcnc1_CB_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+WT_Kcnc1_CB_milo <- countCells(WT_Kcnc1_CB_milo, meta.data = as.data.frame(colData(WT_Kcnc1_CB_milo)), sample="orig.ident")
+
+
+
+
+
+
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_Condition-k100d20.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_Condition-k100d20.pdf", width=3, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) + ## Mark significance threshold (10% FDR)
+  theme_bw()
+dev.off()
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition", "replicate")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ replicate + condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap", reduced.dim = "PCA") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d20.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d20.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+#--> Signif with k100d20
+
+
+# plot
+WT_Kcnc1_CB_milo <- buildNhoodGraph(WT_Kcnc1_CB_milo)
+
+
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d20-PCA.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "PCA", alpha = 0.1)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d20-UMAP.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)
+dev.off()
+
+
+
+
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "cluster.annot")
+
+
+head(da_results)
+
+pdf("output/miloR/plotDAbeeswarm-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d20.pdf", width=5, height=5)
+plotDAbeeswarm(da_results, group.by = "cluster.annot",alpha=0.1)
+dev.off()
+
+
+#--> Show signif changes
+
+```
+
+
+--> Significant changes for p180 time points (ie. effect only when integrating replicate; and with k100; but I did not change parameters as much so should be true!)
+
+
+
+
+
+
+
+
+#### miloR on all p14p35p180 cells - PCA analyzed
+
+
+- Let's use all cells (ie. one integrated for pseudotime)
+- Use PCA!
+
+
+
+
+
+
+
+```bash
+conda activate miloR
+```
+
+
+```R
+
+#packages
+library("Seurat")
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+set.seed(42)
+
+
+# Load seurat obj
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-V1_numeric.rds")
+set.seed(42)
+
+
+
+xxxy here!!!
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "RNA")
+
+
+# Re vizualize data
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-UMAP_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-UMAP_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP", colour_by="cluster.annot")
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-PCA_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-PCA_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA", colour_by="cluster.annot")
+dev.off()
+
+
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="condition", dimred = "PCA") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-origident.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA") 
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-origident_sep.pdf", width=10, height=6)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA")  + facet_wrap(~ I(colData(WT_Kcnc1_CB)$orig.ident))
+dev.off()
+
+
+
+#####################################################
+# Differential abundance testing VERSION1 ####################
+#####################################################
+
+# create Milo object
+
+WT_Kcnc1_CB_milo <- Milo(WT_Kcnc1_CB)
+WT_Kcnc1_CB_milo
+
+
+## Construct KNN graph
+WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 100, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+
+
+
+
+## Defining representative neighbourhoods on the KNN graph
+WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 100, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-k20d40.pdf", width=5, height=3)
+plotNhoodSizeHist(WT_Kcnc1_CB_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+WT_Kcnc1_CB_milo <- countCells(WT_Kcnc1_CB_milo, meta.data = as.data.frame(colData(WT_Kcnc1_CB_milo)), sample="orig.ident")
+
+
+
+
+
+
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_Condition-k20d40.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_Condition-k20d40.pdf", width=3, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) + ## Mark significance threshold (10% FDR)
+  theme_bw()
+dev.off()
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition", "replicate")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ replicate + condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap", reduced.dim = "PCA") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+#--> Signif with k100d40
+
+
+# plot
+WT_Kcnc1_CB_milo <- buildNhoodGraph(WT_Kcnc1_CB_milo)
+
+
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40-PCA.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "PCA", alpha = 0.1)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40-UMAP.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)
+dev.off()
+
+
+
+
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "cluster.annot")
+
+
+head(da_results)
+
+pdf("output/miloR/plotDAbeeswarm-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.pdf", width=5, height=5)
+plotDAbeeswarm(da_results, group.by = "cluster.annot",alpha=0.1)
+dev.off()
+
+
+#--> Show signif changes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+--> Significant changes for p35 time points (ie. effect only when integrating replicate; and with k100; but I did not change parameters as much so should be true!)
 
 
 
