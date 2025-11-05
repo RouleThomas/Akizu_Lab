@@ -40112,17 +40112,17 @@ WT_Kcnc1_CB_milo
 
 
 ## Construct KNN graph
-WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 20, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 100, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
 
 
 
 
 ## Defining representative neighbourhoods on the KNN graph
-WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 20, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 100, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
 
 
 ## plot to check if our k was ok
-pdf("output/miloR/plotNhoodSizeHist-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-k20d40.pdf", width=5, height=3)
+pdf("output/miloR/plotNhoodSizeHist-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-k100d40.pdf", width=5, height=3)
 plotNhoodSizeHist(WT_Kcnc1_CB_milo)
 dev.off()
 
@@ -40155,11 +40155,11 @@ da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ condition, design.df = WT_
 head(da_results)
 
 # Inspecting DA testing results
-pdf("output/miloR/da_results-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_Condition-k20d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_Condition-k100d40.pdf", width=5, height=3)
 ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
 dev.off()
 
-pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_Condition-k20d40.pdf", width=3, height=3)
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_Condition-k100d40.pdf", width=3, height=3)
 ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
   geom_point() +
   geom_hline(yintercept = 1) + ## Mark significance threshold (10% FDR)
@@ -40189,11 +40189,11 @@ da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ replicate + condition, des
 head(da_results)
 
 # Inspecting DA testing results
-pdf("output/miloR/da_results-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_ReplicateCondition-k20d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_ReplicateCondition-k100d40.pdf", width=5, height=3)
 ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
 dev.off()
 
-pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_ReplicateCondition-k20d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_ReplicateCondition-k100d40.pdf", width=5, height=3)
 ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
   geom_point() +
   geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
@@ -40204,10 +40204,29 @@ dev.off()
 
 
 
+# SAVE OUTPUT da_results
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "cluster.annot")
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "replicate")
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "orig.ident")
+
+
+head(da_results)
+
+write.table(
+  da_results,
+  file = "output/miloR/da_results-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_ReplicateCondition-k100d40.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = TRUE
+)
+
+
 ```
 
 
 --> No signficnat changes for p14 time points (tested different k values; with and without batch effect)
+
+--> Lets use k = 100, d=dim and export `da_results`
 
 
 
@@ -43993,6 +44012,241 @@ dev.off()
 
 
 
+##### miloR on all p35 cells - UMAP analyzed
+
+
+- Let's use all cells
+- Use UMAP; not sure recommended, buyt let's see!
+
+
+
+
+
+
+
+```bash
+conda activate miloR
+```
+
+
+```R
+
+#packages
+library("Seurat")
+library("miloR")
+library("SingleCellExperiment")
+library("dplyr")
+library("patchwork")
+library("scater")
+library("scran")
+
+set.seed(42)
+
+
+# Load seurat obj
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245.sct_V1_label.rds") # 
+set.seed(42)
+
+
+
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p35_CB_1step.sct, assay = "RNA")
+
+
+# Re vizualize data
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-UMAP_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-UMAP_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "UMAP", colour_by="cluster.annot")
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-PCA_grey.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA")
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-PCA_clusterannot.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, dimred = "PCA", colour_by="cluster.annot")
+dev.off()
+
+
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="condition", dimred = "PCA") +
+  scale_color_manual(values = c(WT="black", Kcnc1="red"))
+dev.off()
+
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-origident.pdf", width=5, height=3)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA") 
+dev.off()
+
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-origident_sep.pdf", width=10, height=6)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "PCA")  + facet_wrap(~ I(colData(WT_Kcnc1_CB)$orig.ident))
+dev.off()
+pdf("output/miloR/plotReducedDim-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-origident_sepUMAP.pdf", width=20, height=12)
+plotReducedDim(WT_Kcnc1_CB, colour_by="orig.ident", dimred = "UMAP")  + facet_wrap(~ I(colData(WT_Kcnc1_CB)$orig.ident))
+dev.off()
+
+
+
+#####################################################
+# Differential abundance testing VERSION1 ####################
+#####################################################
+
+
+# create Milo object
+
+WT_Kcnc1_CB_milo <- Milo(WT_Kcnc1_CB)
+WT_Kcnc1_CB_milo
+
+
+## Construct KNN graph
+WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 100, d = 40, reduced.dim = "PCA") # Here I have to use PCA, as UMAP only got 2 dims
+
+
+
+
+## Defining representative neighbourhoods on the KNN graph
+WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 100, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+
+
+## plot to check if our k was ok
+pdf("output/miloR/plotNhoodSizeHist-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-k20d40UMAP.pdf", width=5, height=3)
+plotNhoodSizeHist(WT_Kcnc1_CB_milo)
+dev.off()
+
+
+
+# Counting cells in neighbourhoods (in each replicate)
+WT_Kcnc1_CB_milo <- countCells(WT_Kcnc1_CB_milo, meta.data = as.data.frame(colData(WT_Kcnc1_CB_milo)), sample="orig.ident")
+
+
+
+
+
+
+
+
+########################################################################
+# TEST WITHOUT REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
+#--> calcNhoodDistance not needed anymore, see notes below
+
+
+# Testing
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_Condition-k20d40UMAP.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_Condition-k20d40UMAP.pdf", width=3, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) + ## Mark significance threshold (10% FDR)
+  theme_bw()
+dev.off()
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition", "replicate")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ replicate + condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap", reduced.dim = "UMAP") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k50d40UMAP.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k50d40UMAP.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+#--> Signif with k100d40 and k50d40
+
+
+# plot
+WT_Kcnc1_CB_milo <- buildNhoodGraph(WT_Kcnc1_CB_milo)
+
+
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k50d40UMAP-PCA.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "PCA", alpha = 0.1)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k50d40UMAP-UMAP.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)
+dev.off()
+
+
+
+
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "cluster.annot")
+
+
+head(da_results)
+
+pdf("output/miloR/plotDAbeeswarm-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k50d40UMAP.pdf", width=5, height=5)
+plotDAbeeswarm(da_results, group.by = "cluster.annot",alpha=0.1)
+dev.off()
+
+
+#--> Show signif changes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+--> Usiong UMAP gave same result as PCA, lets prefer using PCA!
+
+
 
 
 
@@ -44001,7 +44255,7 @@ dev.off()
 
 
 - Let's use all cells
-- Use PCA!
+- Use PCA (recommended)
 
 
 
@@ -44210,13 +44464,21 @@ dev.off()
 
 
 
+# SAVE OUTPUT da_results
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "cluster.annot")
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "replicate")
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "orig.ident")
 
 
+head(da_results)
 
-
-
-
-
+write.table(
+  da_results,
+  file = "output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = TRUE
+)
 
 
 
@@ -44224,6 +44486,10 @@ dev.off()
 
 
 --> Significant changes for p35 time points (ie. effect only when integrating replicate; and with k100; but I did not change parameters as much so should be true!)
+
+
+
+
 
 
 
@@ -47971,6 +48237,28 @@ dev.off()
 
 #--> Show signif changes
 
+
+
+
+# SAVE OUTPUT da_results
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "cluster.annot")
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "replicate")
+da_results <- annotateNhoods(WT_Kcnc1_CB_milo, da_results, coldata_col = "orig.ident")
+
+
+head(da_results)
+
+write.table(
+  da_results,
+  file = "output/miloR/da_results-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d40.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = TRUE
+)
+
+
+
+
 ```
 
 
@@ -47983,8 +48271,10 @@ dev.off()
 
 
 
-#### miloR on all p14p35p180 cells - PCA analyzed
+#### miloR all time points  - PCA analyzed
 
+
+##### miloR using integration p14 p35 p180 (used in pseudotime)
 
 - Let's use all cells (ie. one integrated for pseudotime)
 - Use PCA!
@@ -48247,7 +48537,164 @@ dev.off()
 ```
 
 
---> Significant changes for p35 time points (ie. effect only when integrating replicate; and with k100; but I did not change parameters as much so should be true!)
+--> No signifcant changes when integrating all samples together! But not sure that is the right think to do anyway....
+
+
+
+
+##### miloR - PCA analyzed - putting together output from time specific analysis
+
+Let's import the da_results of each miloR analysis and make some plots for presentation (ie. compare cell abundance changes per cell time over time)
+
+
+
+
+```bash
+conda activate miloR
+```
+
+
+```R
+# packages
+library("tidyverse")
+library(ggplot2)
+library(scales)
+
+
+# import da_results
+
+da_results_p14 <- read.delim("output/miloR/da_results-WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-design_ReplicateCondition-k100d40.tsv") %>%
+  add_column(time="p14") %>%
+  as_tibble()
+
+da_results_p35 <-  read.delim("output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.tsv")  %>%
+  add_column(time="p35") %>%
+  as_tibble()
+  
+  
+
+da_results_p180 <-  read.delim("output/miloR/da_results-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d40.tsv") %>%
+  add_column(time="p180") %>%
+  as_tibble()
+
+
+da_results = da_results_p14 %>%
+  bind_rows(da_results_p35) %>%
+  bind_rows(da_results_p180)
+
+da_results$time <- factor(x = da_results$time, levels = c(    "p14",
+  "p35",
+  "p180"))
+
+
+
+# Granule
+
+# Filter for Granule cell type only
+Granule <- da_results %>%
+  filter(cluster.annot == "Granule") %>%
+  mutate(
+    sig = SpatialFDR <= 0.1,
+    max_pos = max(logFC[logFC > 0], na.rm = TRUE),
+    min_neg = min(logFC[logFC < 0], na.rm = TRUE),
+    color = case_when(
+      !sig ~ "grey75",
+      logFC > 0 ~ col_numeric(c("#FDE0E0", "#8B0000"), domain = c(0, max_pos))(pmax(logFC, 0)),
+      logFC < 0 ~ col_numeric(c("#D9D9D9", "#000000"), domain = c(min_neg, 0))(pmin(logFC, 0)),
+      TRUE ~ "grey75"
+    ),
+    alpha_val = ifelse(sig, 0.9, 0.3),
+    size_val  = ifelse(sig, 1.8, 1.0)
+  )
+pdf("output/miloR/plotDAbeeswarm_LIKE-WT_Kcnc1_CB_1step-version5-design_ReplicateCondition-k100d40.pdf", width=2, height=3)
+
+ggplot(Granule, aes(x = time, y = logFC)) +
+  geom_jitter(aes(color = color, alpha = alpha_val, size = size_val),
+              width = 0.2, height = 0) +
+  scale_color_identity() +
+  scale_alpha_identity() +
+  scale_size_identity() +
+  geom_hline(yintercept = 0, linetype = 2) +
+  theme_bw() +
+  labs(
+    x = "Time",
+    y = "Log Fold Change",
+    title = "Granule"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(size = 11),
+    axis.text.y = element_text(size = 11)
+  )
+dev.off()
+
+
+
+
+
+
+
+# Filter for Granule cell type only - thresh FC 1.5
+Granule <- da_results %>%
+  filter(cluster.annot == "Granule") %>%
+  mutate(
+    sig = SpatialFDR <= 0.1,
+    max_pos = max(logFC[logFC > 1.5], na.rm = TRUE),
+    min_neg = min(logFC[logFC < -1.5], na.rm = TRUE),
+    color = case_when(
+      !sig ~ "grey75",
+      logFC > 1.5 ~ col_numeric(c("#FDE0E0", "#8B0000"), domain = c(0, max_pos))(pmax(logFC, 0)),
+      logFC < -1.5 ~ col_numeric(c("#D9D9D9", "#000000"), domain = c(min_neg, 0))(pmin(logFC, 0)),
+      TRUE ~ "grey75"
+    ),
+    alpha_val = ifelse(sig, 0.9, 0.3),
+    size_val  = ifelse(sig, 1.8, 1.0)
+  )
+pdf("output/miloR/plotDAbeeswarm_LIKE-WT_Kcnc1_CB_1step-version5-design_ReplicateCondition-k100d40.pdf", width=2, height=3)
+
+ggplot(Granule, aes(x = time, y = logFC)) +
+  geom_jitter(aes(color = color, alpha = alpha_val, size = size_val),
+              width = 0.2, height = 0) +
+  scale_color_identity() +
+  scale_alpha_identity() +
+  scale_size_identity() +
+  geom_hline(yintercept = 0, linetype = 2) +
+  theme_bw() +
+  labs(
+    x = "Time",
+    y = "Log Fold Change",
+    title = "Granule"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(size = 11),
+    axis.text.y = element_text(size = 11)
+  )
+dev.off()
+
+
+
+
+
+```
+
+
+--> Granule: p14 same, p35 more in Kcnc1, p180 a bit more in Kcnc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
