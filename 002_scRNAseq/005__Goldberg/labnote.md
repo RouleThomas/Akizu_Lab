@@ -48019,9 +48019,6 @@ WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_inte
 set.seed(42)
 
 
-
-xxxy here!!!
-
 # convert to SingleCellExperiment
 WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "RNA")
 
@@ -48071,17 +48068,17 @@ WT_Kcnc1_CB_milo
 
 
 ## Construct KNN graph
-WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 100, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 50, d = 50, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 50; k value can be adapted
 
 
 
 
 ## Defining representative neighbourhoods on the KNN graph
-WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 100, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 50, d=50, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
 
 
 ## plot to check if our k was ok
-pdf("output/miloR/plotNhoodSizeHist-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-k20d40.pdf", width=5, height=3)
+pdf("output/miloR/plotNhoodSizeHist-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-k50d50.pdf", width=5, height=3)
 plotNhoodSizeHist(WT_Kcnc1_CB_milo)
 dev.off()
 
@@ -48120,23 +48117,21 @@ da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ condition, design.df = WT_
 head(da_results)
 
 # Inspecting DA testing results
-pdf("output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_Condition-k20d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-design_Condition-k100d50.pdf", width=5, height=3)
 ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
 dev.off()
 
-pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_Condition-k20d40.pdf", width=3, height=3)
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-design_Condition-k100d50.pdf", width=3, height=3)
 ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
   geom_point() +
   geom_hline(yintercept = 1) + ## Mark significance threshold (10% FDR)
   theme_bw()
 dev.off()
 
-
-
-
+#--> Not signif but bad design, need take replicate and time likely into the design
 
 ########################################################################
-# TEST WITH REPLICATE BATCH EFFECT ####################################
+# TEST WITH REPLICATE BATCH EFFECT - REPLICATE ####################################
 # Defining experimental design
 WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition", "replicate")]
 ## Convert batch info from integer to factor
@@ -48154,18 +48149,58 @@ da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ replicate + condition, des
 head(da_results)
 
 # Inspecting DA testing results
-pdf("output/miloR/da_results-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-design_ReplicateCondition-k100d50.pdf", width=5, height=3)
 ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
 dev.off()
 
-pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40.pdf", width=5, height=3)
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-design_ReplicateCondition-k100d50.pdf", width=5, height=3)
 ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
   geom_point() +
   geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
 dev.off()
 
 
-#--> Signif with k100d40
+
+
+#--> Not signif but bad design, need take replicate and time likely into the design
+
+
+
+
+
+########################################################################
+# TEST WITH REPLICATE BATCH EFFECT - REPLICATE AND TIME ####################################
+# Defining experimental design
+WT_Kcnc1_CB_design <- data.frame(colData(WT_Kcnc1_CB_milo))[,c("orig.ident", "condition", "time", "replicate")]
+## Convert batch info from integer to factor
+WT_Kcnc1_CB_design <- distinct(WT_Kcnc1_CB_design)
+rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
+
+WT_Kcnc1_CB_design
+
+
+
+# Computing neighbourhood connectivity
+#--> Not needed 
+
+da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ replicate + time + condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap", reduced.dim = "PCA") # fdr.weighting="graph-overlap" added, see notes
+head(da_results)
+
+# Inspecting DA testing results
+pdf("output/miloR/da_results-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-design_ReplicateTimeCondition-k50d50.pdf", width=5, height=3)
+ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+dev.off()
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_CB_integrateMerge-version5dim50kparam30res25-design_ReplicateTimeCondition-k50d50.pdf", width=5, height=3)
+ggplot(da_results, aes(logFC, -log10(SpatialFDR))) + 
+  geom_point() +
+  geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+dev.off()
+
+
+XXXY here!
+
+
 
 
 # plot
