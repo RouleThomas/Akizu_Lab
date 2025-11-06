@@ -216,6 +216,9 @@ WORK great!
 --> Same `monocle3` but with miloR for diff. cell abundance
 
 
+### DAseq
+
+--> Same `miloR` but with `DAseq` and `devtools`
 
 
 
