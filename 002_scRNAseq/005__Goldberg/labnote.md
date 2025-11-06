@@ -40112,13 +40112,13 @@ WT_Kcnc1_CB_milo
 
 
 ## Construct KNN graph
-WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 100, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
+WT_Kcnc1_CB_milo <- buildGraph(WT_Kcnc1_CB_milo, k = 50, d = 40, reduced.dim = "PCA") # for d lets use the nb of dims we used for clustering= 40; k value can be adapted
 
 
 
 
 ## Defining representative neighbourhoods on the KNN graph
-WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 100, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
+WT_Kcnc1_CB_milo <- makeNhoods(WT_Kcnc1_CB_milo, prop = 0.2, k = 50, d=40, refined = TRUE, reduced_dims = "PCA", refinement_scheme="graph") # refinement_scheme="graph" added, see note
 
 
 ## plot to check if our k was ok
@@ -40143,12 +40143,9 @@ rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
 WT_Kcnc1_CB_design
 
 
-
 # Computing neighbourhood connectivity
 #Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
 #--> calcNhoodDistance not needed anymore, see notes below
-
-
 # Testing
 
 da_results <- testNhoods(WT_Kcnc1_CB_milo, design = ~ condition, design.df = WT_Kcnc1_CB_design, fdr.weighting="graph-overlap") # fdr.weighting="graph-overlap" added, see notes
@@ -44372,12 +44369,9 @@ rownames(WT_Kcnc1_CB_design) <- WT_Kcnc1_CB_design$orig.ident
 
 WT_Kcnc1_CB_design
 
-
-
 # Computing neighbourhood connectivity
 #Part_Granule_subset_milo <- calcNhoodDistance(Part_Granule_subset_milo, d=40, reduced.dim = "PCA")
 #--> calcNhoodDistance not needed anymore, see notes below
-
 
 # Testing
 
@@ -44446,6 +44440,15 @@ pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15
 plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)
 dev.off()
 
+
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40-UMAP_color.pdf", width=12, height=8)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)  +
+  scale_fill_gradient2(high='red', mid='white', low= "blue")
+dev.off()
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-design_ReplicateCondition-k100d40-UMAP_color1.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)  +
+  scale_fill_gradient2(high='red', mid='white', low= "blue")
+dev.off()
 
 
 
@@ -48222,6 +48225,16 @@ pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p180_CB_1step-version5dim20kparam1
 plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)
 dev.off()
 
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d20-UMAP_color.pdf", width=12, height=8)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)  +
+  scale_fill_gradient2(high='red', mid='white', low= "blue")
+dev.off()
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d20-UMAP_color1.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)  +
+  scale_fill_gradient2(high='red', mid='white', low= "blue")
+dev.off()
+
+
 
 
 
@@ -48557,8 +48570,8 @@ conda activate miloR
 ```R
 # packages
 library("tidyverse")
-library(ggplot2)
-library(scales)
+library("ggplot2")
+library("scales")
 
 
 # import da_results
@@ -48672,6 +48685,101 @@ ggplot(Granule, aes(x = time, y = logFC)) +
   )
 dev.off()
 
+
+
+
+
+
+
+
+
+
+# MLI1
+
+# Filter for MLI1 cell type only
+MLI1 <- da_results %>%
+  filter(cluster.annot == "MLI1") %>%
+  mutate(
+    sig = SpatialFDR <= 0.1,
+    max_pos = max(logFC[logFC > 0], na.rm = TRUE),
+    min_neg = min(logFC[logFC < 0], na.rm = TRUE),
+    color = case_when(
+      !sig ~ "grey75",
+      logFC > 0 ~ col_numeric(c("#FDE0E0", "#8B0000"), domain = c(0, max_pos))(pmax(logFC, 0)),
+      logFC < 0 ~ col_numeric(c("#D9D9D9", "#000000"), domain = c(min_neg, 0))(pmin(logFC, 0)),
+      TRUE ~ "grey75"
+    ),
+    alpha_val = ifelse(sig, 0.9, 0.3),
+    size_val  = ifelse(sig, 1.8, 1.0)
+  )
+
+pdf("output/miloR/plotDAbeeswarm_LIKE-WT_Kcnc1_CB_1step-version5-design_ReplicateCondition-k100d40-MLI1.pdf", width=2, height=3)
+ggplot(MLI1, aes(x = time, y = logFC)) +
+  geom_jitter(aes(color = color, alpha = alpha_val, size = size_val),
+              width = 0.2, height = 0) +
+  scale_color_identity() +
+  scale_alpha_identity() +
+  scale_size_identity() +
+  geom_hline(yintercept = 0, linetype = 2) +
+  theme_bw() +
+  labs(
+    x = "Time",
+    y = "Log Fold Change",
+    title = "MLI1"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(size = 11),
+    axis.text.y = element_text(size = 11)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+# MLI2
+
+# Filter for MLI2 cell type only
+MLI2 <- da_results %>%
+  filter(cluster.annot == "MLI2") %>%
+  mutate(
+    sig = SpatialFDR <= 0.1,
+    max_pos = max(logFC[logFC > 0], na.rm = TRUE),
+    min_neg = min(logFC[logFC < 0], na.rm = TRUE),
+    color = case_when(
+      !sig ~ "grey75",
+      logFC > 0 ~ col_numeric(c("#FDE0E0", "#8B0000"), domain = c(0, max_pos))(pmax(logFC, 0)),
+      logFC < 0 ~ col_numeric(c("#D9D9D9", "#000000"), domain = c(min_neg, 0))(pmin(logFC, 0)),
+      TRUE ~ "grey75"
+    ),
+    alpha_val = ifelse(sig, 0.9, 0.3),
+    size_val  = ifelse(sig, 1.8, 1.0)
+  )
+  
+pdf("output/miloR/plotDAbeeswarm_LIKE-WT_Kcnc1_CB_1step-version5-design_ReplicateCondition-k100d40-MLI2.pdf", width=2, height=3)
+ggplot(MLI2, aes(x = time, y = logFC)) +
+  geom_jitter(aes(color = color, alpha = alpha_val, size = size_val),
+              width = 0.2, height = 0) +
+  scale_color_identity() +
+  scale_alpha_identity() +
+  scale_size_identity() +
+  geom_hline(yintercept = 0, linetype = 2) +
+  theme_bw() +
+  labs(
+    x = "Time",
+    y = "Log Fold Change",
+    title = "MLI2"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(size = 11),
+    axis.text.y = element_text(size = 11)
+  )
+dev.off()
 
 
 
