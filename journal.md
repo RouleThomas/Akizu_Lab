@@ -33,7 +33,7 @@ To allow cp/paste between Vitrual machine and computer:
 - LOCAL COMPUTER FILE:\
 **Box**:`/home/roulet/tsclient/roule/Box`\
 **Google drive**: `/home/roulet/tsclient/roule/Google Drive Streaming`
-
+- **Cristancho** collab:  `/mnt/isilon/cristancho_data` (Windows: `\\ressmb05.research.chop.edu\cristancho_data `)
 
 
 ## Run job
