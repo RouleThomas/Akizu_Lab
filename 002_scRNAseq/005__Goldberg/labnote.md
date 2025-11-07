@@ -48510,6 +48510,25 @@ plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)  +
   scale_fill_gradient2(high='red', mid='white', low= "blue")
 dev.off()
 
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d20-UMAP_colorFC15.pdf", width=12, height=8)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)  +
+  scale_fill_gradientn(
+    colours = c("blue", "white", "white", "red"),   # blue→white band→red
+    values  = rescale(c(-2, -1.5, 1.5, 2)),         # white from -1.5 to +1.5
+    limits  = c(-2, 2),
+    oob     = scales::squish
+  )
+dev.off()
+pdf("output/miloR/da_results_Volcano-WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-design_ReplicateCondition-k100d20-UMAP_color1FC15.pdf", width=5, height=3)
+plotNhoodGraphDA(WT_Kcnc1_CB_milo, da_results, layout = "UMAP", alpha = 0.1)  +
+  scale_fill_gradientn(
+    colours = c("blue", "white", "white", "red"),   # blue→white band→red
+    values  = rescale(c(-2, -1.5, 1.5, 2)),         # white from -1.5 to +1.5
+    limits  = c(-2, 2),
+    oob     = scales::squish
+  )
+dev.off()
+
 
 
 
@@ -49015,7 +49034,7 @@ Granule <- da_results %>%
     alpha_val = ifelse(sig, 0.9, 0.3),
     size_val  = ifelse(sig, 1.8, 1.0)
   )
-pdf("output/miloR/plotDAbeeswarm_LIKE-WT_Kcnc1_CB_1step-version5-design_ReplicateCondition-k100d40.pdf", width=2, height=3)
+pdf("output/miloR/plotDAbeeswarm_LIKE-WT_Kcnc1_CB_1step-version5-design_ReplicateCondition-k100d40-threshFC15.pdf", width=2, height=3)
 
 ggplot(Granule, aes(x = time, y = logFC)) +
   geom_jitter(aes(color = color, alpha = alpha_val, size = size_val),
@@ -76365,7 +76384,7 @@ dev.off()
 
 ## show only one gene ##################
 ## gene expr over time with SE
-target_gene <- "Grin2c"   # <<< change here
+target_gene <- "Eomes"   # <<< change here Mki67, Pcna, Top2a, Rrm1, Rrm2, Ube2c, Tyms
 yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
 stopifnot(length(yhat_cell) == ncol(traj1))
 
@@ -76688,7 +76707,7 @@ dev.off()
 ######## Specific case GO BP ################
 
 genes_cluster <- gene_clusters_traj1_Granule %>%
-  filter(cluster == 6) %>%
+  filter(cluster == 2) %>%
   pull(gene)
 
 
@@ -76703,7 +76722,7 @@ ego <- enrichGO(gene = genes_cluster,
 
 # Plot
 
-pdf("output/Pathway/dotplot_BP-traj1_Granule-version4dim40kparam15res03-l2fc015_cl7_cluster6_top5.pdf", width = 6, height =3 )
+pdf("output/Pathway/dotplot_BP-traj1_Granule-version4dim40kparam15res03-l2fc015_cl7_cluster2_top5.pdf", width = 6, height =3 )
 dotplot(ego, showCategory = 5)
 dev.off()
 
