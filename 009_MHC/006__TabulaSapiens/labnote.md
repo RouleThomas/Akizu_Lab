@@ -564,8 +564,7 @@ Unbiased marker gene identification with find `FindAllMarkers()` ran in slurm be
 ```bash
 conda activate bpcells_r44 # For seurat v5 with BPCells
 
-sbatch scripts/FindAllMarkers_TabulaSapiens_allCells-FindAllMarkersmipct025logfc025.sh # 59562106
-
+sbatch scripts/FindAllMarkers_TabulaSapiens_allCells-FindAllMarkersmipct025logfc025.sh # 59562106 ok
 ```
 
 

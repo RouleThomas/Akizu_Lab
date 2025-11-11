@@ -12979,7 +12979,7 @@ set.seed(42)
 set.seed(42)
 traj2 <- readRDS("output/condiments/traj2_Part_DG_GC-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.rds")
 
-XXXY below not mod!!
+XXXY below not mod!! (just ran gene expr over pseudotime)
 
 
 
@@ -13095,18 +13095,18 @@ write.table(output_df,
 
 
 # Check some genes individually - RNA
-## FOR LINEAGE 1
+## FOR LINEAGE 2
 counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
 cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
-pseudotimes <- slingPseudotime(Part_DG_GC_subset, na = FALSE) [,1] # HERE INDICATE TRAJ
-cellweights <- slingCurveWeights(Part_DG_GC_subset) [,1] # HERE INDICATE TRAJ
+pseudotimes <- slingPseudotime(Part_DG_GC_subset, na = FALSE) [,2] # HERE INDICATE TRAJ
+cellweights <- slingCurveWeights(Part_DG_GC_subset) [,2] # HERE INDICATE TRAJ
 #### Subset the counts, pseudotimes, and cell weights for non-zero weights:
 sub_weights <- cellweights[cellweights != 0]
 sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
-pdf("output/condiments/plotSmoothers-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Hopx.pdf", width=5, height=2)
-plotSmoothers(traj1, sub_counts, gene = "Hopx", curvesCol = c("blue","red"), lwd = 1, size = 0.2) +
+pdf("output/condiments/plotSmoothers-traj2_DG_GC-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Bcl11b.pdf", width=5, height=2)
+plotSmoothers(traj2, sub_counts, gene = "Bcl11b", curvesCol = c("blue","red"), lwd = 1, size = 0.2) +
 scale_color_manual(values =c("blue","red"))
 dev.off()
 
@@ -13311,7 +13311,7 @@ sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC.sh # 45797474 ok
 sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC_option1.sh # 47206838 ok
 
 ### traj of interest NSC_quiescent --> DG_GC isolated cells - (Task email 20251110) 
-sbatch scripts/fitGAM_6knots_traj2_RNA_common_DG_GC-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn.sh # 59563527 xxx
+sbatch scripts/fitGAM_6knots_traj2_RNA_common_DG_GC-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn.sh # 59563527 ok
 
 
 

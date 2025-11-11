@@ -281,9 +281,9 @@ python scripts/plot_sbs96_from_parquet.py \
 
 
 
-## Annotation summary plot
+# Annotation summary plot
 
-### Version1 FAIL
+## Version1 FAIL
 
 Let's generate plot with `x` = `n_mutations` and `y` = `annotation score`
 
@@ -339,7 +339,7 @@ python scripts/plot_all_signatures_combined-contexts-highlight_random.py
 
 
 
-### Version2 - FAIL STOP, unnecessary correction
+## Version2 - FAIL STOP, unnecessary correction
 
 --> Same name with `*_v2*` suffix. (realized STOP issue related to `.json`, not this sumary plot part)
 
@@ -372,7 +372,7 @@ python scripts/plot_all_signatures_combined_v2-contexts-highlight_random.py
 
 
 
-### Version3
+## Version3
 
 Let's generate plot with `x` = `n_mutations` and `y` = `annotation score`
 
@@ -432,7 +432,7 @@ python scripts/plot_all_signatures_combined-experimental-highlight_random_v3.py
 
 
 
-### Version4
+## Version4
 
 From the `## version3 .json corrected and path. score corrected` simulation where CADD_PHRED score corrected.. 
 

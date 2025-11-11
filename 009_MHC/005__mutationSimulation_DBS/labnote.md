@@ -238,15 +238,148 @@ python scripts/dbs_ref_alt.py \
   --tsv-out results_DBS/DBS19/n_4000/rep_01.preview.tsv \
   --vcf-out results_DBS/DBS19/n_4000/rep_01.with_refalt.vcf
 
+```
+
+--> All good
+
+
+
+
+# Add consequence
+
+Here more complex than SBS, as one DBS mutation can alter two AA at the same time! Here is how we will proceed:
+- If mutation affect 2 AA, keep only the most deleterious one
+  - STOP > missense > synonymous (keep > leave)
+
+
+## Proportion of simulated mutations affected 2 AA
+
+First lets check the **proportion of each simulated mutations affected 2 AA**. Which is interesting as higher probabilities would indicate more probability to generate neoantigens!
+
+The below script used the codon_index (0,1,2) column from each parquet file:
+- value of 0= Bases 1 and 2 of the same codon are mutated (1 AA affected)
+- value of 1= Bases 2 and 3 of the same codon are mutated (1 AA affected)
+- value of 2= Bases 3 of this codond, and 1 of the next codon is affected (2 AA)
+
+--> Count in each parquet `codon_index ==2`
+
+
+
+```bash
+conda activate mutsim
+
+
+parquet-tools show --head 5 results_DBS/DBS1/n_4000/rep_01.sim.parquet
+
+
+
+# DBS ################
+## Summarise/count double_AA mutation
+python scripts/summarize_doubleAA.py --root results_DBS
+
+## plot all double_AA mutation
+python scripts/plot_doubleAA.py --root results_DBS --out results_DBS/DBS_doubleAA_prop.pdf
+python scripts/plot_doubleAA-highlight_random.py --root results_DBS --out results_DBS/DBS_doubleAA_prop-highlight_random.pdf
+
+
+# context ################
+## Summarise/count double_AA mutation
+python scripts/summarize_doubleAA.py --root results_contexts_DBS
+
+## plot all double_AA mutation
+python scripts/plot_doubleAA.py --root results_contexts_DBS --out results_contexts_DBS/contexts_DBS_doubleAA_prop.pdf
+python scripts/plot_doubleAA-highlight_random.py --root results_contexts_DBS --flat results_DBS/Flat --out results_contexts_DBS/contexts_DBS_doubleAA_prop-highlight_random.pdf
+
+
+```
+
+--> Gloablly around 1/3, but still some differences between signatures!
+
+
+
+Let's investigate whether result make sense, notably whether the context with higher probability to affect 2 AA are sequences that are often found overlapping two codons.
+
+
+```bash
+conda activate mutsim
+
+python scripts/quantify_dbs_boundary_propensity.py
+```
+
+--> Output file: `dbs_ref2_boundary_propensity.tsv`; provide proportion of each context spanning two codons
+
+- **AT-rich pairs** (AT, TT, AC, TC) are slightly *more likely to occur at codon boundaries* (ends of codons often A/T-rich).
+- **GC-rich pairs** (CG, GC, CC) are slightly *less likely to sit at boundaries*.
 
 
 
 
 
+## Add consequence (STOP, missense, synonymous)
+
+Let's compute consequences at the codon level (not bp level); so from each simulated parquet we will:
+- build the ALT codon(s) by applying the 2-bp change,
+- compare the ALT to the REF AA
+- for boundary cases (two codons hits by single DBS mutation), keep only the most deleterious one (keep the other as *secondary*.)
+  - When codon_index ∈ {0,1} the 2 bases sit within one codon → we build that single ALT codon and compare AA.
+  - When codon_index == 2, we touch two codons: pos2 of the first and pos0 of the next. We compute both AA outcomes and pick the most deleterious as primary (and keep the other as secondary for QC).
+
+
+
+
+
+```bash
+conda activate mutsim
+
+
+python scripts/add_csq_v1.py --root results_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
+python scripts/add_csq_v1.py --root results_contexts_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
 
 
 
 ```
+
+--> All good, new `consequence_summary_rep*.sim.json` file generated for each replicate
+
+
+
+
+## Add path. score (SIFT4G, CADD, )
+
+
+Let's use the same strategy to compile path. score
+
+The script will:
+- calls dbNSFP for each variant
+- Maps scores/preds to the primary AA (worst of the two AAs when a boundary codon is hit).
+  - If both SNVs are in the same codon (codon_index 0/1): aggregate to one codon score (SIFT4G=min, PP2=max, CADD=max).
+  - If it’s a boundary (codon_index=2): use the SNV that belongs to the primary codon (the one with the worse AA consequence).
+- Writes one JSON per replicate with counts, fractions and summary stats, and (optionally) a TSV of per-variant primary scores.
+
+
+
+
+```bash
+conda activate mutsim
+
+XXXY try code !! see chat
+
+python scripts/add_path_v1.py --root results_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
+
+
+
+```
+
+
+
+
+# Annotation summary plot
+
+
+XXXY  do annotatio nplot for consequences and path., score
+
+
+
 
 
 
