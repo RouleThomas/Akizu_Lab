@@ -297,7 +297,13 @@ dev.off()
 
 ## Identify top marker genes in tissue and cell types
 
-XXXY HERE
+
+To isolate expressed/detected genes we will generate several list:
+- **FindAllMarkersmipct025logfc025**: Here isolate gene expressed in at least 25% of the cell of the cluster, and globally more express in this cluster as compared to all over cluster (use `FindAllMarkers()` with `min.pct = 0.25, logfc.threshold = 0.25`)
+- **MatrixFilter025**: Here we simply keep all genes express/detected in at least 25% of the cell of the cluster (use custom script)
+
+
+
 
 ```bash
 conda activate bpcells_r44 # For seurat v5 with BPCells
@@ -310,16 +316,260 @@ library("Seurat")
 library("BPCells")
 library("Azimuth")
 library("biomaRt")
-
+library("Matrix")
+library("ggplot2")
+set.seed(42)
 
 # load rds object
-(seu, file = "output/seurat/TabulaSapiens_allCells-dim30.rds")
+
+TabulaSapiens_allCells <- readRDS(file = "output/seurat/TabulaSapiens_allCells-dim30.rds") # 
+
+####################################
+# tissue resolution ################
+####################################
+
+# FindAllMarkersmipct025logfc025  ###########################
+## Unbiased cell type marker genes
+Idents(TabulaSapiens_allCells) <- "tissue"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(TabulaSapiens_allCells) <- "RNA"
+TabulaSapiens_allCells <- NormalizeData(TabulaSapiens_allCells, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(TabulaSapiens_allCells)
+TabulaSapiens_allCells <- ScaleData(TabulaSapiens_allCells, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(TabulaSapiens_allCells, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_TabulaSapiens_allCells-dim30-FindAllMarkersmipct025logfc025-tissue.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+# MatrixFilter0XX  ###########################
+Idents(TabulaSapiens_allCells) <- "tissue"  # replace "celltype" with your metadata column name
+## Threshold for expression detection
+threshold <- 0.75  # 25%
+## Create output directory
+
+
+## Get all cell types
+celltypes <- levels(Idents(TabulaSapiens_allCells))
+
+### Loop through each cell type
+for (ct in celltypes) {
+  cat("Processing:", ct, "\n")
+  # Subset cells from this cell type
+  cells <- WhichCells(TabulaSapiens_allCells, idents = ct)
+  # Compute detection proportion (>0 counts)
+  expr_matrix <- GetAssayData(TabulaSapiens_allCells, slot = "counts")[, cells]
+  pct_expressed <- Matrix::rowMeans(expr_matrix > 0)
+  # Keep genes expressed in at least 25% of cells
+  expressed_genes <- names(pct_expressed[pct_expressed >= threshold])
+  # Save one file per cell type
+  outfile <- paste0("output/seurat/", ct, "-MatrixFilter075.txt")
+  writeLines(expressed_genes, outfile)
+}
 
 
 
 
+
+
+
+
+
+
+
+####################################
+# cell_type resolution ################
+####################################
+
+
+
+# RUN IN SLURM  #######################################
+# FindAllMarkersmipct025logfc025  ###########################
+## Unbiased cell type marker genes
+Idents(TabulaSapiens_allCells) <- "cell_type"
+## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
+DefaultAssay(TabulaSapiens_allCells) <- "RNA"
+TabulaSapiens_allCells <- NormalizeData(TabulaSapiens_allCells, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(TabulaSapiens_allCells)
+TabulaSapiens_allCells <- ScaleData(TabulaSapiens_allCells, features = all.genes) # zero-centres and scales it
+
+all_markers <- FindAllMarkers(TabulaSapiens_allCells, assay = "RNA", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(all_markers, file = "output/seurat/srat_TabulaSapiens_allCells-dim30-FindAllMarkersmipct025logfc025-cell_type.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+#################################################################
+
+
+
+# MatrixFilter0XX  ###########################
+Idents(TabulaSapiens_allCells) <- "cell_type"  # replace "celltype" with your metadata column name
+## Threshold for expression detection
+threshold <- 0.75  # 25%
+## Create output directory
+
+
+## Get all cell types
+celltypes <- levels(Idents(TabulaSapiens_allCells))
+
+### Loop through each cell type
+for (ct in celltypes) {
+  cat("Processing:", ct, "\n")
+  # Subset cells from this cell type
+  cells <- WhichCells(TabulaSapiens_allCells, idents = ct)
+  # Compute detection proportion (>0 counts)
+  expr_matrix <- GetAssayData(TabulaSapiens_allCells, slot = "counts")[, cells]
+  pct_expressed <- Matrix::rowMeans(expr_matrix > 0)
+  # Keep genes expressed in at least 25% of cells
+  expressed_genes <- names(pct_expressed[pct_expressed >= threshold])
+  # Save one file per cell type
+  outfile <- paste0("output/seurat/", ct, "-MatrixFilter075.txt")
+  writeLines(expressed_genes, outfile)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################
+# Random extra analysis ################
+####################################
+
+
+# tissue ###############
+Idents(TabulaSapiens_allCells) <- "tissue" 
+
+
+
+cells.kidney <- WhichCells(TabulaSapiens_allCells, expression = grepl("kidney", tissue, ignore.case=TRUE))
+cells.heart  <- WhichCells(TabulaSapiens_allCells, expression = grepl("heart",  tissue, ignore.case=TRUE))
+cells.stomach    <- WhichCells(TabulaSapiens_allCells, expression = grepl("stomach",    tissue, ignore.case=TRUE))
+
+pdf("output/seurat/TabulaSapiens-30dim-kidneyHeartStomach.pdf", width=6, height=5)
+DimPlot(
+  TabulaSapiens_allCells,
+  reduction       = "umap",
+  cols            = "grey90",
+  cells.highlight = list(cells.kidney, cells.heart, cells.stomach),
+  cols.highlight  = c("#1f77b4", "#d62728", "#2ca02c"),
+  sizes.highlight = 0.7, shuffle = TRUE
+) 
+dev.off()
+
+
+
+cells.lung <- WhichCells(TabulaSapiens_allCells, expression = grepl("lung", tissue, ignore.case=TRUE))
+cells.blood  <- WhichCells(TabulaSapiens_allCells, expression = grepl("blood",  tissue, ignore.case=TRUE))
+cells.spleen    <- WhichCells(TabulaSapiens_allCells, expression = grepl("spleen",    tissue, ignore.case=TRUE))
+
+pdf("output/seurat/TabulaSapiens-30dim-lungBloddSpleen.pdf", width=6, height=5)
+DimPlot(
+  TabulaSapiens_allCells,
+  reduction       = "umap",
+  cols            = "grey90",
+  cells.highlight = list(cells.lung, cells.blood, cells.spleen),
+  cols.highlight  = c("#1f77b4", "#d62728", "#2ca02c"),
+  sizes.highlight = 0.7, shuffle = TRUE
+) 
+dev.off()
+
+
+
+# cell_type ###############
+
+
+
+Idents(TabulaSapiens_allCells) <- "cell_type" 
+
+
+cells.kidneyepicell <- WhichCells(TabulaSapiens_allCells, expression = grepl("kidney epithelial cell", cell_type, ignore.case=TRUE))
+cells.regularatricardmyoc  <- WhichCells(TabulaSapiens_allCells, expression = grepl("regular atrial cardiac myocyte",  cell_type, ignore.case=TRUE))
+cells.tonguemuscl    <- WhichCells(TabulaSapiens_allCells, expression = grepl("tongue muscle cell",    cell_type, ignore.case=TRUE))
+
+pdf("output/seurat/TabulaSapiens-30dim-KidneyepicellRegularatricardmyocTonguemuscl.pdf", width=6, height=5)
+DimPlot(
+  TabulaSapiens_allCells,
+  reduction       = "umap",
+  cols            = "grey90",
+  cells.highlight = list(cells.kidneyepicell, cells.regularatricardmyoc, cells.tonguemuscl),
+  cols.highlight  = c("#1f77b4", "#d62728", "#2ca02c"),
+  sizes.highlight = 0.7, shuffle = TRUE
+) 
+dev.off()
+
+
+
+
+cells.platelet <- WhichCells(TabulaSapiens_allCells, expression = grepl("platelet", cell_type, ignore.case=TRUE))
+cells.basalcell  <- WhichCells(TabulaSapiens_allCells, expression = grepl("basal cell",  cell_type, ignore.case=TRUE))
+cells.Tcell    <- WhichCells(TabulaSapiens_allCells, expression = grepl("T cell",    cell_type, ignore.case=TRUE))
+
+pdf("output/seurat/TabulaSapiens-30dim-plateletBasalcellTcell.pdf", width=6, height=5)
+DimPlot(
+  TabulaSapiens_allCells,
+  reduction       = "umap",
+  cols            = "grey90",
+  cells.highlight = list(cells.platelet, cells.basalcell, cells.Tcell),
+  cols.highlight  = c("#1f77b4", "#d62728", "#2ca02c"),
+  sizes.highlight = 0.7, shuffle = TRUE
+) 
+dev.off()
+
+
+
+
+
+
+
+# Gene count per cell_type or tissue
+Idents(TabulaSapiens_allCells) <- "tissue"
+threshold <- 0.75  # expressed in at least 75% of cells in that cell type
+celltypes <- levels(Idents(TabulaSapiens_allCells))
+gene_counts <- data.frame(
+  cell_type = character(),
+  n_genes = numeric(),
+  stringsAsFactors = FALSE
+)
+for (ct in celltypes) {
+  cat("Processing:", ct, "\n")
+  cells <- WhichCells(TabulaSapiens_allCells, idents = ct)
+  expr_matrix <- GetAssayData(TabulaSapiens_allCells, slot = "counts")[, cells]
+  pct_expressed <- Matrix::rowMeans(expr_matrix > 0)
+  expressed_genes <- names(pct_expressed[pct_expressed >= threshold])
+  # record how many genes passed
+  gene_counts <- rbind(gene_counts, data.frame(cell_type = ct, n_genes = length(expressed_genes)))
+}
+# Compute median number of genes across all cell types
+median_genes <- median(gene_counts$n_genes)
+cat("\n✅ Median number of expressed genes across all cell types:", median_genes, "\n")
+write.table(gene_counts, "output/seurat/gene_counts-cell_type-MatrixFilter075-tissue.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
 
 ```
+
+
+
+
+- NOTE: `MatrixFilter025` adding 'count' filtering is not working great.. Even using `expr_matrix > 0` lead to very low number of genes...
+
+
+
+Unbiased marker gene identification with find `FindAllMarkers()` ran in slurm below for cell_type:
+
+```bash
+conda activate bpcells_r44 # For seurat v5 with BPCells
+
+sbatch scripts/FindAllMarkers_TabulaSapiens_allCells-FindAllMarkersmipct025logfc025.sh # 59562106
+
+```
+
+
+
 
 
 

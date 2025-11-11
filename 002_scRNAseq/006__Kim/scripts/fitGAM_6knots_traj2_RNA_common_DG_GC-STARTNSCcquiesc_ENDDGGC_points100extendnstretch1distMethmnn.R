@@ -1,0 +1,46 @@
+#! /usr/bin/env Rscript
+
+
+library("condiments")
+library("Seurat")
+library("magrittr") # to use pipe
+library("dplyr") # to use bind_cols and sample_frac
+library("SingleCellExperiment") # for reducedDims
+library("ggplot2")
+library("slingshot")
+library("DelayedMatrixStats")
+library("tidyr")
+library("tradeSeq")
+
+
+
+load("output/condiments/condiments-Part_DG_GC_subset_STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
+set.seed(42)
+
+
+#### DEGs trajectory per trajectory
+counts <- multiome_WT_Bap1KO_QCV2vC1.sct[["RNA"]]@counts # Collect the counts from seurat
+cond <- factor(multiome_WT_Bap1KO_QCV2vC1.sct$orig.ident) # identify conditions
+#### Extract the pseudotimes and cell weights for the SECOND lineage
+pseudotimes <- slingPseudotime(Part_DG_GC_subset, na = FALSE) [,2]
+cellweights <- slingCurveWeights(Part_DG_GC_subset) [,2]
+#### Subset the counts, pseudotimes, and cell weights for non-zero weights:
+sub_weights <- cellweights[cellweights != 0]
+sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
+sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
+sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
+
+
+traj2 <- fitGAM(
+     counts = sub_counts, 
+     pseudotime = sub_pseudotimes,
+     cellWeights = sub_weights,
+     conditions = sub_cond, 
+     nknots = 6,
+     sce = TRUE
+   )
+
+saveRDS(traj2, file = "output/condiments/traj2_Part_DG_GC-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.rds")
+
+
+

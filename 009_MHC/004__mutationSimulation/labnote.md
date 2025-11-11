@@ -496,6 +496,60 @@ python scripts/plot_all_signatures_combined-experimental-highlight_random_v4.py
 
 
 
+For **SIFT4G, Polyphen2 and CADD**; lets instead use **percent of damaging/benign for the y axis** (ie. and not the score values) --> Will lead to 2 plot for SIFT4G (ie. Damaging, benign) and 3 plot for Polyphen2 (ie. Damaging, Possible damaging, benign)
+
+
+- update `scripts/summarize_simulation_results_v3.py` into `scripts/summarize_simulation_results_v3_dbNSFP5.py`
+- update `scripts/plot_signature_summary.py` into `scripts/plot_signature_summary_dbNSFP5.py`
+
+
+```bash
+conda activate mutsim
+
+####################################
+# CONTEXTS ##########################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-contexts_v4_dbNSFP5.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-contexts_v4_dbNSFP5.py
+#--> results_contexts_v3/combined_signature_summary_errorbars_v4_dbNSFP5.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-contexts-highlight_random_v4_dbNSFP5.py
+#--> results_contexts_v3/combined_signature_summary_plots-highlight_random_v4_dbNSFP5.pdf
+
+
+####################################
+# COSMIC ###########################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-cosmic_v4_dbNSFP5.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-cosmic_v4_dbNSFP5.py
+#--> results_v3/combined_signature_summary_errorbars_v4_dbNSFP5.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-cosmic-highlight_random_v4_dbNSFP5.py
+#--> results_v3/combined_signature_summary_plots-highlight_random_v4_dbNSFP5.pdf
+
+
+
+####################################
+# EXPERIMENTAL #####################
+####################################
+
+# Plot and summary metric for each mutations
+bash scripts/run_summary_plot-experimental_v4_dbNSFP5.sh
+# One plot with all mutations
+python scripts/plot_all_signatures_combined-experimental_v4_dbNSFP5.py
+#--> results_experimental_v3/combined_signature_summary_errorbars_v4_dbNSFP5.pdf
+# One plot with all mutations - Random/Flat highlighted
+python scripts/plot_all_signatures_combined-experimental-highlight_random_v4_dbNSFP5.py
+#--> results_experimental_v3/combined_signature_summary_plots-highlight_random_v4_dbNSFP5.pdf
+```
+
+--> All good
 
 
 
@@ -589,19 +643,32 @@ conda activate mutsim
 python scripts/audit_dbnsfp_hits.py ref/dbNSFP5.2a_grch38.gz results_v3/SBS90/n_4000/rep_01.annot.parquet
 #--> No region hit: chr2:74523421 C > A 
 
-# Double check by looking at the dbNSFP5
-tabix ref/dbNSFP5.2a_grch38.gz 2:74523421-74523421 #--> nothing!
-
 
 
 # CHECK SIFT4G
 python scripts/audit_sift4g.py ref/dbNSFP5.2a_grch38.gz results_v3/SBS90/n_4000/rep_01.annot.parquet
 
+# CHECK PolyPhen2 HDIV
+python scripts/audit_polyphen2_hdiv.py ref/dbNSFP5.2a_grch38.gz results_v3/SBS90/n_4000/rep_01.annot.parquet
+
+# CHECK CADD PHRED
+python scripts/audit_cadd_phred.py ref/dbNSFP5.2a_grch38.gz results_v3/SBS90/n_4000/rep_01.annot.parquet
+
+
+# Double check by looking at the dbNSFP5
+tabix ref/dbNSFP5.2a_grch38.gz 2:74523421-74523421 #--> nothing!
+
 
 
 ```
 
---> SIFT4G is for non-synonymous only (ie. no score for synonymous mutation)
+- SIFT4G, and Polyph2 are for non-synonymous only (ie. no score for synonymous mutation)
+- CADD Phred score for any kind of mutations.
+
+--> **No score are missing for a technical reason**; score are missing, either because:
+- they are not present in the dbNSFP5 file
+- mutation is present but not score provided for the canonical transcript (it. but alternative transcript got a score)
+- mutation is present but no score for either SIFT4G or Polyphenm (ie. but could be a score for CADD PHRED...)
 
 
 

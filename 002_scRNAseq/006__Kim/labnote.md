@@ -11701,13 +11701,13 @@ sub_weights <- cellweights[cellweights != 0]
 sub_pseudotimes <- pseudotimes[names(pseudotimes) %in% names(sub_weights)]
 sub_counts <- counts[, colnames(counts) %in% names(sub_weights)]
 sub_cond <- cond[colnames(counts) %in% names(sub_weights)]
-pdf("output/condiments/plotSmoothers-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Hopx.pdf", width=5, height=2)
-plotSmoothers(traj1, sub_counts, gene = "Hopx", curvesCol = c("blue","red"), lwd = 1, size = 0.2) +
+pdf("output/condiments/plotSmoothers-traj1_DG_GC_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-RNA_common-Bcl11b.pdf", width=5, height=2)
+plotSmoothers(traj1, sub_counts, gene = "Bcl11b", curvesCol = c("blue","red"), lwd = 1, size = 0.2) +
 scale_color_manual(values =c("blue","red"))
 dev.off()
 
 
-
+#Pax6, Eomes/Tbr2, Prox1, Neurod1, and Bcl11b
 
 # Heatmap representation
 # Define colors for each cluster
@@ -12554,6 +12554,8 @@ dev.off()
 Starting cluster = NSC_proliferative_1; express Hopx genes / end cluster = DG_GC
 
 
+--> In the end I used the trajectvory 2 here, corresponding to starting with NSC_quiescent!
+
 Lets **isolate the cell types** first; follow same method as Kcnc1 project (`002*/005*`)
 
 
@@ -12832,8 +12834,6 @@ dev.off()
 
 
 
-xxxy here !! pursue try all nsc cluster as START; then try the other dist meth 
-
 
 
 ## PLOT with separate trajectories - Individually
@@ -12948,7 +12948,7 @@ df_3 <- df_3 %>%
                values_to = "pst") %>%
   filter(!is.na(pst))
 
-pdf("output/condiments/densityPlot_trajectory_lineage_Part_DG_GC_option2_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn.pdf", width=6, height=3)
+pdf("output/condiments/densityPlot_trajectory_lineage_Part_DG_GC_option2_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn.pdf", width=6, height=6)
 ggplot(df_3, aes(x = pst)) +
   geom_density(alpha = .8, aes(fill = orig.ident), col = "transparent") +
   geom_density(aes(col = orig.ident), fill = "transparent", size = 1.5) +
@@ -12963,8 +12963,11 @@ ggplot(df_3, aes(x = pst)) +
 dev.off()
 
 
-#### ->  save.image(file="output/condiments/condiments-Part_DG_GC_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
-### load("output/condiments/condiments-Part_DG_GC_subset_STARTNSCprol2_ENDDGGC_points100extendpc1stretch1-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
+
+
+
+#### ->  save.image(file="output/condiments/condiments-Part_DG_GC_subset_STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
+### load("output/condiments/condiments-Part_DG_GC_subset_STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.RData")
 set.seed(42)
 
 #  Differential expression
@@ -12974,7 +12977,11 @@ set.seed(42)
 ################### Time Course effect COMMON CONDITIONS ######################################################
 ## TRAJECTORY1 - DG_GC ##################
 set.seed(42)
-traj1 <- readRDS("output/condiments/traj1_Part_DG_GC_subset-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.rds")
+traj2 <- readRDS("output/condiments/traj2_Part_DG_GC-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn-dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.rds")
+
+XXXY below not mod!!
+
+
 
 
 
@@ -13302,6 +13309,9 @@ sbatch scripts/fitGAM_6knots_traj2_RNA_common.sh # 31299487 ok
 sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC.sh # 45797474 ok
 ### traj of interest NSC_quiescent --> DG_GC isolated cells - (Task post meeting 20250702) Option1
 sbatch scripts/fitGAM_6knots_traj1_RNA_common_DG_GC_option1.sh # 47206838 ok
+
+### traj of interest NSC_quiescent --> DG_GC isolated cells - (Task email 20251110) 
+sbatch scripts/fitGAM_6knots_traj2_RNA_common_DG_GC-STARTNSCcquiesc_ENDDGGC_points100extendnstretch1distMethmnn.sh # 59563527 xxx
 
 
 
