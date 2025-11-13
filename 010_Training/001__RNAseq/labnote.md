@@ -16,13 +16,20 @@ Example will be on three bio rep of 2 conditions, **WT and KO in human**;
 
 # Data cleaning
 
-```bash
+
 Install [fastp](https://github.com/OpenGene/fastp).
+
+```bash
 # Download in Master/Software/
 wget https://opengene.org/fastp/fastp
 chmod a+x ./fastp
 nano ~/.bashrc # add: export PATH=$PATH:/scr1/users/roulet/Akizu_Lab/Master/software
 # Restart terminal
+
+
+/scr1/users/roulet/Akizu_Lab/Master/software/fastp
+
+fastp
 ```
 
 
