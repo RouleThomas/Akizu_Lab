@@ -17,8 +17,22 @@ Example will be on three bio rep of 2 conditions, **WT and KO in human**;
 # Data cleaning
 
 ```bash
+Install [fastp](https://github.com/OpenGene/fastp).
+# Download in Master/Software/
+wget https://opengene.org/fastp/fastp
+chmod a+x ./fastp
+nano ~/.bashrc # add: export PATH=$PATH:/scr1/users/roulet/Akizu_Lab/Master/software
+# Restart terminal
+```
+
+
+
+```bash
 # create fastp output firectory
 mkdir output/fastp
+
+# Create script
+nano scripts/fastp.sh
 
 # Run cleaning
 sbatch scripts/fastp.sh #   
