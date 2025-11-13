@@ -21,18 +21,20 @@ Install [fastp](https://github.com/OpenGene/fastp).
 
 ```bash
 # Download in Master/Software/
-wget https://opengene.org/fastp/fastp
-chmod a+x ./fastp
+wget https://opengene.org/fastp/fastp # download fastp
+chmod a+x ./fastp # install fastp
 nano ~/.bashrc # add: export PATH=$PATH:/scr1/users/roulet/Akizu_Lab/Master/software
-# Restart terminal
 
 
-/scr1/users/roulet/Akizu_Lab/Master/software/fastp
 
-fastp
+# Restart terminal to apply changes!!
+
+
+# Test installation:
+fastp --help
 ```
 
-
+Run fastp:
 
 ```bash
 # create fastp output firectory
