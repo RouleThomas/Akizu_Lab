@@ -456,8 +456,8 @@ DimPlot(
   TabulaSapiens_allCells,
   reduction       = "umap",
   cols            = "grey90",
-  cells.highlight = list(cells.kidney, cells.heart, cells.stomach),
-  cols.highlight  = c("#1f77b4", "#d62728", "#2ca02c"),
+  cells.highlight = list(kidney= cells.kidney , heart= cells.heart , stomach= cells.stomach),
+  cols.highlight  = c("#1f77b4", "#2ca02c", "#d62728"),
   sizes.highlight = 0.7, shuffle = TRUE
 ) 
 dev.off()
@@ -473,7 +473,7 @@ DimPlot(
   TabulaSapiens_allCells,
   reduction       = "umap",
   cols            = "grey90",
-  cells.highlight = list(cells.lung, cells.blood, cells.spleen),
+  cells.highlight = list(lung= cells.lung, blood= cells.blood, spleen= cells.spleen),
   cols.highlight  = c("#1f77b4", "#d62728", "#2ca02c"),
   sizes.highlight = 0.7, shuffle = TRUE
 ) 
@@ -497,8 +497,8 @@ DimPlot(
   TabulaSapiens_allCells,
   reduction       = "umap",
   cols            = "grey90",
-  cells.highlight = list(cells.kidneyepicell, cells.regularatricardmyoc, cells.tonguemuscl),
-  cols.highlight  = c("#1f77b4", "#d62728", "#2ca02c"),
+  cells.highlight = list(kidneyepicell= cells.kidneyepicell, regularatricardmyoc= cells.regularatricardmyoc, tonguemuscl= cells.tonguemuscl),
+  cols.highlight  = c("#1f77b4", "#2ca02c", "#d62728"),
   sizes.highlight = 0.7, shuffle = TRUE
 ) 
 dev.off()
@@ -515,7 +515,7 @@ DimPlot(
   TabulaSapiens_allCells,
   reduction       = "umap",
   cols            = "grey90",
-  cells.highlight = list(cells.platelet, cells.basalcell, cells.Tcell),
+  cells.highlight = list(platelet= cells.platelet, basalcell= cells.basalcell, Tcell= cells.Tcell),
   cols.highlight  = c("#1f77b4", "#d62728", "#2ca02c"),
   sizes.highlight = 0.7, shuffle = TRUE
 ) 
