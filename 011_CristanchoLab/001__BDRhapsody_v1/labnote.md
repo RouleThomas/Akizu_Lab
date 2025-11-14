@@ -12,8 +12,9 @@ XXX
 # Data access
 
 
-Access data from [BD Rhapsody](https://bd-rhapsody-bioinfo-docs.genomics.bd.com/setup/sbg/top_sbg_setup.html).
---> Create account and ask data file access to Paulo
+Access data from [Seven Bridge - BD Rhapsody](https://igor.sbgenomics.com/home)
+--> Create [Seven Bridge](https://bd-rhapsody-bioinfo-docs.genomics.bd.com/setup/sbg/top_sbg_setup.html) account and ask data file access to Paulo 
+
 
 
 XXX
