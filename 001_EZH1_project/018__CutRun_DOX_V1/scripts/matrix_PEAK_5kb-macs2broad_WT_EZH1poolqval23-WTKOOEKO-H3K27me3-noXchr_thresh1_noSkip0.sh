@@ -52,3 +52,17 @@ plotHeatmap -m output/deeptools/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTK
 
 
 
+
+
+plotHeatmap -m output/deeptools/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.gz \
+    -out output/deeptools/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0_heatmap2.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "OEKO_H3K27me3" \
+    --colorMap Blues \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 7 \
+    --heatmapWidth 2 \
+    --zMax 3 3 3
+
+
+
+

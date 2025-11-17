@@ -389,6 +389,206 @@ ggboxplot(
                      method = "t.test", p.adjust.method = "BH",
                      label = "p.signif", hide.ns = TRUE)
 dev.off()
+
+
+
+####################################################
+# show gain lost H3K27me3 - q05fc058_promoter5#################
+####################################################
+
+
+
+
+
+
+median_log2tpm <- long_data_log2tpm %>%
+  group_by(geneSymbol, Genotype) %>%
+  summarize(median_log2tpm = median(log2tpm, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(
+    names_from = Genotype,
+    values_from = median_log2tpm,
+    names_prefix = "log2tpm_"
+  )
+
+
+# ALL GENES
+cor_stats <- cor.test(
+  median_log2tpm$log2tpm_WT,
+  median_log2tpm$log2tpm_KO,
+  method = "pearson"
+)
+R_value  <- round(cor_stats$estimate, 3)
+p_value  <- signif(cor_stats$p.value, 3)
+pdf("output/tpm/corr_log2tpm_WTvsKO-allGenes.pdf", width = 3, height = 3.5)
+ggplot(median_log2tpm, aes(x = log2tpm_WT, y = log2tpm_KO)) +
+  geom_point(alpha = 0.5, size = 1.5, color = "black") +
+  geom_smooth(method = "lm", color = "red", se = TRUE, linewidth = 1) +
+  theme_bw(base_size = 14) +
+  labs(
+    x = "log2TPM (WT)",
+    y = "log2TPM (KO)",
+    title = "Correlation of Median log2TPM (WT vs KO)",
+    subtitle = paste("Pearson R =", R_value, ",  p =", p_value)
+  )
+dev.off()
+
+
+
+
+
+cor_stats <- cor.test(
+  median_log2tpm$log2tpm_WT,
+  median_log2tpm$log2tpm_OEKO,
+  method = "pearson"
+)
+R_value  <- round(cor_stats$estimate, 3)
+p_value  <- signif(cor_stats$p.value, 3)
+pdf("output/tpm/corr_log2tpm_WTvsOEKO-allGenes.pdf", width = 3, height = 3.5)
+ggplot(median_log2tpm, aes(x = log2tpm_WT, y = log2tpm_OEKO)) +
+  geom_point(alpha = 0.5, size = 1.5, color = "black") +
+  geom_smooth(method = "lm", color = "red", se = TRUE, linewidth = 1) +
+  theme_bw(base_size = 14) +
+  labs(
+    x = "log2TPM (WT)",
+    y = "log2TPM (OEKO)",
+    title = "Correlation of Median log2TPM (WT vs OEKO)",
+    subtitle = paste("Pearson R =", R_value, ",  p =", p_value)
+  )
+dev.off()
+
+
+
+# Gain H3K27me3 in KO
+
+GAIN_q05fc058_promoter5_KOvsWT = median_log2tpm %>%
+  dplyr::filter(geneSymbol %in% readLines("../018__CutRun_DOX_V1/output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_geneSymbol.txt"))
+
+
+cor_stats <- cor.test(
+  GAIN_q05fc058_promoter5_KOvsWT$log2tpm_WT,
+  GAIN_q05fc058_promoter5_KOvsWT$log2tpm_KO,
+  method = "pearson"
+)
+R_value  <- round(cor_stats$estimate, 3)
+p_value  <- signif(cor_stats$p.value, 3)
+pdf("output/tpm/corr_log2tpm_WTvsKO-GAIN_q05fc058_promoter5_KOvsWT.pdf", width = 3, height = 3.5)
+ggplot(GAIN_q05fc058_promoter5_KOvsWT, aes(x = log2tpm_WT, y = log2tpm_KO)) +
+  geom_point(alpha = 0.5, size = 1.5, color = "black") +
+  geom_smooth(method = "lm", color = "red", se = TRUE, linewidth = 1) +
+  theme_bw(base_size = 14) +
+  labs(
+    x = "log2TPM (WT)",
+    y = "log2TPM (KO)",
+    title = "Correlation of Median log2TPM (WT vs KO)",
+    subtitle = paste("Pearson R =", R_value, ",  p =", p_value)
+  )
+dev.off()
+
+
+
+
+
+# Gain H3K27me3 in OEKO
+
+GAIN_q05fc058_promoter5_OEKOvsWT = median_log2tpm %>%
+  dplyr::filter(geneSymbol %in% readLines("../018__CutRun_DOX_V1/output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_geneSymbol.txt"))
+
+
+cor_stats <- cor.test(
+  GAIN_q05fc058_promoter5_OEKOvsWT$log2tpm_WT,
+  GAIN_q05fc058_promoter5_OEKOvsWT$log2tpm_OEKO,
+  method = "pearson"
+)
+R_value  <- round(cor_stats$estimate, 3)
+p_value  <- signif(cor_stats$p.value, 3)
+pdf("output/tpm/corr_log2tpm_WTvsOEKO-GAIN_q05fc058_promoter5_OEKOvsWT.pdf", width = 3, height = 3.5)
+ggplot(GAIN_q05fc058_promoter5_OEKOvsWT, aes(x = log2tpm_WT, y = log2tpm_OEKO)) +
+  geom_point(alpha = 0.5, size = 1.5, color = "black") +
+  geom_smooth(method = "lm", color = "red", se = TRUE, linewidth = 1) +
+  theme_bw(base_size = 14) +
+  labs(
+    x = "log2TPM (WT)",
+    y = "log2TPM (OEKO)",
+    title = "Correlation of Median log2TPM (WT vs OEKO)",
+    subtitle = paste("Pearson R =", R_value, ",  p =", p_value)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+# Lost H3K27me3 in KO
+
+LOST_q05fc058_promoter5_KOvsWT = median_log2tpm %>%
+  dplyr::filter(geneSymbol %in% readLines("../018__CutRun_DOX_V1/output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_geneSymbol.txt"))
+
+
+cor_stats <- cor.test(
+  LOST_q05fc058_promoter5_KOvsWT$log2tpm_WT,
+  LOST_q05fc058_promoter5_KOvsWT$log2tpm_KO,
+  method = "pearson"
+)
+R_value  <- round(cor_stats$estimate, 3)
+p_value  <- signif(cor_stats$p.value, 3)
+pdf("output/tpm/corr_log2tpm_WTvsKO-LOST_q05fc058_promoter5_KOvsWT.pdf", width = 3, height = 3.5)
+ggplot(LOST_q05fc058_promoter5_KOvsWT, aes(x = log2tpm_WT, y = log2tpm_KO)) +
+  geom_point(alpha = 0.5, size = 1.5, color = "black") +
+  geom_smooth(method = "lm", color = "red", se = TRUE, linewidth = 1) +
+  theme_bw(base_size = 14) +
+  labs(
+    x = "log2TPM (WT)",
+    y = "log2TPM (KO)",
+    title = "Correlation of Median log2TPM (WT vs KO)",
+    subtitle = paste("Pearson R =", R_value, ",  p =", p_value)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+# Lost H3K27me3 in OEKO
+
+LOST_q05fc058_promoter5_OEKOvsWT = median_log2tpm %>%
+  dplyr::filter(geneSymbol %in% readLines("../018__CutRun_DOX_V1/output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_geneSymbol.txt"))
+
+
+cor_stats <- cor.test(
+  LOST_q05fc058_promoter5_OEKOvsWT$log2tpm_WT,
+  LOST_q05fc058_promoter5_OEKOvsWT$log2tpm_OEKO,
+  method = "pearson"
+)
+R_value  <- round(cor_stats$estimate, 3)
+p_value  <- signif(cor_stats$p.value, 3)
+pdf("output/tpm/corr_log2tpm_WTvsKO-LOST_q05fc058_promoter5_OEKOvsWT.pdf", width = 3, height = 3.5)
+ggplot(LOST_q05fc058_promoter5_OEKOvsWT, aes(x = log2tpm_WT, y = log2tpm_OEKO)) +
+  geom_point(alpha = 0.5, size = 1.5, color = "black") +
+  geom_smooth(method = "lm", color = "red", se = TRUE, linewidth = 1) +
+  theme_bw(base_size = 14) +
+  labs(
+    x = "log2TPM (WT)",
+    y = "log2TPM (OEKO)",
+    title = "Correlation of Median log2TPM (WT vs OEKO)",
+    subtitle = paste("Pearson R =", R_value, ",  p =", p_value)
+  )
+dev.off()
+
+
+
+
+
+
+
 ```
 
 
@@ -396,10 +596,10 @@ dev.off()
 
 
 
-### deepTool bigwig QC - STAR mapping
+# deepTool bigwig QC - STAR mapping
 
 
-### Raw bigwig
+## Raw bigwig
 
 
 ```bash

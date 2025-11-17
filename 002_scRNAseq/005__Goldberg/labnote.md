@@ -34572,6 +34572,10 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Apoe.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-NeurodegeMarkers.pdf", width=10, height=40)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Apoe","Cox6c","Cox8a","Ndufa4","Cox4i1","Uqcr11","Cox6b1","Cox7a2","Cox5b","Cox7c","Uqcrq","Ndufa13","Ndufc1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
 
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Myt1l.pdf", width=10, height=5)

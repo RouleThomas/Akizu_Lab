@@ -47,3 +47,15 @@ plotHeatmap -m output/deeptools/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100
 
 
 
+plotHeatmap -m output/deeptools/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.gz \
+    -out output/deeptools/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0_heatmap2.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "OEKO_H3K27me3" \
+    --colorMap Blues \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 10 \
+    --heatmapWidth 2 \
+    --zMax 3 3 3
+
+
+
+

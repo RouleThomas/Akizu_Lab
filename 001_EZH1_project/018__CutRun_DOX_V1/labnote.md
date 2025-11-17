@@ -6576,6 +6576,159 @@ write.table(ESC_OEKO_EZH1_qval23_annot_promoterAnd5_geneSymbol, file = "output/C
 
 
 
+### On macs2 optimal peaks; H3K27me3, EZH2, EZH1 - each genotype  - no chrX - GENCODEv47
+
+
+
+```bash
+# files - pool peaks qval2.3 H3K27me3, EZH2, EZH1 qval23 
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_noXchr_pool_peaks.broadPeak
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_noXchr_pool_peaks.broadPeak
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_noXchr_pool_peaks.broadPeak
+
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_H3K27me3_noXchr_pool_peaks.broadPeak
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH2_noXchr_pool_peaks.broadPeak
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH1_noXchr_pool_peaks.broadPeak
+
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_H3K27me3_noXchr_pool_peaks.broadPeak
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH2_noXchr_pool_peaks.broadPeak
+output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_noXchr_pool_peaks.broadPeak
+
+conda activate deseq2
+```
+
+
+
+```R
+library("ChIPseeker")
+library("tidyverse")
+library("TxDb.Hsapiens.UCSC.hg38.knownGene")
+txdb <- loadDb("../../Master/meta/gencode.v47.annotation.gtf.txdb") # Human version47 as RNAseq!! 
+library("clusterProfiler")
+library("meshes")
+library("ReactomePA")
+library("org.Hs.eg.db")
+library("VennDiagram")
+
+
+# Import peaks
+H3K27me3_WT <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_H3K27me3_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+H3K27me3_KO <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_H3K27me3_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+H3K27me3_OEKO <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_H3K27me3_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+
+EZH2_WT <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH2_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+EZH2_KO <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_KO_EZH2_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+EZH2_OEKO <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH2_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+
+EZH1_WT <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_WT_EZH1_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+EZH1_OEKO <- read.delim("output/macs2/broad/broad_blacklist_qval2.30103/ESC_OEKO_EZH1_noXchr_pool_peaks.broadPeak", sep = "\t", header = FALSE) %>%
+  as_tibble() %>%
+  dplyr::rename("chr"= "V1", "start" = "V2", "end" = "V3")
+
+
+# Tidy peaks 
+H3K27me3_WT_gr = makeGRangesFromDataFrame(H3K27me3_WT,keep.extra.columns=TRUE)
+H3K27me3_KO_gr = makeGRangesFromDataFrame(H3K27me3_KO,keep.extra.columns=TRUE)
+H3K27me3_OEKO_gr = makeGRangesFromDataFrame(H3K27me3_OEKO,keep.extra.columns=TRUE)
+
+EZH2_WT_gr = makeGRangesFromDataFrame(EZH2_WT,keep.extra.columns=TRUE)
+EZH2_KO_gr = makeGRangesFromDataFrame(EZH2_KO,keep.extra.columns=TRUE)
+EZH2_OEKO_gr = makeGRangesFromDataFrame(EZH2_OEKO,keep.extra.columns=TRUE)
+
+EZH1_WT_gr = makeGRangesFromDataFrame(EZH1_WT,keep.extra.columns=TRUE)
+EZH1_OEKO_gr = makeGRangesFromDataFrame(EZH1_OEKO,keep.extra.columns=TRUE)
+
+gr_list <- list(
+  H3K27me3_WT   = H3K27me3_WT_gr,
+  H3K27me3_KO   = H3K27me3_KO_gr,
+  H3K27me3_OEKO = H3K27me3_OEKO_gr,
+  EZH2_WT       = EZH2_WT_gr,
+  EZH2_KO       = EZH2_KO_gr,
+  EZH2_OEKO     = EZH2_OEKO_gr,
+  EZH1_WT       = EZH1_WT_gr,
+  EZH1_OEKO     = EZH1_OEKO_gr
+)
+# Export Gene peak assignemnt
+peakAnnoList <- lapply(gr_list, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 3000), verbose=FALSE) # Not sure defeining the tssRegion is used here
+## plots
+pdf("output/ChIPseeker/plotAnnoBar_ESC_WTKOOEKO_H3K27me3EZH2EZH1_qval23.pdf", width = 8, height = 6)
+plotAnnoBar(peakAnnoList)
+dev.off()
+pdf("output/ChIPseeker/plotDistToTSS_ESC_WTKOOEKO_H3K27me3EZH2EZH1_qval23.pdf", width = 8, height = 6)
+plotDistToTSS(peakAnnoList, title="Distribution relative to TSS")
+dev.off()
+
+
+
+
+XXXY BELOW not mod!!!
+
+
+## Get annotation data frame
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot <- as.data.frame(peakAnnoList[["ESC_WTKOOEKO_EZH1_qval23merge100bp"]]@anno)
+ESC_OEKO_EZH1_qval23_annot <- as.data.frame(peakAnnoList[["ESC_OEKO_EZH1_qval23"]]@anno)
+
+
+## Convert entrez gene IDs to gene symbols
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH1_qval23merge100bp_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_WTKOOEKO_EZH1_qval23merge100bp_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+ESC_OEKO_EZH1_qval23_annot$geneSymbol <- mapIds(org.Hs.eg.db, keys = ESC_OEKO_EZH1_qval23_annot$geneId, column = "SYMBOL", keytype = "ENTREZID")
+ESC_OEKO_EZH1_qval23_annot$gene <- mapIds(org.Hs.eg.db, keys = ESC_OEKO_EZH1_qval23_annot$geneId, column = "ENSEMBL", keytype = "ENTREZID")
+
+
+## Save output table
+write.table(ESC_WTKOOEKO_EZH1_qval23merge100bp_annot, file="output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_annot.txt", sep="\t", quote=F, row.names=F)  
+write.table(ESC_OEKO_EZH1_qval23_annot, file="output/ChIPseeker/annotation_ESC_OEKO_EZH1_qval23_annot.txt", sep="\t", quote=F, row.names=F)  
+
+
+## Keep only signals in promoter of 5'UTR ############################################# TO CHANGE IF NEEDED !!!!!!!!!!!!!!!!!!!
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5 = tibble(ESC_WTKOOEKO_EZH1_qval23merge100bp_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+ESC_OEKO_EZH1_qval23_annot_promoterAnd5 = tibble(ESC_OEKO_EZH1_qval23_annot) %>%
+    filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR"))
+
+### Save output gene lists
+ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_geneSymbol = ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+ESC_OEKO_EZH1_qval23_annot_promoterAnd5_geneSymbol = ESC_OEKO_EZH1_qval23_annot_promoterAnd5 %>%
+    dplyr::select(geneSymbol) %>%
+    unique()
+
+
+write.table(ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_WTKOOEKO_EZH1_qval23merge100bp_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+write.table(ESC_OEKO_EZH1_qval23_annot_promoterAnd5_geneSymbol, file = "output/ChIPseeker/annotation_ESC_OEKO_EZH1_qval23_annot_promoterAnd5_geneSymbol.txt",
+            quote = FALSE, 
+            sep = "\t", 
+            col.names = FALSE, 
+            row.names = FALSE)
+```
+
+
+
+
+
+
+
 
 # deepTools plots
 
@@ -6705,7 +6858,7 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge1
 
 
 ## consensus peaks - without X chr and without noise - clean bigwigs
-sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52161178 ok
+sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1.sh # 52161178 ok 
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1.sh # 52161543 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2.sh # 52161793 ok
 
@@ -6720,15 +6873,24 @@ sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge1
 #### without --skipZero
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52390896 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52390909 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0 # 59961043 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52390925 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WTKOOEKOconsensus_H3K27me3poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 59976595 ok
 
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52391043 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 59961309 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52391079 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 59961336 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52391082 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WTKOOEKOconsensus_EZH2poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 59961367 ok
+
 
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52391086 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 59961492
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52391090 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 59961498 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52391114 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WTKOOEKOconsensus_EZH1poolqval23merge100bp-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 59961512 ok
 
 
 ## DESEQ2/MACS2 - IP per IP - Gain/lost noXchr thresh
@@ -6746,7 +6908,7 @@ sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 5238566 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH2-noXchr_noSkip0.sh # 54059876 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52385528 ok
-sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_noSkip0.sh # 54060069 xxx
+sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_KO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_noSkip0.sh # 54060069 ok
 
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52391517 ok
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_H3K27me3_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-H3K27me3-noXchr_noSkip0.sh # 54060224 ok
@@ -6780,18 +6942,25 @@ sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT
 sbatch scripts/matrix_PEAK_5kb-WTKOOEKO_EZH2_qval23merge100bp-ESC_OEKO_vs_ESC_WT-q05fc058-WTKOOEKO-EZH1-noXchr_noSkip0.sh # 54061176 ok
 
 
-# WT peaks
+# WT peaks without --skipZero
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_H3K27me3poolqval23-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52849929 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_H3K27me3poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 5285059 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WT_H3K27me3poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 59962069 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_H3K27me3poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # interactive
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WT_H3K27me3poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 59962128 ok
 
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52850236 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52850326 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 59962190 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52850547 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WT_EZH2poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 59962847 ok
+
 
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-H3K27me3-noXchr_thresh1_noSkip0.sh # 52850417 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 52850436 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-EZH2-noXchr_thresh1_noSkip0.sh # 59962984 ok
 sbatch scripts/matrix_PEAK_5kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 52850555 ok
+sbatch scripts/matrix_PEAK_2kb-macs2broad_WT_EZH1poolqval23-WTKOOEKO-EZH1-noXchr_thresh2_noSkip0.sh # 59962991 ok
 
 
 
@@ -6870,6 +7039,48 @@ output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ES
 output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-EZH2.txt
 output/edgeR/upregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt
 output/edgeR/downregulated_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-EZH2.txt
+
+## MACS2/DESEQ2 H3K27me3 diff binding - qval2.3 merge100bp no X chr thresh background clean - SIGNAL IN PROMOTER 5' ONLY!!!
+### Filter gene
+awk -F'\t' '
+    NR==1 { print; next }  # print header
+    ($3 > 0.58) && ($6 < 0.05) && \
+    ($10=="Promoter (<=1kb)" || $10=="Promoter (1-2kb)" || \
+     $10=="Promoter (2-3kb)" || $10=="5'\'' UTR")
+' output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt > output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt
+awk -F'\t' '
+    NR==1 { print; next }  # print header
+    ($3 < -0.58) && ($6 < 0.05) && \
+    ($10=="Promoter (<=1kb)" || $10=="Promoter (1-2kb)" || \
+     $10=="Promoter (2-3kb)" || $10=="5'\'' UTR")
+' output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt > output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt
+
+
+awk -F'\t' '
+    NR==1 { print; next }  # print header
+    ($3 > 0.58) && ($6 < 0.05) && \
+    ($10=="Promoter (<=1kb)" || $10=="Promoter (1-2kb)" || \
+     $10=="Promoter (2-3kb)" || $10=="5'\'' UTR")
+' output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt > output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt
+awk -F'\t' '
+    NR==1 { print; next }  # print header
+    ($3 < -0.58) && ($6 < 0.05) && \
+    ($10=="Promoter (<=1kb)" || $10=="Promoter (1-2kb)" || \
+     $10=="Promoter (2-3kb)" || $10=="5'\'' UTR")
+' output/edgeR/DESEQ2-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt > output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt
+
+output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt
+output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt
+output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt
+output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt
+
+### Extract geneSymbol only
+cut -f11 output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt | tail -n +2 | sed '/^$/d' | sort -u > output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_geneSymbol.txt
+cut -f11 output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.txt | tail -n +2 | sed '/^$/d' | sort -u > output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_geneSymbol.txt
+
+cut -f11 output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt | tail -n +2 | sed '/^$/d' | sort -u > output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_geneSymbol.txt
+cut -f11 output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.txt | tail -n +2 | sed '/^$/d' | sort -u > output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_geneSymbol.txt
+
 
 
 ## MACS2 peaks in WT qval2.3 no chrX gencode v47
@@ -7000,6 +7211,20 @@ sed 's/\r$//; s/.*/gene_name "&"/' ../019__RNAseq_ESC_V1/output/deseq2/downregul
 
 
 
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_geneSymbol.txt > output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_geneSymbol.txt > output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt
+
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_geneSymbol.txt > output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt
+sed 's/\r$//; s/.*/gene_name "&"/' output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_geneSymbol.txt > output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt
+
+
+
+
+
+
+
+
 ## Filter the gtf
 grep -Ff output/ChIPseeker/annotation_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost_annot_promoterAnd5_as_gtf_geneSymbol.txt meta/ENCFF159KBI.gtf > meta/ENCFF159KBI_PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost_annot_promoterAnd5.gtf
 
@@ -7095,6 +7320,19 @@ grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_
 grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.gtf
 grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/upregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_upregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.gtf
 grep -Ff ../019__RNAseq_ESC_V1/output/deseq2/downregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058_ESC_OEKO_vs_ESC_WT-STAR.gtf
+
+
+
+grep -Ff output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf
+grep -Ff output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf
+
+grep -Ff output/edgeR/upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.gtf
+grep -Ff output/edgeR/downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3_as_gtf_geneSymbol.txt meta/gencode.v47.annotation.gtf > meta/gencode_downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_OEKO_vs_ESC_WT-H3K27me3.gtf
+
+
+
+
+
 
 
 
@@ -7329,18 +7567,28 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval2
 
 
 ### WT vs KO _ without --skipZero
+#### H3K27me3 peaks/genes changes
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52385335 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 59966484 ok 
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52385336 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 59966554 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52385338 ok
-
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 59966608 ok
+#### EZH2 peaks/genes changes
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52391805 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52391844 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52391855 ok
-### WT vs OEKO
-sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52391870 ok
-sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52391881 ok
-sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52391883 ok
 
+
+### WT vs OEKO _ without --skipZero
+#### H3K27me3 peaks/genes changes
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52391870 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 59966644 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52391881 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 59966718 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52391883 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 59966796 ok
+#### EZH2 peaks/genes changes
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52391894 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52391899 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-OEKO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52391905 ok
