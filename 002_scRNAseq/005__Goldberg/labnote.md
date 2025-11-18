@@ -40653,13 +40653,31 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-mt-Nd4.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("mt-Nd4"), cols = c("grey", "red"), split.by = "condition")
 dev.off()
-
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Slc6a6-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Slc6a6"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Gabr_a6b3d-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabr_a6b3d"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Apoe.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+genes_gabr <- rownames(WT_Kcnc1_p35_CB_1step.sct)[grepl("^Gabr", rownames(WT_Kcnc1_p35_CB_1step.sct))]
+genes_gabr
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-genes_gabr-split.pdf", width=10, height=70)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = genes_gabr, max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
-
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Gabrb3.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabrb3"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Gabra6.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabra6"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Gabrb2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabrb2"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-HomeostaticMicrogliaMarkers.pdf", width=15, height=20)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("P2ry12","P2ry13","Cx3cr1","Tmem119" ), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
@@ -44048,6 +44066,8 @@ combined_deg <- combined_deg %>%
 # Generate the violin plot
 ###### Define genes of interest
 genes_of_interest <- c("Slc6a1", "Slc6a6", "Slc32a1","Gad1","Gabbr1", "Gabbr2", "Gabra1", "Gabra2", "Gabra3", "Gabra6", "Gabrb2", "Gabrb3", "Gabrg2", "Gabrd") # gene.down gene.up 
+genes_of_interest <- c("Gad1","Gad2","Slc6a1","Slc6a6","Gabrd","Gabrb3","Gabrg2","Gabra1","Gabra6","Gabrb2" ) # gene.down gene.up 
+
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
@@ -44070,7 +44090,7 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
-pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-geneDownGABA-filterNeurons-STAT.pdf", width=5, height=3)
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-GABAdown-filterNeurons-STAT.pdf", width=5, height=3)
 
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
@@ -44152,6 +44172,7 @@ genes_of_interest <- c("P2ry12","P2ry13","Cx3cr1","Tmem119","Trem2","Apoe","Lpl"
 
 
 
+
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
@@ -44174,7 +44195,7 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
-pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-HMDAMMicroglia-STAT.pdf", width=3, height=3)
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-GABAdown-STAT.pdf", width=3, height=3)
 
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
