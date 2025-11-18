@@ -38126,6 +38126,9 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gls.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gls"),  cols = c("grey", "red"), max.cutoff = 3,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gria1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gria1"),  cols = c("grey", "red"), max.cutoff = 2,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gria3.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gria3"),  cols = c("grey", "red"), max.cutoff = 5,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
@@ -38137,6 +38140,18 @@ FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grm8"),  cols = c("grey", "
 dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grm1.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grm1"),  cols = c("grey", "red"), max.cutoff = 4,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grm3.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grm3"),  cols = c("grey", "red"), max.cutoff = 2,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grm5.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grm5"),  cols = c("grey", "red"), max.cutoff = 1.5,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grm7.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grm7"),  cols = c("grey", "red"), max.cutoff = 3,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grm8.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grm8"),  cols = c("grey", "red"), max.cutoff = 3,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Gad1.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gad1"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
@@ -38150,8 +38165,14 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grik1.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grik1"),  cols = c("grey", "red"), max.cutoff = 2,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grik2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grik2"),  cols = c("grey", "red"), max.cutoff = 5,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grik5.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grik2"),  cols = c("grey", "red"), max.cutoff = 5,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-Grik4.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grik4"),  cols = c("grey", "red"), max.cutoff = 1,split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
 dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_p14_CB-1stepIntegrationRegressNotRepeated-version5dim40kparam15res015-gene.up.pdf", width=10, height=160)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = gene.up,  cols = c("grey", "red"),split.by = "condition") #  max.cutoff = 10, min.cutoff = 1
@@ -38211,7 +38232,7 @@ combined_deg <- combined_deg %>%
 
 # Generate the violin plot
 ###### Define genes of interest
-genes_of_interest <- c("Myt1l", "Grin2b", "Cntn5") # gene.down gene.up 
+genes_of_interest <- c("Slc1a2", "Gls", "Grik1", "Grik2", "Grik4", "Gria1", "Gria2", "Gria3", "Grm1", "Grm3", "Grm5", "Grm7", "Grm8") # gene.down gene.up 
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest)
@@ -38234,8 +38255,7 @@ sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches c
 sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
-pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-NeuronDevExamples-filterNeurons-STAT.pdf", width=5, height=3)
-
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-geneUpSignif-filterNeurons-STAT.pdf", width=5, height=3)
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
   print(paste("Generating plot for:", gene))
