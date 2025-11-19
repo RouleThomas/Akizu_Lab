@@ -40678,6 +40678,9 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Gabrb2.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Gabrb2"), max.cutoff = 2, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Slc32a1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Slc32a1"), max.cutoff = 0.5, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-HomeostaticMicrogliaMarkers.pdf", width=15, height=20)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("P2ry12","P2ry13","Cx3cr1","Tmem119" ), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
@@ -44066,7 +44069,8 @@ combined_deg <- combined_deg %>%
 # Generate the violin plot
 ###### Define genes of interest
 genes_of_interest <- c("Slc6a1", "Slc6a6", "Slc32a1","Gad1","Gabbr1", "Gabbr2", "Gabra1", "Gabra2", "Gabra3", "Gabra6", "Gabrb2", "Gabrb3", "Gabrg2", "Gabrd") # gene.down gene.up 
-genes_of_interest <- c("Gad1","Gad2","Slc6a1","Slc6a6","Gabrd","Gabrb3","Gabrg2","Gabra1","Gabra6","Gabrb2" ) # gene.down gene.up 
+genes_of_interest <- c("Gad1","Gad2","Slc6a1","Slc6a6","Slc32a1","Gabrd","Gabrb3","Gabrg2","Gabra1","Gabra6","Gabrb2" ) # gene.down 
+
 
 ###### Extract the subset of significant DEGs
 sig_data <- combined_deg %>%
@@ -44091,7 +44095,7 @@ sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
 pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-GABAdown-filterNeurons-STAT.pdf", width=5, height=3)
-
+Idents(WT_Kcnc1_p35_CB_1step_subset) <- factor(Idents(WT_Kcnc1_p35_CB_1step_subset), levels = c("CerebellarNuclei", "Golgi", "Granule", "MLI1", "MLI2", "PLI", "Purkinje", "UBC"))
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
   print(paste("Generating plot for:", gene))
