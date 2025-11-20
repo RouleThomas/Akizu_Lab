@@ -36400,6 +36400,175 @@ dev.off()
 
 
 
+
+
+## Downsampling with bootstrap to compare the nb of cell per cell types
+
+library("tidyverse")
+
+### Identify the unique clusters
+unique_clusters <- unique(Idents(GASTRU_24h_merge))
+
+### Create empty matrices to store cell counts
+UNTREATED24hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+DASATINIB24hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+XMU24hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+
+colnames(UNTREATED24hr_clusters_counts) <- unique_clusters
+colnames(DASATINIB24hr_clusters_counts) <- unique_clusters
+colnames(XMU24hr_clusters_counts) <- unique_clusters
+
+# count nb of cells in each cluster
+untreated_clusters <- table(Idents(GASTRU_24h_merge)[GASTRU_24h_merge$condition == "UNTREATED"])
+print(untreated_clusters)
+dasatinib_clusters <- table(Idents(GASTRU_24h_merge)[GASTRU_24h_merge$condition == "DASATINIB"])
+print(dasatinib_clusters)
+xmu_clusters <- table(Idents(GASTRU_24h_merge)[GASTRU_24h_merge$condition == "XMU"])
+print(xmu_clusters)
+
+
+### Loop through 100 iterations
+GASTRU_24h_merge_UNTREATED24hr <- which(GASTRU_24h_merge$condition == 'UNTREATED') # 7331
+GASTRU_24h_merge_DASATINIB24hr <- which(GASTRU_24h_merge$condition == 'DASATINIB') # 6613
+GASTRU_24h_merge_XMU24hr <- which(GASTRU_24h_merge$condition == 'XMU') # 4058
+
+
+for (i in 1:100) { # Change this to 100 for the final run
+  set.seed(i)
+  # Downsampling
+  GASTRU_24h_merge_UNTREATED24hr_downsample <- sample(GASTRU_24h_merge_UNTREATED24hr, 4058)
+  GASTRU_24h_merge_DASATINIB24hr_downsample <- sample(GASTRU_24h_merge_DASATINIB24hr, 4058)
+
+  GASTRU_24h_merge_integrated_downsample <- GASTRU_24h_merge[,c(GASTRU_24h_merge_UNTREATED24hr_downsample, GASTRU_24h_merge_DASATINIB24hr_downsample,GASTRU_24h_merge_XMU24hr)]
+
+  # Count nb of cells in each cluster
+  UNTREATED24hr_clusters <- table(Idents(GASTRU_24h_merge_integrated_downsample)[GASTRU_24h_merge_integrated_downsample$condition == "UNTREATED"])
+  DASATINIB24hr_clusters <- table(Idents(GASTRU_24h_merge_integrated_downsample)[GASTRU_24h_merge_integrated_downsample$condition == "DASATINIB"])
+  XMU24hr_clusters <- table(Idents(GASTRU_24h_merge_integrated_downsample)[GASTRU_24h_merge_integrated_downsample$condition == "XMU"])
+
+  # Align the counts with the unique clusters
+  UNTREATED24hr_clusters_counts[i, names(UNTREATED24hr_clusters)] <- as.numeric(UNTREATED24hr_clusters)
+  DASATINIB24hr_clusters_counts[i, names(DASATINIB24hr_clusters)] <- as.numeric(DASATINIB24hr_clusters)
+  XMU24hr_clusters_counts[i, names(XMU24hr_clusters)] <- as.numeric(XMU24hr_clusters)
+}
+
+
+
+### Calculate mean and standard error
+mean_UNTREATED24hr_clusters  <- colMeans(UNTREATED24hr_clusters_counts)
+mean_DASATINIB24hr_clusters  <- colMeans(DASATINIB24hr_clusters_counts)
+mean_XMU24hr_clusters        <- colMeans(XMU24hr_clusters_counts)
+
+std_error_UNTREATED24hr_clusters <- apply(UNTREATED24hr_clusters_counts, 2, sd) / sqrt(100)
+std_error_DASATINIB24hr_clusters <- apply(DASATINIB24hr_clusters_counts, 2, sd) / sqrt(100)
+std_error_XMU24hr_clusters       <- apply(XMU24hr_clusters_counts, 2, sd) / sqrt(100)
+
+# Chi-squared test
+p_values <- numeric(length(unique_clusters))
+
+for (i in 1:length(unique_clusters)) {
+
+  # 2 x 3 contingency table (Cluster vs NotCluster, for 3 conditions)
+  contingency_table <- matrix(0, nrow = 2, ncol = 3)
+  colnames(contingency_table) <- c("UNTREATED", "DASATINIB", "XMU")
+  rownames(contingency_table) <- c("Cluster", "NotCluster")
+  
+  for (j in 1:100) { # Number of bootstrap iterations
+    contingency_table[1,1] <- UNTREATED24hr_clusters_counts[j, i]
+    contingency_table[1,2] <- DASATINIB24hr_clusters_counts[j, i]
+    contingency_table[1,3] <- XMU24hr_clusters_counts[j, i]
+
+    contingency_table[2,1] <- sum(UNTREATED24hr_clusters_counts[j, -i])
+    contingency_table[2,2] <- sum(DASATINIB24hr_clusters_counts[j, -i])
+    contingency_table[2,3] <- sum(XMU24hr_clusters_counts[j, -i])
+    
+    # Chi-squared test for this bootstrap
+    chi_test <- chisq.test(contingency_table)
+
+    # Accumulate p-values
+    p_values[i] <- p_values[i] + chi_test$p.value
+  }
+  
+  # Average p-value over bootstraps
+  p_values[i] <- p_values[i] / 100
+}
+
+
+# Adjust the p-values
+adjusted_p_values <- p.adjust(p_values, method = "bonferroni")
+
+# Create a tidy data frame for plotting
+plot_data <- data.frame(
+  cluster   = names(mean_UNTREATED24hr_clusters),
+  untreated = mean_UNTREATED24hr_clusters,
+  dasatinib = mean_DASATINIB24hr_clusters,
+  xmu       = mean_XMU24hr_clusters,
+  
+  std_error_UNTREATED24hr  = std_error_UNTREATED24hr_clusters,
+  std_error_DASATINIB24hr  = std_error_DASATINIB24hr_clusters,
+  std_error_XMU24hr        = std_error_XMU24hr_clusters,
+  p_value  = adjusted_p_values
+) %>%
+  # pivot the means
+  gather(key = "condition", value = "value", untreated:xmu) %>%
+  # fix condition names + significance + per-bar SE
+  mutate(
+    condition = case_when(
+      condition == "untreated" ~ "UNTREATED",
+      condition == "dasatinib" ~ "DASATINIB",
+      condition == "xmu"       ~ "XMU",
+      TRUE ~ condition
+    ),
+    se = case_when(
+      condition == "UNTREATED" ~ std_error_UNTREATED24hr,
+      condition == "DASATINIB" ~ std_error_DASATINIB24hr,
+      condition == "XMU"       ~ std_error_XMU24hr
+    ),
+    significance = case_when(
+      p_value < 0.0001 ~ "***",
+      p_value < 0.001  ~ "**",
+      p_value < 0.05   ~ "*",
+      TRUE ~ ""
+    )
+  )
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB", "XMU")) # Reorder untreated 1st
+#plot_data$cluster <- factor(plot_data$cluster, levels = c(  "Unknown",)) # Reorder untreated 1st
+
+
+# Plotting using ggplot2
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling100-GASTRU_24h_merge-dim25kparam30res03_QCkeptUNDASA.pdf", width=5, height=3)
+ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(
+    aes(ymin = value - se, ymax = value + se),
+    position = position_dodge(width = 0.9),
+    width = 0.3
+  ) +
+  geom_text(
+    data = dplyr::filter(plot_data, condition == "DASATINIB"),
+    aes(label = significance, y = value + se),
+    vjust = -0.8,
+    position = position_dodge(0.9),
+    size = 5
+  ) +
+  scale_fill_manual(values = c(
+    "UNTREATED" = "blue",
+    "DASATINIB" = "red",
+    "XMU"       = "darkgreen"
+  )) +
+  labs(x = "Cluster", y = "Number of cells") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) +
+  ylim(0, 3100)
+
+dev.off()
+
+
+
+
+
+
+
 XXXXY below not mod
 
 
@@ -38611,6 +38780,173 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA-GATA6-split.pdf", width=10, height=5)
 FeaturePlot(GASTRU_72h_merge, features = c("GATA6"), max.cutoff = 5, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+
+
+
+
+
+
+## Downsampling with bootstrap to compare the nb of cell per cell types
+
+library("tidyverse")
+
+### Identify the unique clusters
+unique_clusters <- unique(Idents(GASTRU_72h_merge))
+
+### Create empty matrices to store cell counts
+UNTREATED72hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+DASATINIB72hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+XMU72hr_clusters_counts <- matrix(0, nrow=100, ncol=length(unique_clusters))
+
+colnames(UNTREATED72hr_clusters_counts) <- unique_clusters
+colnames(DASATINIB72hr_clusters_counts) <- unique_clusters
+colnames(XMU72hr_clusters_counts) <- unique_clusters
+
+# count nb of cells in each cluster
+untreated_clusters <- table(Idents(GASTRU_72h_merge)[GASTRU_72h_merge$condition == "UNTREATED"])
+print(untreated_clusters)
+dasatinib_clusters <- table(Idents(GASTRU_72h_merge)[GASTRU_72h_merge$condition == "DASATINIB"])
+print(dasatinib_clusters)
+xmu_clusters <- table(Idents(GASTRU_72h_merge)[GASTRU_72h_merge$condition == "XMU"])
+print(xmu_clusters)
+
+
+### Loop through 100 iterations
+GASTRU_72h_merge_UNTREATED72hr <- which(GASTRU_72h_merge$condition == 'UNTREATED') # 5713
+GASTRU_72h_merge_DASATINIB72hr <- which(GASTRU_72h_merge$condition == 'DASATINIB') # 7148
+GASTRU_72h_merge_XMU72hr <- which(GASTRU_72h_merge$condition == 'XMU') # 1219
+
+
+for (i in 1:100) { # Change this to 100 for the final run
+  set.seed(i)
+  # Downsampling
+  GASTRU_72h_merge_UNTREATED72hr_downsample <- sample(GASTRU_72h_merge_UNTREATED72hr, 1219)
+  GASTRU_72h_merge_DASATINIB72hr_downsample <- sample(GASTRU_72h_merge_DASATINIB72hr, 1219)
+
+  GASTRU_72h_merge_integrated_downsample <- GASTRU_72h_merge[,c(GASTRU_72h_merge_UNTREATED72hr_downsample, GASTRU_72h_merge_DASATINIB72hr_downsample,GASTRU_72h_merge_XMU72hr)]
+
+  # Count nb of cells in each cluster
+  UNTREATED72hr_clusters <- table(Idents(GASTRU_72h_merge_integrated_downsample)[GASTRU_72h_merge_integrated_downsample$condition == "UNTREATED"])
+  DASATINIB72hr_clusters <- table(Idents(GASTRU_72h_merge_integrated_downsample)[GASTRU_72h_merge_integrated_downsample$condition == "DASATINIB"])
+  XMU72hr_clusters <- table(Idents(GASTRU_72h_merge_integrated_downsample)[GASTRU_72h_merge_integrated_downsample$condition == "XMU"])
+
+  # Align the counts with the unique clusters
+  UNTREATED72hr_clusters_counts[i, names(UNTREATED72hr_clusters)] <- as.numeric(UNTREATED72hr_clusters)
+  DASATINIB72hr_clusters_counts[i, names(DASATINIB72hr_clusters)] <- as.numeric(DASATINIB72hr_clusters)
+  XMU72hr_clusters_counts[i, names(XMU72hr_clusters)] <- as.numeric(XMU72hr_clusters)
+}
+
+
+
+### Calculate mean and standard error
+mean_UNTREATED72hr_clusters  <- colMeans(UNTREATED72hr_clusters_counts)
+mean_DASATINIB72hr_clusters  <- colMeans(DASATINIB72hr_clusters_counts)
+mean_XMU72hr_clusters        <- colMeans(XMU72hr_clusters_counts)
+
+std_error_UNTREATED72hr_clusters <- apply(UNTREATED72hr_clusters_counts, 2, sd) / sqrt(100)
+std_error_DASATINIB72hr_clusters <- apply(DASATINIB72hr_clusters_counts, 2, sd) / sqrt(100)
+std_error_XMU72hr_clusters       <- apply(XMU72hr_clusters_counts, 2, sd) / sqrt(100)
+
+# Chi-squared test
+p_values <- numeric(length(unique_clusters))
+
+for (i in 1:length(unique_clusters)) {
+
+  # 2 x 3 contingency table (Cluster vs NotCluster, for 3 conditions)
+  contingency_table <- matrix(0, nrow = 2, ncol = 3)
+  colnames(contingency_table) <- c("UNTREATED", "DASATINIB", "XMU")
+  rownames(contingency_table) <- c("Cluster", "NotCluster")
+  
+  for (j in 1:100) { # Number of bootstrap iterations
+    contingency_table[1,1] <- UNTREATED72hr_clusters_counts[j, i]
+    contingency_table[1,2] <- DASATINIB72hr_clusters_counts[j, i]
+    contingency_table[1,3] <- XMU72hr_clusters_counts[j, i]
+
+    contingency_table[2,1] <- sum(UNTREATED72hr_clusters_counts[j, -i])
+    contingency_table[2,2] <- sum(DASATINIB72hr_clusters_counts[j, -i])
+    contingency_table[2,3] <- sum(XMU72hr_clusters_counts[j, -i])
+    
+    # Chi-squared test for this bootstrap
+    chi_test <- chisq.test(contingency_table)
+
+    # Accumulate p-values
+    p_values[i] <- p_values[i] + chi_test$p.value
+  }
+  
+  # Average p-value over bootstraps
+  p_values[i] <- p_values[i] / 100
+}
+
+
+# Adjust the p-values
+adjusted_p_values <- p.adjust(p_values, method = "bonferroni")
+
+# Create a tidy data frame for plotting
+plot_data <- data.frame(
+  cluster   = names(mean_UNTREATED72hr_clusters),
+  untreated = mean_UNTREATED72hr_clusters,
+  dasatinib = mean_DASATINIB72hr_clusters,
+  xmu       = mean_XMU72hr_clusters,
+  
+  std_error_UNTREATED72hr  = std_error_UNTREATED72hr_clusters,
+  std_error_DASATINIB72hr  = std_error_DASATINIB72hr_clusters,
+  std_error_XMU72hr        = std_error_XMU72hr_clusters,
+  p_value  = adjusted_p_values
+) %>%
+  # pivot the means
+  gather(key = "condition", value = "value", untreated:xmu) %>%
+  # fix condition names + significance + per-bar SE
+  mutate(
+    condition = case_when(
+      condition == "untreated" ~ "UNTREATED",
+      condition == "dasatinib" ~ "DASATINIB",
+      condition == "xmu"       ~ "XMU",
+      TRUE ~ condition
+    ),
+    se = case_when(
+      condition == "UNTREATED" ~ std_error_UNTREATED72hr,
+      condition == "DASATINIB" ~ std_error_DASATINIB72hr,
+      condition == "XMU"       ~ std_error_XMU72hr
+    ),
+    significance = case_when(
+      p_value < 0.0001 ~ "***",
+      p_value < 0.001  ~ "**",
+      p_value < 0.05   ~ "*",
+      TRUE ~ ""
+    )
+  )
+plot_data$condition <- factor(plot_data$condition, levels = c("UNTREATED", "DASATINIB", "XMU")) # Reorder untreated 1st
+#plot_data$cluster <- factor(plot_data$cluster, levels = c(  "Unknown",)) # Reorder untreated 1st
+
+
+# Plotting using ggplot2
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling100-GASTRU_72h_merge-dim25kparam30res03_QCkeptUNDASA.pdf", width=5, height=3)
+ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  geom_errorbar(
+    aes(ymin = value - se, ymax = value + se),
+    position = position_dodge(width = 0.9),
+    width = 0.3
+  ) +
+  geom_text(
+    data = dplyr::filter(plot_data, condition == "DASATINIB"),
+    aes(label = significance, y = value + se),
+    vjust = -0.8,
+    position = position_dodge(0.9),
+    size = 5
+  ) +
+  scale_fill_manual(values = c(
+    "UNTREATED" = "blue",
+    "DASATINIB" = "red",
+    "XMU"       = "darkgreen"
+  )) +
+  labs(x = "Cluster", y = "Number of cells") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) +
+  ylim(0, 1200)
+
+dev.off()
+
 
 
 

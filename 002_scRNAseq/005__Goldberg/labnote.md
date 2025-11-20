@@ -40430,6 +40430,194 @@ STG_markers <- STGmarkerFinder(
 
 
 
+
+##### cytotrace2
+
+Let's check cell differentation stage using [cytotrace2](https://github.com/digitalcytometry/cytotrace2)
+
+
+
+###### cytotrace2 installation
+
+
+--> I followed *Advanced options* as regulated `devtools::install_github("digitalcytometry/cytotrace2", subdir = "cytotrace2_r")` failed
+
+
+
+```bash
+conda create --name cytotrace2 --clone monocle3
+
+conda activate cytotrace2
+
+
+
+cd ../../Master/software/
+git clone https://github.com/digitalcytometry/cytotrace2.git cytotrace2 #
+
+cd cytotrace2
+
+R
+# In R  `install.packages("devtools")` and then `devtools::install_local("./cytotrace2_r")`
+
+# In R  `library(CytoTRACE2)` --> WORKS!!!
+```
+
+
+###### cytotrace2 all cells
+
+
+
+```bash
+conda activate cytotrace2
+```
+
+
+```R
+library("CytoTRACE2")
+
+
+
+
+# load rds
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+set.seed(42)
+
+
+## Separate WT and Kcnc1
+WT_p14_CB <- subset(WT_Kcnc1_p14_CB_1step.sct, subset = condition == "WT")
+Kcnc1_p14_CB <- subset(WT_Kcnc1_p14_CB_1step.sct, subset = condition == "Kcnc1")
+
+
+
+######################################
+# WT #################################
+######################################
+# running CytoTRACE 2 main function - cytotrace2
+cytotrace2_WT_p14_CB <- cytotrace2(WT_p14_CB, is_seurat = TRUE, slot_type = "counts")
+# making an annotation dataframe that matches input requirements for plotData function
+annotation <- data.frame(phenotype = WT_p14_CB@meta.data$cluster.annot) %>% set_rownames(., colnames(WT_p14_CB))
+# plotting
+plots <- plotData(cytotrace2_result = cytotrace2_WT_p14_CB, 
+                  annotation = annotation, 
+                  is_seurat = TRUE)
+
+pdf("output/cytotrace2/plotData-WT_p14_CB-allCells.pdf", width = 10, height = 10)
+plots
+dev.off()
+
+
+
+
+```
+
+
+--> All label as differentiated; make not sense to run on all cells; lets do granule only!
+
+
+
+
+
+
+
+###### cytotrace2 granule p14 only
+
+--> Lets use the same cells I use for pseudotime granule
+
+
+
+```bash
+conda activate cytotrace2
+```
+
+
+```R
+library("CytoTRACE2")
+
+library("SingleCellExperiment")
+
+
+
+
+####################################################################################
+# import and re-generate cell subset same as for the psuedotime analysis ###########
+####################################################################################
+
+# import rds with increased clustering
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version4dim40kparam15res03.sct_V1_numeric.rds") # 
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA" # According to condiments workflow
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+# First filter based on cell type
+Part_Granule <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("6", "1", "4")]
+table(Part_Granule$seurat_clusters) # to double check
+## Second filter based on UMAP coordinate
+umap_coords <- reducedDims(Part_Granule)$UMAP
+# Filter conditions based on your description:
+# Keep cells with UMAP_1 > -3 and UMAP_2 < 2.5
+selected_cells <-  umap_coords[,1] > 3 & umap_coords[,2] < 8 & umap_coords[,2] > -10
+# Subset your SCE object
+Part_Granule_subset <- Part_Granule[, selected_cells]
+# Check resulting subset
+dim(Part_Granule_subset)
+# Convert back to seurat
+Part_Granule_subset_seurat <- as.Seurat(
+  Part_Granule_subset)
+#--> PART UP COMES FROM `#### Isolating cell of interest - Granule p14 time point only`
+##################################################################################################################
+
+
+## Separate WT and Kcnc1
+WT_p14_granule_CB <- subset(Part_Granule_subset_seurat, subset = condition == "WT")
+Kcnc1_p14_granule_CB <- subset(Part_Granule_subset_seurat, subset = condition == "Kcnc1")
+
+
+
+######################################
+# WT granule - slot counts #########################
+######################################
+# running CytoTRACE 2 main function - cytotrace2
+cytotrace2_WT_p14_granule_CB <- cytotrace2(WT_p14_granule_CB, is_seurat = TRUE, slot_type = "counts")
+# making an annotation dataframe that matches input requirements for plotData function
+annotation <- data.frame(phenotype = WT_p14_granule_CB@meta.data$cluster.annot) %>% set_rownames(., colnames(WT_p14_granule_CB))
+# plotting
+plots <- plotData(cytotrace2_result = cytotrace2_WT_p14_granule_CB, 
+                  annotation = annotation, 
+                  is_seurat = TRUE)
+pdf("output/cytotrace2/plotData-WT_p14_CB-Part_Granule_subset.pdf", width = 10, height = 10)
+plots
+dev.off()
+
+
+
+
+######################################
+# WT granule - slot data #########################
+######################################
+# running CytoTRACE 2 main function - cytotrace2
+cytotrace2_WT_p14_granule_CB <- cytotrace2(WT_p14_granule_CB, is_seurat = TRUE, slot_type = "data")
+# making an annotation dataframe that matches input requirements for plotData function
+annotation <- data.frame(phenotype = WT_p14_granule_CB@meta.data$cluster.annot) %>% set_rownames(., colnames(WT_p14_granule_CB))
+# plotting
+plots <- plotData(cytotrace2_result = cytotrace2_WT_p14_granule_CB, 
+                  annotation = annotation, 
+                  is_seurat = TRUE)
+pdf("output/cytotrace2/plotData-WT_p14_CB-Part_Granule_subset-slot_data.pdf", width = 10, height = 10)
+plots
+dev.off()
+
+
+
+
+
+```
+
+--> All label as differentiated for slot `counts` and `data` (recommended to use `counts` but can also use `data`)
+
+
+
+
+
+
 #### p35 Cerebellum
 
 
@@ -49343,6 +49531,10 @@ dev.off()
 
 
 ```
+
+
+
+
 
 
 
