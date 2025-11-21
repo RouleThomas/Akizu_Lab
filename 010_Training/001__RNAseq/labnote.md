@@ -72,8 +72,10 @@ Download human genome:
 ```bash
 # Create output folder
 mkdir /Master/meta/STAR_hg38
-
-# Index human genome for use with STAR
+# Create scripts
+nano scripts/STAR_index_hg38.sh
+# Run script
+## Index human genome for use with STAR
 sbatch scripts/STAR_index_hg38.sh #  
 ```
 
@@ -83,7 +85,9 @@ sbatch scripts/STAR_index_hg38.sh #
 ```bash
 # Create output folder
 mkdir output/STAR
-
+# Create scripts
+nano scripts/STAR_mapping.sh
+# Run script
 sbatch scripts/STAR_mapping.sh
 ```
 

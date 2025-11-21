@@ -276,25 +276,25 @@ ATACMultiomewithST_SMK_QCv2.sct <- IntegrateData(anchorset = ATACMultiomewithST_
 #### UMAP
 DefaultAssay(ATACMultiomewithST_SMK_QCv2.sct) <- "integrated"
 
-ATACMultiomewithST_SMK_QCv2.sct <- RunPCA(ATACMultiomewithST_SMK_QCv2.sct, verbose = FALSE, npcs = 50)
-ATACMultiomewithST_SMK_QCv2.sct <- RunUMAP(ATACMultiomewithST_SMK_QCv2.sct, reduction = "pca", dims = 1:50, verbose = FALSE)
-ATACMultiomewithST_SMK_QCv2.sct <- FindNeighbors(ATACMultiomewithST_SMK_QCv2.sct, reduction = "pca", k.param = 30, dims = 1:50)
+ATACMultiomewithST_SMK_QCv2.sct <- RunPCA(ATACMultiomewithST_SMK_QCv2.sct, verbose = FALSE, npcs = 30)
+ATACMultiomewithST_SMK_QCv2.sct <- RunUMAP(ATACMultiomewithST_SMK_QCv2.sct, reduction = "pca", dims = 1:30, verbose = FALSE)
+ATACMultiomewithST_SMK_QCv2.sct <- FindNeighbors(ATACMultiomewithST_SMK_QCv2.sct, reduction = "pca", k.param = 30, dims = 1:30)
 ATACMultiomewithST_SMK_QCv2.sct <- FindClusters(ATACMultiomewithST_SMK_QCv2.sct, resolution = 0.3, verbose = FALSE, algorithm = 4) # method = "igraph" needed for large nb of cells
 
 
 ATACMultiomewithST_SMK_QCv2.sct$condition <- factor(ATACMultiomewithST_SMK_QCv2.sct$condition, levels = c("Normoxia", "Hypoxia")) # 
 
-pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_QCv2-dim50kparam30res03.pdf", width=7, height=6)
+pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_QCv2-dim30kparam30res03.pdf", width=7, height=6)
 DimPlot(ATACMultiomewithST_SMK_QCv2.sct, reduction = "umap", label=TRUE)
 dev.off()
 
-pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_QCv2-dim50kparam30res03-groupSex.pdf", width=7, height=6)
+pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_QCv2-dim30kparam30res03-groupSex.pdf", width=7, height=6)
 DimPlot(ATACMultiomewithST_SMK_QCv2.sct, reduction = "umap", label=TRUE, group.by= "sex" )
 dev.off()
-pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_QCv2-dim50kparam30res03-groupSex.pdf", width=7, height=6)
+pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_QCv2-dim30kparam30res03-groupSex.pdf", width=7, height=6)
 DimPlot(ATACMultiomewithST_SMK_QCv2.sct, reduction = "umap", label=FALSE, group.by= "sex" )
 dev.off()
-pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_QCv2-dim50kparam30res03-groupCondition.pdf", width=7, height=6)
+pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_QCv2-dim30kparam30res03-groupCondition.pdf", width=7, height=6)
 DimPlot(ATACMultiomewithST_SMK_QCv2.sct, reduction = "umap", label=FALSE, group.by= "condition" )
 dev.off()
 
@@ -339,42 +339,49 @@ Mg= c("C1qa", "C1qb")
 Astro= c("Slc1a3", "Fabp7", "Zfpm2", "Nrxn3")
 Endo= c("Col4a1", "Col4a2", "Cldn5", "Zfpm2")
 
-
-XXXY HERE !!!
-
-
-
 DefaultAssay(ATACMultiomewithST_SMK_QCv2.sct) <- "SCT"
 
-pdf("output/seurat/FeaturePlot-dim50-ListdotPLot.pdf", width=30, height=60)
-FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = c(   "Gabra6","Pax6", # Granular_1
-  "Sorcs3", "Ptprk", # MLI1
-  "Nxph1", "Cdh22", # MLI2
-  "Klhl1", "Gfra2", "Aldh1a3", # PLI12
-  "Galntl6", "Kcnc2", # PLI23
-  "Pax2", # Golgi
-  "Eomes", # Unipolar_Brush
-  "Calb1", "Slc1a6", "Car8", # Purkinje
-  "Zeb2", # Astrocyte
-  "Aqp4", "Slc39a12", # Bergmann_Glia
-  "Mbp", "Mag", "Plp1", # Oligodendrocyte
-  "Aldoc", "Cnp", # OPC
-  "Itgam", "Cx3cr1", # Mix_Microglia_Meningeal
-  "Ptgds", "Dcn", # Endothelial
-  "Lef1", "Notum", "Apcdd1", # Endothelial_Mural
-  "Dlc1", "Pdgfrb", # Choroid_Plexus
-  "Kl",  "Ttr",
-  "Eomes", "Rgs6", "Tafa2"), max.cutoff = 1, cols = c("grey", "red"))
+pdf("output/seurat/FeaturePlot-dim30-NSC.pdf", width=10, height=10)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = NSC, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-dim30-NPC.pdf", width=10, height=10)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = NPC, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-dim30-In.pdf", width=25, height=10)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = In, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-dim30-Glut.pdf", width=30, height=20)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = Glut, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-dim30-Neuron.pdf", width=15, height=5)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = Neuron, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-dim30-OPC.pdf", width=10, height=10)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = OPC, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-dim30-RG.pdf", width=10, height=10)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = RG, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-dim30-Mg.pdf", width=15, height=5)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = Mg, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-dim30-Astro.pdf", width=10, height=10)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = Astro, max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-dim30-Endo.pdf", width=10, height=10)
+FeaturePlot(ATACMultiomewithST_SMK_QCv2.sct, features = Endo, max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
 
 
+XXXY HERE!!
 
 
 
 
 
 
+XXXY HERE !!!
 
 
 

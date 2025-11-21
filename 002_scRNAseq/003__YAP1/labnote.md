@@ -36276,11 +36276,7 @@ bind_rows(
   
 
 
-## PLOT 
-
-
-
-
+## PLOT
 g1 <- "GATA6"; g2 <- "CDX2"
 E  <- FetchData(GASTRU_24h_merge_UNTREATED, vars = c(g1, g2))
 c1 <- quantile(E[[g1]], 0.95, na.rm = TRUE)
@@ -36300,7 +36296,21 @@ FeaturePlot(
   order = TRUE
 )
 dev.off()
-
+pdf("output/seurat/GASTRU_24h_merge_XMU-dim25kparam30res03_QCkeptUNDASA-coexprGATA6CDX2_colorChange.pdf",
+    width = 14, height = 6)
+FeaturePlot(
+  GASTRU_24h_merge_XMU,
+  features = c(g1, g2),
+  reduction = "umap",
+  blend = TRUE,
+  blend.threshold = 0,
+  cols = c("#E43323" , "#7289F7"),     # <- use cols, not cols.blend
+  min.cutoff = c(0, 0),
+  max.cutoff = c(c1, c2),
+  pt.size = 0.9,
+  order = TRUE
+)
+dev.off()
 
 ## STAT 
 compare_both <- function(obj1, obj2, g1, g2, name1, name2) {
@@ -38875,7 +38885,21 @@ FeaturePlot(
   order = TRUE
 )
 dev.off()
-
+pdf("output/seurat/GASTRU_72h_merge_XMU-dim25kparam30res03_QCkeptUNDASA-coexprGATA6CDX2_colorChange.pdf",
+    width = 14, height = 6)
+FeaturePlot(
+  GASTRU_72h_merge_XMU,
+  features = c(g1, g2),
+  reduction = "umap",
+  blend = TRUE,
+  blend.threshold = 0,
+  cols = c("#E43323" , "#7289F7"),     # <- use cols, not cols.blend
+  min.cutoff = c(0, 0),
+  max.cutoff = c(c1, c2),
+  pt.size = 0.9,
+  order = TRUE
+)
+dev.off()
 
 ## STAT 
 compare_both <- function(obj1, obj2, g1, g2, name1, name2) {
