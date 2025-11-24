@@ -88,3 +88,42 @@ plotHeatmap -m output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_pr
 
 
 
+
+
+
+
+plotHeatmap -m output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.gz \
+    -out output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_heatmap4.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "OEKO_H3K27me3" \
+    --colorList 'white,#e8f3ff,#cce6ff,#99ccff,#66b3ff,#3385cc,#0066cc,#004c99,#003366' \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 7 \
+    --heatmapWidth 2 \
+    --zMax 3 3 3
+
+
+
+
+
+plotHeatmap -m output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.gz \
+    -out output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans6_heatmap3.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "OEKO_H3K27me3" \
+    --colorMap Blues \
+    --kmeans 6 \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 7 \
+    --heatmapWidth 2 \
+    --zMax 3 3 3
+
+
+
+plotHeatmap -m output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.gz \
+    -out output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans12_heatmap3.pdf \
+    --samplesLabel "WT_H3K27me3" "KO_H3K27me3" "OEKO_H3K27me3" \
+    --colorMap Blues \
+    --kmeans 12 \
+    --whatToShow 'heatmap and colorbar' \
+    --heatmapHeight 7 \
+    --heatmapWidth 2 \
+    --zMax 3 3 3
+

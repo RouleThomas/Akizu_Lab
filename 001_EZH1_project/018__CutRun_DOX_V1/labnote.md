@@ -7570,6 +7570,7 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval2
 #### H3K27me3 peaks/genes changes
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52385335 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 59966484 ok 
+sbatch scripts/matrix_GENETSS_500bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 60384646 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52385336 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 59966554 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52385338 ok
@@ -7578,6 +7579,60 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52391805 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1_noSkip0.sh # 52391844 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2_noSkip0.sh # 52391855 ok
+
+#### H3K27me3 peaks/genes changes - isolate region showing signal
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_GAIN-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 60387191 ok
+#--> 8 cluster output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_GAIN-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3.bed
+
+## remove cluster 8 with low signal
+grep -v "cluster_8" output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_GAIN-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3.bed > output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_GAIN-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8.bed # 5763 --> 1655 unique regions
+## Then remove any region that overlap with these transcripts in my GTF
+cut -f4 output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_GAIN-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8.bed \
+    | sort -u \
+    > output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_GAIN-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8_transcriptname.txt
+
+awk '
+  NR==FNR {ids[$1]; next}              # read IDs into array from transcripts_gain_unique.txt
+  /^#/ {print; next}                   # keep GTF header lines
+  match($0, /transcript_id "([^"]+)"/, m) {
+    if (m[1] in ids) print             # print line if transcript_id is one of our IDs
+  }
+' output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_GAIN-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8_transcriptname.txt \
+  meta/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf \
+  > meta/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3-NOCLUSTER8.gtf
+
+
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 60387646 ok
+#--> 8 cluster output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3.bed
+grep -v "cluster_8" output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3.bed > output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8.bed # 6462 --> 2101 unique regions
+awk '{print $1 "\t" $2 "\t" $3}' output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8.bed > output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8BED.bed
+
+## remove cluster 8 with low signal
+grep -v "cluster_8" output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3.bed > output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8.bed # 6462 --> 2101 unique regions
+## Then remove any region that overlap with these transcripts in my GTF
+cut -f4 output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8.bed \
+    | sort -u \
+    > output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8_transcriptname.txt
+
+awk '
+  NR==FNR {ids[$1]; next}              # read IDs into array from transcripts_LOST_unique.txt
+  /^#/ {print; next}                   # keep GTF header lines
+  match($0, /transcript_id "([^"]+)"/, m) {
+    if (m[1] in ids) print             # print line if transcript_id is one of our IDs
+  }
+' output/deeptools/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_LOST-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0_kmeans8_heatmap3_NOCLUSTER8_transcriptname.txt \
+  meta/gencode_downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf \
+  > meta/gencode_downregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3-NOCLUSTER8.gtf
+
+
+
+
+
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5_NOCLUSTER8-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 60396206 xxx
+
+
+
 
 
 ### WT vs OEKO _ without --skipZero

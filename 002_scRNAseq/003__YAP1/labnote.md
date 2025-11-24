@@ -12810,7 +12810,49 @@ cd uploads/thomasroule@orcid_A787EGG4
 mirror -R GEO_gastrulationPaper/
 ```
 
---> Done succesfully; release data: 2025-12-20
+--> Done succesfully; release data: 2025-12-20; updated to 2026-12-16
+
+
+
+# Upload files to GEO - 3D gastrulation paper human gastruloids 24 72 hrs XMU sample
+
+Go [here](https://www.ncbi.nlm.nih.gov/geo/info/seq.html); and follow instructions in `Transfer Files`. Connect to my personal space (`uploads/thomasroule@orcid_A787EGG4`) and transfer files.
+
+- Create a clean `GEO_3DPaper_XMU` folder with all cellranger files (barcode, features, matrix), and fq.gz files
+  - I copy `24hgastruloidhumanXMU/outs/filtered_feature_bc_matrix` and add manually prefix `humangastruloidXMU24hrs_`
+  - I copy `72hgastruloidhumanXMU/outs/filtered_feature_bc_matrix` and add manually prefix `humangastruloidXMU72hrs_`
+  - I copy `input/24hgastruloidhumanXMU/24h_XMU_S2_L001_R*`
+  - I copy `input/72hgastruloidhumanXMU/72h_XMU_S1_L001_R*`
+
+- Fill in the `seq_template_TR_3DPaper_XMU.xlsx` (`Metada` and `MD5` sheet notably)
+- submit files
+
+```bash
+cd GEO_3DPaper_XMU/
+
+# do file integrity check with md5
+md5sum * | awk '{print $2 "\t" $1}' > md5sums.txt
+
+module load lftp
+
+# connect to ftp
+lftp -u geoftp,inAlwokhodAbnib5 ftp-private.ncbi.nlm.nih.gov # geoftp = username; inAlwokhodAbnib5 = pwd
+cd uploads/thomasroule@orcid_uTsNo4GU
+
+mkdir GEO_3DPaper_XMU
+
+cd GEO_3DPaper_XMU/
+
+mirror -R ./
+
+
+
+
+```
+
+--> Done succesfully; release data: 2026-12-16
+
+
 
 
 
@@ -36769,7 +36811,7 @@ dev.off()
 
 
 
-XXXXY below not mod
+
 
 
 # differential expressed genes across conditions
@@ -36798,47 +36840,78 @@ cell_types <- c("1",
   "3",
   "4",
   "5",
-  #"6", # not in DASA
-  #"7", # not in DASA
-  #"8", # not in DASA
+  "6", # not in DASA
+  "7", # not in DASA
+  "8", # not in DASA
   "9")
 
-for (cell_type in cell_types) {
-  response_name <- paste(cell_type, "DASATINIB24hrmerge_dim20kparam30res03.response", sep = ".")
-  ident_1 <- paste(cell_type, "-DASATINIB", sep = "")
-  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
 
-  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
-  
-  print(head(response, n = 15))
-  
-  file_name <- paste("output/seurat/", cell_type, "-DASATINIBresponse24hrmerge_dim20kparam30res03.txt", sep = "")
-  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+# UNTREATED vs DASA 
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "DASATINIB24hrmerge_dim25kparam30res03_QCkeptUNDASA.response", sep = ".")
+  ident_1 <- paste0(cell_type, "-DASATINIB")
+  ident_2 <- paste0(cell_type, "-UNTREATED")
+
+  file_name <- paste0("output/seurat/", cell_type,
+                      "-DASATINIBresponse24hrmerge_dim25kparam30res03_QCkeptUNDASA.txt")
+
+  message("Running DE for cluster ", cell_type, " ...")
+
+  tryCatch(
+    {
+      response <- FindMarkers(
+        GASTRU_24h_merge,
+        assay = "RNA",
+        ident.1 = ident_1,
+        ident.2 = ident_2,
+        verbose = FALSE
+      )
+      
+      print(head(response, 15))
+      write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+    },
+    error = function(e) {
+      message("⚠️  Skipping cluster ", cell_type, ": ", conditionMessage(e))
+    }
+  )
 }
 
 
-cell_types <- c("1"
- # "2",
- #  "3",
-  # "4",
-  # "5",
-  # "6", 
- #  "7", 
- #  "8",
-  # "9")
-)
-for (cell_type in cell_types) {
-  response_name <- paste(cell_type, "XMU24hrmerge_dim20kparam30res03.response", sep = ".")
-  ident_1 <- paste(cell_type, "-XMU", sep = "")
-  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
 
-  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
-  
-  print(head(response, n = 15))
-  
-  file_name <- paste("output/seurat/", cell_type, "-XMUresponse24hrmerge_dim20kparam30res03.txt", sep = "")
-  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+# UNTREATED vs XMU 
+for (cell_type in cell_types) {
+  response_name <- paste(cell_type, "XMU24hrmerge_dim25kparam30res03_QCkeptUNDASA.response", sep = ".")
+  ident_1 <- paste0(cell_type, "-XMU")
+  ident_2 <- paste0(cell_type, "-UNTREATED")
+
+  file_name <- paste0("output/seurat/", cell_type,
+                      "-XMUresponse24hrmerge_dim25kparam30res03_QCkeptUNDASA.txt")
+
+  message("Running DE for cluster ", cell_type, " ...")
+
+  tryCatch(
+    {
+      response <- FindMarkers(
+        GASTRU_24h_merge,
+        assay = "RNA",
+        ident.1 = ident_1,
+        ident.2 = ident_2,
+        verbose = FALSE
+      )
+      
+      print(head(response, 15))
+      write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+    },
+    error = function(e) {
+      message("⚠️  Skipping cluster ", cell_type, ": ", conditionMessage(e))
+    }
+  )
 }
+
+
+
 
 
 ```
@@ -39362,27 +39435,24 @@ dev.off()
 
 
 
-XXXY below not mod!
-
-
 # differential expressed genes across conditions
 ## PRIOR Lets switch to RNA assay and normalize and scale before doing the DEGs
 
-DefaultAssay(GASTRU_24h_merge) <- "RNA"
+DefaultAssay(GASTRU_72h_merge) <- "RNA"
 
-GASTRU_24h_merge <- NormalizeData(GASTRU_24h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
-all.genes <- rownames(GASTRU_24h_merge)
-GASTRU_24h_merge <- ScaleData(GASTRU_24h_merge, features = all.genes) # zero-centres and scales it
+GASTRU_72h_merge <- NormalizeData(GASTRU_72h_merge, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(GASTRU_72h_merge)
+GASTRU_72h_merge <- ScaleData(GASTRU_72h_merge, features = all.genes) # zero-centres and scales it
 
 
 ## what genes change in different conditions for cells of the same type
 
-GASTRU_24h_merge$celltype.stim <- paste(GASTRU_24h_merge$seurat_clusters, GASTRU_24h_merge$condition,
+GASTRU_72h_merge$celltype.stim <- paste(GASTRU_72h_merge$seurat_clusters, GASTRU_72h_merge$condition,
     sep = "-")
-Idents(GASTRU_24h_merge) <- "celltype.stim"
+Idents(GASTRU_72h_merge) <- "celltype.stim"
 
 # use RNA corrected count for DEGs
-## GASTRU_24h_merge <- PrepSCTFindMarkers(GASTRU_24h_merge)
+## GASTRU_72h_merge <- PrepSCTFindMarkers(GASTRU_72h_merge)
 
 
 ## Automation::
@@ -39390,48 +39460,74 @@ cell_types <- c("1",
   "2",
   "3",
   "4",
-  "5",
-  #"6", # not in DASA
-  #"7", # not in DASA
-  #"8", # not in DASA
-  "9")
+  "5")
 
+
+
+# UNTRERATED vs DASA
 for (cell_type in cell_types) {
-  response_name <- paste(cell_type, "DASATINIB24hrmerge_dim20kparam30res03.response", sep = ".")
-  ident_1 <- paste(cell_type, "-DASATINIB", sep = "")
-  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+  response_name <- paste(cell_type, "DASATINIB72hrmerge_dim25kparam30res03_QCkeptUNDASA.response", sep = ".")
+  ident_1 <- paste0(cell_type, "-DASATINIB")
+  ident_2 <- paste0(cell_type, "-UNTREATED")
 
-  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
-  
-  print(head(response, n = 15))
-  
-  file_name <- paste("output/seurat/", cell_type, "-DASATINIBresponse24hrmerge_dim20kparam30res03.txt", sep = "")
-  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+  file_name <- paste0("output/seurat/", cell_type,
+                      "-DASATINIBresponse72hrmerge_dim25kparam30res03_QCkeptUNDASA.txt")
+
+  message("Running DE for cluster ", cell_type, " ...")
+
+  tryCatch(
+    {
+      response <- FindMarkers(
+        GASTRU_72h_merge,
+        assay = "RNA",
+        ident.1 = ident_1,
+        ident.2 = ident_2,
+        verbose = FALSE
+      )
+      
+      print(head(response, 15))
+      write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+    },
+    error = function(e) {
+      message("⚠️  Skipping cluster ", cell_type, ": ", conditionMessage(e))
+    }
+  )
 }
 
 
-cell_types <- c("1"
- # "2",
- #  "3",
-  # "4",
-  # "5",
-  # "6", 
- #  "7", 
- #  "8",
-  # "9")
-)
+# UNTRERATED vs XMU
 for (cell_type in cell_types) {
-  response_name <- paste(cell_type, "XMU24hrmerge_dim20kparam30res03.response", sep = ".")
-  ident_1 <- paste(cell_type, "-XMU", sep = "")
-  ident_2 <- paste(cell_type, "-UNTREATED", sep = "")
+  response_name <- paste(cell_type, "XMU72hrmerge_dim25kparam30res03_QCkeptUNDASA.response", sep = ".")
+  ident_1 <- paste0(cell_type, "-XMU")
+  ident_2 <- paste0(cell_type, "-UNTREATED")
 
-  response <- FindMarkers(GASTRU_24h_merge, assay = "RNA", ident.1 = ident_1, ident.2 = ident_2, verbose = FALSE)
-  
-  print(head(response, n = 15))
-  
-  file_name <- paste("output/seurat/", cell_type, "-XMUresponse24hrmerge_dim20kparam30res03.txt", sep = "")
-  write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+  file_name <- paste0("output/seurat/", cell_type,
+                      "-XMUresponse72hrmerge_dim25kparam30res03_QCkeptUNDASA.txt")
+
+  message("Running DE for cluster ", cell_type, " ...")
+
+  tryCatch(
+    {
+      response <- FindMarkers(
+        GASTRU_72h_merge,
+        assay = "RNA",
+        ident.1 = ident_1,
+        ident.2 = ident_2,
+        verbose = FALSE
+      )
+      
+      print(head(response, 15))
+      write.table(response, file = file_name, sep = "\t", quote = FALSE, row.names = TRUE)
+    },
+    error = function(e) {
+      message("⚠️  Skipping cluster ", cell_type, ": ", conditionMessage(e))
+    }
+  )
 }
+
+
+
+
 
 
 ```

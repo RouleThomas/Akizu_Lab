@@ -954,6 +954,71 @@ sbatch scripts/matrix_TSS_10kb_WTQ731EvsKO_H3K27me3_median_THOR_genePeaks_macs2q
 
 
 
+### deeptools plot F31 Jasmine - H3K27me3 signal in H3K27me3 peaks
+
+Lets show WT and KO only in WT peaks MACS2 qval 2.3 (more true peaks)
+
+```bash
+conda activate deeptools
+
+sbatch scripts/matrix_TSS_5kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_MACS2q23_peakWTonly.sh # 60380414 ok
+#--> this version show more signal in WT as I am centered on WT peaks...
+
+
+sbatch scripts/matrix_TSS_5kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_MACS2q23_peakWTandKO.sh # 60380519 ok
+#--> this version seprate WT and KO... Lets identify consensus peaks...
+
+
+# Consensus peaks from WT and KO; extend them by 100bp and find overlap
+sbatch scripts/matrix_TSS_5kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_MACS2q23consensuspeakWTandKO.sh # 60383863 ok
+#--> Work but does not show more in KO... Exact same...
+
+
+# positive and negative THOR qval20
+sbatch scripts/matrix_TSS_5kb_bigwig_THOR_MG1655_DiffBind_TMM_50dN_H3K27me3_median_WTvsKO_THORq20_positiveANDnegative.sh # 60385655 ok
+
+
+
+
+```
+
+
+
+
+# Identify consensus peaks
+
+
+Identify peak in WT, KO, OEKO, separately using MACS2, then merge overlapping peak = consensus peak. Then calculate signal in these regions
+
+
+```bash
+conda activate BedToBigwig
+
+# concatenate and sort bed files
+
+## qvalue 2.3 ##############
+### WT KO 
+cat output/macs2/broad/broad_blacklist_qval2.30103/50dN_WTQ731E_H3K27me3_pool_peaks.broadPeak output/macs2/broad/broad_blacklist_qval2.30103/50dN_KO_H3K27me3_pool_peaks.broadPeak | sort -k1,1 -k2,2n > output/macs2/broad/broad_blacklist_qval2.30103/50dN_WTKO_H3K27me3_pool_peaks.sorted.broadPeak
+
+
+
+# merge = consensus peak identification
+### with 100bp peak merging
+bedtools merge -d 100 -i output/macs2/broad/broad_blacklist_qval2.30103/50dN_WTKO_H3K27me3_pool_peaks.sorted.broadPeak > output/macs2/broad/broad_blacklist_qval2.30103/50dN_WTKO_H3K27me3_pool_peaks.sorted.merge100bp.bed
+
+
+
+
+
+
+```
+
+--> All good; consensus peak files are: `output/macs2/broad/ESC_WTKOOEKO_[ANTIBODY]_pool_peaks.sorted.merge[SIZE].bed`
+  --> Without X chr: `output/macs2/broad/ESC_WTKOOEKO_[ANTIBODY]_noXchr_pool_peaks.sorted.merge[SIZE].bed`
+
+
+
+
 # clean bigwig file (remove low value)
 
 The deeptool profile is weird probably due to high level of noise. Let's try to renmove the low value; assign value under 5 to 0:
