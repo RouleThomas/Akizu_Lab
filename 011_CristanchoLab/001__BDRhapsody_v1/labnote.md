@@ -457,11 +457,16 @@ dev.off()
 pdf("output/seurat/VlnPlot-QC-ATACMultiomewithST_SMK-percent.mt.pdf", width = 10, height = 6)
 VlnPlot(ATACMultiomewithST_SMK, features = c("percent.mt"), ncol = 4, pt.size = 0.1) 
 dev.off()
+pdf("output/seurat/VlnPlot-QC-ATACMultiomewithST_SMK-percent.mt-groupSample_Name.pdf", width = 40, height = 6)
+VlnPlot(ATACMultiomewithST_SMK, features = c("percent.mt"), ncol = 4, pt.size = 0.1, group.by= "Sample_Name") 
+dev.off()
 
 pdf("output/seurat/VlnPlot-QC-ATACMultiomewithST_SMK-percent.rb.pdf", width = 10, height = 6)
 VlnPlot(ATACMultiomewithST_SMK, features = c("percent.rb"), ncol = 4, pt.size = 0.1) 
 dev.off()
-
+pdf("output/seurat/VlnPlot-QC-ATACMultiomewithST_SMK-percent.rb-groupSample_Name.pdf", width = 40, height = 6)
+VlnPlot(ATACMultiomewithST_SMK, features = c("percent.rb"), ncol = 4, pt.size = 0.1, group.by= "Sample_Name") 
+dev.off()
 
 
 # Filter seurat object
@@ -518,6 +523,15 @@ VlnPlot(
   pt.size = 0.1,
   ncol = 5 )
 dev.off()
+pdf("output/seurat/VlnPlot-QC-ATACMultiomewithST_SMK_V2QCv1-nCount_peaks-groupSample_Name.pdf", width = 40, height = 6)
+VlnPlot(
+  object = ATACMultiomewithST_SMK_QCv1,
+  features = c('nCount_peaks'),
+  pt.size = 0.1,
+  ncol = 5, group.by= "Sample_Name" )
+dev.off()
+
+
 pdf("output/seurat/VlnPlot-QC-ATACMultiomewithST_SMK_V2QCv1-nCount_peaks_030000.pdf", width=12, height=6)
 VlnPlot(
   object = ATACMultiomewithST_SMK_QCv1,
@@ -533,6 +547,14 @@ VlnPlot(
   pt.size = 0.1,
   ncol = 5 )
 dev.off()
+pdf("output/seurat/VlnPlot-QC-ATACMultiomewithST_SMK_V2QCv1-TSSenrichment-groupSample_Name.pdf", width = 40, height = 6)
+VlnPlot(
+  object = ATACMultiomewithST_SMK_QCv1,
+  features = c('TSS.enrichment'),
+  pt.size = 0.1,
+  ncol = 5, group.by= "Sample_Name" )
+dev.off()
+
 pdf("output/seurat/VlnPlot-QC-ATACMultiomewithST_SMK_V2QCv1-nucleosome_signal.pdf", width=12, height=6)
 VlnPlot(
   object = ATACMultiomewithST_SMK_QCv1,
@@ -540,7 +562,13 @@ VlnPlot(
   pt.size = 0.1,
   ncol = 5 )
 dev.off()
-
+pdf("output/seurat/VlnPlot-QC-ATACMultiomewithST_SMK_V2QCv1-nucleosome_signal-groupSample_Name.pdf", width = 40, height = 6)
+VlnPlot(
+  object = ATACMultiomewithST_SMK_QCv1,
+  features = c('nucleosome_signal'),
+  pt.size = 0.1,
+  ncol = 5, group.by= "Sample_Name" )
+dev.off()
 
 
 
@@ -568,7 +596,7 @@ ATACMultiomewithST_SMK_QCv2 <- subset(
     nucleosome_signal > 0.11 &
     nucleosome_signal < 0.28
 )
-#--> 22,052 to 21,692 cells
+#--> 21,685 to 21,333 cells
 ATACMultiomewithST_SMK_QCv2
 
 
@@ -734,6 +762,29 @@ pdf("output/seurat/FeaturePlot-ATACMultiomewithST_SMK_V2QCv2-dim30-AstroGoldberg
 FeaturePlot(ATACMultiomewithST_SMK_V2QCv2.sct, features = c("Aqp4", "Slc39a12"), max.cutoff = 1, cols = c("grey", "red"))
 dev.off()
 
+pdf("output/seurat/FeaturePlot-ATACMultiomewithST_SMK_V2QCv2-dim30-Neurod2.pdf", width=6, height=5)
+FeaturePlot(ATACMultiomewithST_SMK_V2QCv2.sct, features = c("Neurod2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-ATACMultiomewithST_SMK_V2QCv2-dim30-Neurod6.pdf", width=6, height=5)
+FeaturePlot(ATACMultiomewithST_SMK_V2QCv2.sct, features = c("Neurod6"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-ATACMultiomewithST_SMK_V2QCv2-dim30-Gad2.pdf", width=6, height=5)
+FeaturePlot(ATACMultiomewithST_SMK_V2QCv2.sct, features = c("Gad2"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-ATACMultiomewithST_SMK_V2QCv2-dim30-Nrxn3.pdf", width=6, height=5)
+FeaturePlot(ATACMultiomewithST_SMK_V2QCv2.sct, features = c("Nrxn3"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-ATACMultiomewithST_SMK_V2QCv2-dim30-C1qb.pdf", width=6, height=5)
+FeaturePlot(ATACMultiomewithST_SMK_V2QCv2.sct, features = c("C1qb"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+pdf("output/seurat/FeaturePlot-ATACMultiomewithST_SMK_V2QCv2-dim30-Mki67.pdf", width=6, height=5)
+FeaturePlot(ATACMultiomewithST_SMK_V2QCv2.sct, features = c("Mki67"), max.cutoff = 1, cols = c("grey", "red"))
+dev.off()
+
+
+
+
+
 #-->  dim30kparam30res04 seems the best option!
 
 
@@ -802,7 +853,7 @@ dev.off()
 
 
 
-pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04-labelNoSplit.pdf", width=9, height=6)
+pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04-labelNoSplit.pdf", width=7, height=6)
 DimPlot(ATACMultiomewithST_SMK_V2QCv2.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
 dev.off()
 
@@ -829,7 +880,7 @@ all_markers <- c(
 
 
 markers_Cristancho <- c(
-  "Neurod6", "Rbfox1", "Tle4", "Zfpm2", "Satb2", "Dok5", "Unc5d", "Sema3c", "Sema3a", "Nrxn3", "Reln", "Gad2", "Lhx6", "Sst", "Adarb2", "Isl1", "Drd2", "Eomes", "Mki67", "Top2a", "Tnc", "Olig2", "Slc1a3", "Fabp7", "Col4a1", "Cldn5", "C1qb", "C1qa"
+  "Neurod6", "Rbfox1", "Tle4", "Zfpm2", "Satb2", "Dok5", "Unc5d", "Sema3c", "Sema3a", "Nrxn3", "Reln", "Ldb2", "Gad2", "Lhx6", "Sst", "Adarb2", "Isl1", "Drd2", "Eomes", "Mki67", "Top2a", "Tnc", "Olig2", "Slc1a3", "Fabp7", "Col4a1", "Cldn5", "C1qb", "C1qa"
 )
 
 
@@ -940,7 +991,7 @@ for (cell_type in cell_types) {
 }
 
 
-#--> DEGs save as output/seurat[CLUSTERNAME]-Hypoxia-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04.txt
+#--> DEGs save as output/seurat/[CLUSTERNAME]-Hypoxia-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04.txt
 
 
 
