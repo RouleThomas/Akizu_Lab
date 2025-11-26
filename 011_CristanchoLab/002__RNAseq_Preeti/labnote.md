@@ -91,6 +91,24 @@ B8	PSC_Hypo_Rep4   hiPSCs_Hyp_24h
 sbatch scripts/fastp.sh # 60456895 ok
 ```
 
+# Fastqc 
+
+Let's run fastqc to check why so many reads assigned to no features in featurecounts...
+
+
+```bash
+# Raw fastq
+sbatch scripts/fastqc_raw.sh # 60548567 xxx
+
+
+# fastp-clean fastq
+sbatch scripts/fastqc_fastp.sh # 60548570 xxx
+```
+
+
+
+
+
 # STAR mapping fastp trim
 
 ```bash
@@ -156,14 +174,22 @@ featureCounts -p -C -O -M --fraction \
 
 
 # all samples:
-sbatch scripts/featurecounts.sh # 60547513 xxx
-sbatch scripts/featurecounts_multi.sh # 60547516 xxx
+sbatch scripts/featurecounts.sh # 60547513 ok
+#--> 50-60% uniquely aligned reads
+sbatch scripts/featurecounts_multi.sh # 60547516 ok
+#--> 55-65% uniquely aligned reads
+
+sbatch scripts/featurecounts_unstranded.sh # 60549123 xxx
+#--> xxx-xxx% uniquely aligned reads
+sbatch scripts/featurecounts_multi_unstranded.sh # 60549134 xxx
+#--> xxx-xxx% uniquely aligned reads
+
 
 
 ```
 
 test with `ReN_Norm_Rep1`
-- ~50%, 16% alignment with stranded paramters `-s 2` and `-s 1`, respectively + looking at IGV bam, **files looks stranded**
+- ~50%, 16% alignment with stranded paramters `-s 2` and `-s 1`, respectively + looking at IGV bam, **files seems stranded**
 - Many mapping to unassigned features, and multimapped reads.. Let's generate two versions:
   - one counting multimapped reads (`*_multi`), and another one removing multimapped reads, improve a bit but not so much
 
