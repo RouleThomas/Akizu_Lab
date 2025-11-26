@@ -130,6 +130,129 @@ sbatch --dependency=afterany:60457411 scripts/bigwigmerge_STAR_TPM_bw.sh # 60458
 
 
 
+
+# deepTool bigwig QC - STAR mapping
+
+
+## TPM bigwig
+
+XXXY HERE DO BIGWIG PCA sbathc job ran already !!!!!!!!!
+
+
+```bash
+conda activate deeptools
+
+###################################
+# Include X chr - All samples #####################
+###################################
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_STAR_TPM.sh # 60553000 xxx
+
+############################################
+# Plot ESC ###########
+## PCA
+plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --colors black black black red red red blue blue blue \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf \
+    --plotWidth 7
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_heatmap.pdf
+
+#################################
+
+
+
+
+###################################
+# Include X chr - PSC samples #####################
+###################################
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_STAR_TPM-PSC.sh # 60553025 xxx
+
+############################################
+# Plot ESC ###########
+## PCA
+plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --colors black black black red red red blue blue blue \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf \
+    --plotWidth 7
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_heatmap.pdf
+
+#################################
+
+
+
+
+
+
+###################################
+# Include X chr - ReN samples #####################
+###################################
+# Generate compile bigwig (.npz) files
+sbatch scripts/multiBigwigSummary_STAR_TPM-ReN.sh # 60553031 xxx
+
+############################################
+# Plot ESC ###########
+## PCA
+plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    --transpose \
+    --ntop 0 \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --colors black black black red red red blue blue blue \
+    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf \
+    --plotWidth 7
+
+## Heatmap
+plotCorrelation \
+    -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    --corMethod pearson --skipZeros \
+    --plotTitle "Pearson Correlation" \
+    --removeOutliers \
+    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --whatToPlot heatmap --colorMap bwr --plotNumbers \
+    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_heatmap.pdf
+
+#################################
+
+
+
+```
+
+--> XXX
+
+
+
+
+
+
+
+
 # Count with featureCounts
 
 
@@ -218,91 +341,6 @@ mv output/featurecounts/*rpkm* output/rpkm/
 --> All good. 
 
 
-
-
-
-# deepTool bigwig QC - STAR mapping
-
-
-## Raw bigwig
-
-
-```bash
-conda activate deeptools
-
-###################################
-# Include X chr #####################
-###################################
-# Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_STAR_TPM.sh # 51072872 ok
-
-
-############################################
-# Plot ESC ###########
-## PCA
-plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
-    --transpose \
-    --ntop 0 \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
-    --colors black black black red red red blue blue blue \
-    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf \
-    --plotWidth 7
-
-## Heatmap
-plotCorrelation \
-    -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_heatmap.pdf
-
-#################################
-
-
-
-
-###################################
-# Without X chr #####################
-###################################
-
-sbatch scripts/multiBigwigSummary_STAR_TPM_noXchr.sh # 51799981 xxx
-
-
-############################################
-# Plot ESC ###########
-## PCA
-plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_noXchr_TPM.npz \
-    --transpose \
-    --ntop 0 \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
-    --colors black black black red red red blue blue blue \
-    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_noXchr_TPM_plotPCA.pdf \
-    --plotWidth 7
-
-## Heatmap
-plotCorrelation \
-    -in output/bigwig_STAR/multiBigwigSummary_STAR_noXchr_TPM.npz \
-    --corMethod pearson --skipZeros \
-    --plotTitle "Pearson Correlation" \
-    --removeOutliers \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
-    --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_noXchr_TPM_heatmap.pdf
-
-#################################
-
-
-
-
-```
-
---> **STAR plot PCA cluster the same as Kallisto one**; meaning the bad clustering is not due to the new Kallisto method used.
-
---> With or without X chr does not change things a lot at the RNA level; PCA looks very similar
 
 
 
