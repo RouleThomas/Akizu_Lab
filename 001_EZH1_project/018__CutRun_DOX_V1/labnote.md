@@ -7543,10 +7543,12 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_n
 
 
 
-# signal in MACS2/DESEQ2 - no X chr backgroun clean thresh - Gencode.v47 
+# signal in MACS2/DESEQ2 - no X chr backgroun clean thresh - Gencode.v47 - with --skipZero
 ## GAIN LOST GENES
 ### WT vs KO
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh # 52384177 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh # 60540512 xxx
+
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1.sh # 52384200 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2.sh # 52384226 ok
 
@@ -7570,7 +7572,7 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_EZH2_qval2
 #### H3K27me3 peaks/genes changes
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 52385335 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 59966484 ok 
-sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3IGG_noSkip0.sh #  60450868 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3IGG_noSkip0.sh #  60450868 ok
 
 sbatch scripts/matrix_GENETSS_500bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 60384646 ok
 sbatch scripts/matrix_GENETSS_3kb100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1_noSkip0.sh # 60416369 ok
