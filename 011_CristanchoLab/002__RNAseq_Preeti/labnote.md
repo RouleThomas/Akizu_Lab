@@ -88,26 +88,26 @@ B8	PSC_Hypo_Rep4   hiPSCs_Hyp_24h
 # Fastp cleaning
 
 ```bash
-sbatch scripts/fastp.sh # 60456895 xxx
+sbatch scripts/fastp.sh # 60456895 ok
 ```
 
 # STAR mapping fastp trim
 
 ```bash
-sbatch --dependency=afterany:60456895 scripts/STAR_mapping_fastp.sh # 60457138 xxx
+sbatch --dependency=afterany:60456895 scripts/STAR_mapping_fastp.sh # 60457138 ok
 
 
 ## Convert alignment to bigwig
 conda activate deeptools
-sbatch --dependency=afterany:60457138 scripts/STAR_TPM_bw.sh # 60457411 xxx
+sbatch --dependency=afterany:60457138 scripts/STAR_TPM_bw.sh # 60457411 ok
 
 ## Calculate median
 conda activate BedToBigwig
-sbatch --dependency=afterany:60457411 scripts/bigwigmerge_STAR_TPM_bw.sh # 60458041 xxx
+sbatch --dependency=afterany:60457411 scripts/bigwigmerge_STAR_TPM_bw.sh # 60458041 ok
 
 ```
 
---> XXX All good
+--> All good
 
 
 
@@ -115,31 +115,63 @@ sbatch --dependency=afterany:60457411 scripts/bigwigmerge_STAR_TPM_bw.sh # 60458
 # Count with featureCounts
 
 
-XXXY HERE!!!  DO  SOEM TESTE to know which strand it is...
+Data look stranded: To confirm with Preeti.
 
-
+AMPD stringenT: featureCounts -p -C -O \
+AMPD relax: featureCounts -p -C -O -M --fraction \
 
 
 ```bash
 conda activate featurecounts
 
 # slight test
-## -s for stranded
+## -s 2 for stranded
 featureCounts -p -C -O -M --fraction -s 2 \
 	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v47.annotation.gtf \
-	-o output/featurecounts/ESC_WT_R1.txt output/STAR/fastp/ESC_WT_R1_AlignednoXchr.sortedByCoord.out.bam
+	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
+#--> 49% assigned
 
+## -s 1 for stranded
+featureCounts -p -C -O -M --fraction -s 1 \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v47.annotation.gtf \
+	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
+#--> 16% assigned
+
+## unstranded, not counting multimapped reads
+
+featureCounts -p -C -O \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v47.annotation.gtf \
+	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
+#--> 50% assigned! mostly not assigned due to multimapping; seems to be stranded in the end
+
+featureCounts -p -C -O -M --fraction \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v47.annotation.gtf \
+	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
+#--> 60%! Still not great...; the rest fall into unassigned no features
+
+featureCounts -p -C -O -M --fraction \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI.gtf \
+	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
+#--> 60%! issue does not come from using the new gene annotation; the rest fall into unassigned no features
 
 
 # all samples:
-sbatch scripts/featurecounts_AlignednoXchr.sh # 52397154 ok
-
+sbatch scripts/featurecounts.sh # 60547513 xxx
+sbatch scripts/featurecounts_multi.sh # 60547516 xxx
 
 
 ```
-test with `ESC_WT_R1`
---> Around 83% of succesfully assigned alignments with `-p -C -O -M --fraction -s 2` parameters...
-  --> all good!!
+
+test with `ReN_Norm_Rep1`
+- ~50%, 16% alignment with stranded paramters `-s 2` and `-s 1`, respectively + looking at IGV bam, **files looks stranded**
+- Many mapping to unassigned features, and multimapped reads.. Let's generate two versions:
+  - one counting multimapped reads (`*_multi`), and another one removing multimapped reads, improve a bit but not so much
+
+
+
+
+
+
 
 --> All samples ~90% uniq aligned reads
 

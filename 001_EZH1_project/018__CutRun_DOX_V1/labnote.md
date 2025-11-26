@@ -7396,12 +7396,12 @@ meta/gencode_ESC_WT_EZH1_qval23nochrX_annot_promoterAnd5.gtf
 sbatch scripts/matrix_GENETSS_5kb-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50668786 ok
 sbatch scripts/matrix_GENETSS_5kb-PSC_WTvsKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-H3K27me3EZH2EZH1.sh # 50752200 ok
 ## all genotypes but IP separated
-sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3.sh # 51084760 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3.sh # 51084760 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-H3K27me3.sh # 51084806 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-EZH2.sh # 51084846 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-EZH2.sh # 51084927 ok
-sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-EZH1.sh # 51084995 xxx
-sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-EZH1.sh # 51085074 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-EZH1.sh # 51084995 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-EZH1.sh # 51085074 ok
 
 
 
@@ -7413,9 +7413,9 @@ sbatch scripts/matrix_GENETSS_5kb-PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_pa
 sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsOEKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-H3K27me3.sh # 51085256 xxx
 sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-H3K27me3.sh # 51085328 xxx
 sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsOEKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-EZH2.sh # 51085363 ok
-sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-EZH2.sh # 51085392 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-EZH2.sh # 51085392 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsOEKO_H3K27me3_bin1000space100_gt_pval05_padj001_fc1_avg100__GainLost-WTKOOEKO-EZH1.sh # 51085456 xxx
-sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-EZH1.sh # 51085472 xxx
+sbatch scripts/matrix_GENETSSTES_250bp100bp-PSC_WTvsOEKO_EZH2_bin1000space100_gt_pval05_padj001_fc1_avg30__GainLost-WTKOOEKO-EZH1.sh # 51085472 ok
 
 
 
@@ -7547,8 +7547,8 @@ sbatch scripts/matrix_GENETSSTES_250bp100bp-ESC_WTKOOEKO_EZH1_qval23merge100bp_n
 ## GAIN LOST GENES
 ### WT vs KO
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh # 52384177 ok
-sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh # 60540512 xxx
-
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3_thresh1.sh # 60540512 ok
+sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-H3K27me3.sh #  60542643 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH2_thresh1.sh # 52384200 ok
 sbatch scripts/matrix_GENETSSTES_250bp100bp-gencode_q05fc058-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-KO_vs_WT-WTKOOEKO-EZH1_thresh2.sh # 52384226 ok
 
@@ -8133,3 +8133,143 @@ dev.off()
 
 
 ```
+
+
+
+
+# Troubleshoot - why heatmap gene show no signal for some rows
+
+Let’s troubleshoot why some rows in my heatmap of significant peak changes show no signal after assigning peaks to genes and keeping only promoter/5′ regions. 
+
+--> I think because of alternative TSS: all isoforms are included, but because the signal is centered on the TSS, some alternative TSS show no signal, and add noise
+
+To support this, let’s check the median number of isoforms per gene.
+
+```bash
+conda activate mutsim
+
+
+
+# Read gtf file, and calculate median number of isoforms per gene
+
+## All genes
+awk '$3=="transcript" {
+    match($0,/gene_id "([^"]+)"/,g);
+    match($0,/transcript_id "([^"]+)"/,t);
+    if(g[1] && t[1]) print g[1], t[1];
+}' ../../Master/meta/gencode.v47.annotation.gtf \
+| sort -u \
+| awk '{c[$1]++} END {for (g in c) print c[g]}' \
+| sort -n \
+| awk '
+    {a[NR]=$1}
+    END {
+        if (NR%2==1) print a[(NR+1)/2];
+        else print (a[NR/2] + a[(NR/2)+1]) / 2;
+    }'
+#--> 1 isoforms median for entire gene
+
+### Here check how many gene have how many isoforms
+awk '$3=="transcript" {
+  match($0,/gene_id "([^"]+)"/,g);
+  match($0,/transcript_id "([^"]+)"/,t);
+  if (g[1] && t[1]) print g[1], t[1];
+}' ../../Master/meta/gencode.v47.annotation.gtf \
+| sort -u \
+| awk '{c[$1]++} END {for (g in c) print c[g]}' \
+| sort -n \
+| uniq -c
+#
+
+## Gene that gain H3K27me3 in KO, only signal in promoter: 
+awk '$3=="transcript" {
+    match($0,/gene_id "([^"]+)"/,g);
+    match($0,/transcript_id "([^"]+)"/,t);
+    if(g[1] && t[1]) print g[1], t[1];
+}' meta/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf \
+| sort -u \
+| awk '{c[$1]++} END {for (g in c) print c[g]}' \
+| sort -n \
+| awk '
+    {a[NR]=$1}
+    END {
+        if (NR%2==1) print a[(NR+1)/2];
+        else print (a[NR/2] + a[(NR/2)+1]) / 2;
+    }'
+#--> 1 isoforms median 
+
+awk '$3=="transcript" {
+  match($0,/gene_id "([^"]+)"/,g);
+  match($0,/transcript_id "([^"]+)"/,t);
+  if (g[1] && t[1]) print g[1], t[1];
+}' meta/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf \
+| sort -u \
+| awk '{c[$1]++} END {for (g in c) print c[g]}' \
+| sort -n \
+| uniq -c
+# Many genes have MANY isoforms!
+
+
+
+# Lets make a plot with python; lets save number of isoforms per gene:
+awk '$3=="transcript" {
+  match($0,/gene_id "([^"]+)"/,g);
+  match($0,/transcript_id "([^"]+)"/,t);
+  if (g[1] && t[1]) print g[1], t[1];
+}' meta/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3.gtf \
+| sort -u \
+| awk '{c[$1]++} END {for (g in c) print g"\t"c[g]}' \
+> output/test/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3-isoform_counts.tsv
+
+
+```
+
+
+
+Let's use python to generate a simple plot
+
+
+```python
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 1. Read isoform counts
+df = pd.read_csv("output/test/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3-isoform_counts.tsv", sep="\t", header=None, names=["gene_id", "n_isoforms"])
+
+# 2. Bin genes
+bins = [0, 1, 5, 10, 50, 1e9]  # 1; 2–5; 6–10; 11–50; >50
+labels = ["1", "2–5", "6–10", "11–50", ">50"]
+
+df["bin"] = pd.cut(df["n_isoforms"], bins=bins, labels=labels,
+                   right=True, include_lowest=True)
+
+counts = df["bin"].value_counts().reindex(labels)
+
+# 3. Plot
+plt.figure(figsize=(5, 4))
+bars = counts.plot(kind="bar")
+plt.ylabel("Number of genes")
+plt.xlabel("Number of isoforms per gene")
+plt.title("Isoform count distribution")
+plt.tight_layout()
+
+# Add counts on top of each bar
+for p in bars.patches:
+    height = p.get_height()
+    bars.annotate(f'{int(height)}',
+                  (p.get_x() + p.get_width() / 2, height),
+                  ha='center', va='bottom', fontsize=9)
+
+plt.savefig("output/test/gencode_upregulated_q05fc058_promoter5-WTKOOEKO_H3K27me3_qval23merge100bpnoXchrthresh1-ESC_KO_vs_ESC_WT-H3K27me3-isoform_counts.pdf")
+
+
+```
+
+--> Most gene have one isoform, BUT we also see many genes presenting multiple isoforms: these likely contains alternative TSS and will add noise to our heatmap.
+  --> Using `--skipZeros` for signal around TSS is the way to go
+
+
+
+
+

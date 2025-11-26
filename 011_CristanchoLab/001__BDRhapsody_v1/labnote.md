@@ -1245,12 +1245,17 @@ pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04_ATAC
 p = DimPlot(ATACMultiomewithST_SMK_V2QCv2.sct, reduction = "wnn.umap", group.by = "cluster.annot", label = FALSE, label.size = 4, repel = TRUE) + ggtitle("Cell type") + NoLegend()
 LabelClusters(p, id = "cluster.annot", fontface = "bold", color = "black", size = 3)
 dev.off()
-pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04_ATACdim240-WNNcondition.pdf", width=5, height=5)
-DimPlot(ATACMultiomewithST_SMK_V2QCv2.sct, reduction = "wnn.umap", group.by = "condition", label = FALSE, cols = c("blue", "red")) + ggtitle("Genotype")  + NoLegend()
-dev.off()
+
 pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04_ATACdim240-RNAcondition.pdf", width=5, height=5)
-DimPlot(ATACMultiomewithST_SMK_V2QCv2.sct, reduction = "umap", group.by = "condition", label = FALSE, cols = c("blue", "red")) + ggtitle("Genotype")  + NoLegend()
+DimPlot(ATACMultiomewithST_SMK_V2QCv2.sct, reduction = "umap", group.by = "condition", label = FALSE, cols = c("blue", "red")) + ggtitle("RNA")  + NoLegend()
 dev.off()
+pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04_ATACdim240-ATACcondition.pdf", width=5, height=5)
+DimPlot(ATACMultiomewithST_SMK_V2QCv2.sct, reduction = "umap.atac", group.by = "condition", label = FALSE, cols = c("blue", "red")) + ggtitle("ATAC")  + NoLegend()
+dev.off()
+pdf("output/seurat/DimPlot-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04_ATACdim240-WNNcondition.pdf", width=5, height=5)
+DimPlot(ATACMultiomewithST_SMK_V2QCv2.sct, reduction = "wnn.umap", group.by = "condition", label = FALSE, cols = c("blue", "red")) + ggtitle("WNN")  + NoLegend()
+dev.off()
+
 
 
 #--> Different dim for ATAC tested; 2:40 best (notably for separating Endo and Mg)
