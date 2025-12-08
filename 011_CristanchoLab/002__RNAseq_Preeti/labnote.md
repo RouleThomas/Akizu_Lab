@@ -302,10 +302,10 @@ sbatch scripts/featurecounts.sh # 60547513 ok
 sbatch scripts/featurecounts_multi.sh # 60547516 ok
 #--> 55-65% uniquely aligned reads
 
-sbatch scripts/featurecounts_unstranded.sh # 60549123 xxx
-#--> xxx-xxx% uniquely aligned reads
+sbatch scripts/featurecounts_unstranded.sh # 60549123 ok
+#--> 50-65% uniquely aligned reads
 sbatch scripts/featurecounts_multi_unstranded.sh # 60549134 xxx
-#--> xxx-xxx% uniquely aligned reads
+#--> 60-75% uniquely aligned reads
 
 
 
