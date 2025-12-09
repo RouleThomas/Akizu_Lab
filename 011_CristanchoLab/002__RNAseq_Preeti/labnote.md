@@ -279,50 +279,69 @@ featureCounts -p -C -O -M --fraction -s 1 \
 #--> 16% assigned
 
 ## unstranded, not counting multimapped reads
-
 featureCounts -p -C -O \
 	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v47.annotation.gtf \
 	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
 #--> 50% assigned! mostly not assigned due to multimapping; seems to be stranded in the end
 
+## unstranded, counting multimapped reads
 featureCounts -p -C -O -M --fraction \
 	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v47.annotation.gtf \
 	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
 #--> 60%! Still not great...; the rest fall into unassigned no features
 
+## unstranded, counting multimapped reads, testing previous gene annotations
 featureCounts -p -C -O -M --fraction \
 	-a /scr1/users/roulet/Akizu_Lab/Master/meta/ENCFF159KBI.gtf \
 	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
 #--> 60%! issue does not come from using the new gene annotation; the rest fall into unassigned no features
 
+## count on gene (REMOVE -O), not counting multimapped reads 
+featureCounts -p -C -s 2 -t gene -g gene_id \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v47.annotation.gtf \
+	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
+#--> 48%!
+
+## count on gene (REMOVE -O), counting multimapped reads
+featureCounts -p -C -M --fraction -s 2 -t gene -g gene_id \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v47.annotation.gtf \
+	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
+#--> 66%!
+
+
+
 
 # all samples:
-sbatch scripts/featurecounts.sh # 60547513 ok
-#--> 50-60% uniquely aligned reads
-sbatch scripts/featurecounts_multi.sh # 60547516 ok
-#--> 55-65% uniquely aligned reads
-
 sbatch scripts/featurecounts_unstranded.sh # 60549123 ok
-#--> 50-65% uniquely aligned reads
-sbatch scripts/featurecounts_multi_unstranded.sh # 60549134 xxx
-#--> 60-75% uniquely aligned reads
+#--> 50-65% uniquely aligned reads - NO, data is stranded
+sbatch scripts/featurecounts_multi_unstranded.sh # 60549134 ok
+#--> 60-75% uniquely aligned reads - NO, data is stranded
+sbatch scripts/featurecounts.sh # 60547513 ok
+#--> 50-60% uniquely aligned reads - NO, many multimapped reads!
+
+## The two options below are good:
+sbatch scripts/featurecounts_multi.sh # 60547516 ok
+#--> 55-65% uniquely aligned reads - YES: output/featurecounts_multi
+sbatch scripts/featurecounts_multi_gene.sh # 61302605 xxx
+#--> xxx-xxx% uniquely aligned reads - YES: output/featurecounts_multi_gene
 
 
 
 ```
 
 test with `ReN_Norm_Rep1`
-- ~50%, 16% alignment with stranded paramters `-s 2` and `-s 1`, respectively + looking at IGV bam, **files seems stranded**
-- Many mapping to unassigned features, and multimapped reads.. Let's generate two versions:
+- ~50%, 16% alignment with stranded paramters `-s 2` and `-s 1`, respectively + looking at IGV bam, **files are stranded**
+- Many mapping to *unassigned features*, and *multimapped reads*.. Let's generate two versions:
   - one counting multimapped reads (`*_multi`), and another one removing multimapped reads, improve a bit but not so much
+- I noticed checking bigwig on IGV that many reads fall within introns, should explain the high *unassigned features*
+  - For this let's do a version where I **count on gene, not exon**; **when counting on gene level do NOT use` -O`**; indeed this count reads in gene that overlap twice, but it will lead to artificial correlation and issue with DESEQ2 when counting on gene body...
+
+
+--> Seems **count on exon, stranded, and count multimapped reads is the best approach**: `output/featurecounts_multi` (count on gene as also been generated at `output/featurecounts_multi_gene`)
 
 
 
 
-
-
-
---> All samples ~90% uniq aligned reads
 
 
 ## Calculate TPM and RPKM
@@ -331,11 +350,20 @@ test with `ReN_Norm_Rep1`
 Use custom R script `RPKM_TPM_featurecounts.R` as follow:
 ```bash
 conda activate deseq2
-# Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
-sbatch scripts/featurecounts_TPM.sh # 52397893
-# mv all output to output/tpm or rpkm folder
-mv output/featurecounts/*tpm* output/tpm/
-mv output/featurecounts/*rpkm* output/rpkm/
+# output/featurecounts_multi
+## Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
+sbatch scripts/featurecounts_TPM.sh # 61302936 ok
+## mv all output to output/tpm or rpkm folder
+mv output/featurecounts_multi/*tpm* output/tpm_featurecounts_multi/
+mv output/featurecounts_multi/*rpkm* output/rpkm_featurecounts_multi/
+
+
+# output/featurecounts_multi_gene
+## Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
+sbatch scripts/featurecounts_multi_gene_TPM.sh # 61303337
+## mv all output to output/tpm or rpkm folder
+mv output/featurecounts_multi_gene/*tpm* output/tpm_featurecounts_multi_gene/
+mv output/featurecounts_multi_gene/*rpkm* output/rpkm_featurecounts_multi_gene/
 ```
 
 --> All good. 
@@ -344,6 +372,7 @@ mv output/featurecounts/*rpkm* output/rpkm/
 
 
 
+XXXY HERE !!!
 
 
 # DEGs with deseq2 (featurecounts)
