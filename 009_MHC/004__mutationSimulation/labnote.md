@@ -245,6 +245,49 @@ sbatch scripts/run_filtered_experimental_v3.slurm # 56796128 ok  --> results_exp
 
 
 
+## version4 update for missing dbNSFP5
+
+I noticed that many dbNSFP5 scores were not retrieved, it seems to be because dbNSFP/tabix is 1-based and my simulated parquet at 0-based. So let's make them 1-based like dbNSFP5.
+
+--> Modify `scripts/simulate_array_v3.py` into `scripts/simulate_array_v4.py`
+
+
+
+
+
+```bash
+conda activate mutsim
+
+# Test with one simulation
+
+python scripts/simulate_array_v4.py \
+  --signature SBS90 \
+  --n 4000 \
+  --rep 1 \
+  --seed 42 \
+  --sigfile signatures/COSMIC_with_flat.txt \
+  --outdir results_v4 # UPDATE PATH
+
+
+
+
+
+
+# Generate plot for all (script updated to use `scripts/simulate_array_v3.py` and `scripts/annotate_damage4.py`)
+
+sbatch scripts/run_filtered_cosmic_v4.slurm #  xxx --> results_v4/
+
+XXX TO MODIFY 
+
+
+sbatch scripts/run_filtered_contexts_v4.slurm #  xxx --> results_contexts_v4/
+sbatch scripts/run_filtered_experimental_v4.slurm #  xxx --> results_experimental_v4/
+```
+
+
+--> Well still a lot of missing! Could be gencode version; I simualted on gencode v45 but dbNSFP5.2a use v48...
+
+
 
 
 
@@ -491,7 +534,6 @@ python scripts/plot_all_signatures_combined-experimental_v4.py
 # One plot with all mutations - Random/Flat highlighted
 python scripts/plot_all_signatures_combined-experimental-highlight_random_v4.py
 #--> results_experimental_v3/combined_signature_summary_plots-highlight_random_v4.pdf
-
 ```
 
 
@@ -655,11 +697,11 @@ python scripts/audit_polyphen2_hdiv.py ref/dbNSFP5.2a_grch38.gz results_v3/SBS90
 python scripts/audit_cadd_phred.py ref/dbNSFP5.2a_grch38.gz results_v3/SBS90/n_4000/rep_01.annot.parquet
 
 
+# CHECK CADD PHRED - version4 0-based 1-based
+python scripts/audit_cadd_phred.py ref/dbNSFP5.2a_grch38.gz results_v4/SBS90/n_4000/rep_01.annot.parquet
+
 # Double check by looking at the dbNSFP5
 tabix ref/dbNSFP5.2a_grch38.gz 2:74523421-74523421 #--> nothing!
-
-
-
 ```
 
 - SIFT4G, and Polyph2 are for non-synonymous only (ie. no score for synonymous mutation)
@@ -671,7 +713,75 @@ tabix ref/dbNSFP5.2a_grch38.gz 2:74523421-74523421 #--> nothing!
 - mutation is present but no score for either SIFT4G or Polyphenm (ie. but could be a score for CADD PHRED...)
 
 
+--> **Testing v3 vs v4 showed that in v4, show that in v3 lot of no_region_hit; which is bad and show that position is not correct; however in v4 the missing are mostly ALT mismatch; meaning it is likely a synonymous mutation which dbNSFP5 sometime does not include**
 
+
+Check more carefully why some mutations are NOT included in the dbNSFP5
+
+```python
+import pyarrow.parquet as pq
+import pandas as pd
+
+df = pq.read_table(
+    "results_v3/SBS90/n_4000/rep_01.annot.parquet"
+).to_pandas()
+
+
+db = "ref/dbNSFP5.2a_grch38.gz"
+
+miss = df[df["cadd_phred"].isna()].sample(20, random_state=1)
+
+import subprocess
+
+def tabix_has_hit(db, chrom, pos):
+    reg = f"{chrom}:{pos}-{pos}"
+    p = subprocess.run(["tabix", db, reg], capture_output=True, text=True)
+    return bool(p.stdout.strip())
+
+hits_pos   = sum(tabix_has_hit(db, str(r["chr"]).lstrip("chr"), int(r["pos"]))     for _,r in miss.iterrows())
+hits_posp1 = sum(tabix_has_hit(db, str(r["chr"]).lstrip("chr"), int(r["pos"]) + 1) for _,r in miss.iterrows())
+
+print("hits at pos:", hits_pos)
+print("hits at pos+1:", hits_posp1)
+
+```
+
+--> Show that the `simulation/parquet` pos is 0-based and `dbNSFP/tabix` is 1-based --> Lets generate a new 1-based mutation as *version4*
+
+
+
+```python
+import pyarrow.parquet as pq
+import pandas as pd
+
+df = pq.read_table(
+    "results_v4/SBS90/n_4000/rep_01.annot.parquet"
+).to_pandas()
+
+
+db = "ref/dbNSFP5.2a_grch38.gz"
+
+miss = df[df["cadd_phred"].isna()].sample(20, random_state=1)
+
+import subprocess
+
+def tabix_has_hit(db, chrom, pos):
+    reg = f"{chrom}:{pos}-{pos}"
+    p = subprocess.run(["tabix", db, reg], capture_output=True, text=True)
+    return bool(p.stdout.strip())
+
+hits_pos   = sum(tabix_has_hit(db, str(r["chr"]).lstrip("chr"), int(r["pos"]))     for _,r in miss.iterrows())
+hits_posp1 = sum(tabix_has_hit(db, str(r["chr"]).lstrip("chr"), int(r["pos"]) + 1) for _,r in miss.iterrows())
+
+print("hits at pos:", hits_pos)
+print("hits at pos+1:", hits_posp1)
+
+```
+
+--> Seems to contain as many missing...
+
+
+So it seems that the 0 and 1-based pos is important; and also the GENCODE version may be important too... Let's try a new version 007* where I downlaod the last version of dbNSFP together with the corresponding gencode version... This should work optimally!
 
 
 
@@ -801,6 +911,7 @@ conda activate mutsim
 # light testing on one signature
 python scripts/plot_distributions_per_replicate_version2-SBS2_4k.py
 #--> Works!
+
 
 
 
