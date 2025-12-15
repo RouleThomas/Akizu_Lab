@@ -136,8 +136,6 @@ sbatch --dependency=afterany:60457411 scripts/bigwigmerge_STAR_TPM_bw.sh # 60458
 
 ## TPM bigwig
 
-XXXY HERE DO BIGWIG PCA sbathc job ran already !!!!!!!!!
-
 
 ```bash
 conda activate deeptools
@@ -146,29 +144,29 @@ conda activate deeptools
 # Include X chr - All samples #####################
 ###################################
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_STAR_TPM.sh # 60553000 xxx
+sbatch scripts/multiBigwigSummary_STAR_TPM.sh # 60553000 ok
 
 ############################################
-# Plot ESC ###########
+# Plot alls ###########
 ## PCA
-plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+plotPCA -in output/bigwig/multiBigwigSummary_TPM.npz \
     --transpose \
     --ntop 0 \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
-    --colors black black black red red red blue blue blue \
-    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf \
+    --labels ReN_Norm_Rep1 ReN_Norm_Rep2 ReN_Norm_Rep3 ReN_Norm_Rep4 ReN_Hypo_Rep1 ReN_Hypo_Rep2 ReN_Hypo_Rep3 ReN_Hypo_Rep4 PSC_Norm_Rep1 PSC_Norm_Rep2 PSC_Norm_Rep3 PSC_Norm_Rep4 PSC_Hypo_Rep1 PSC_Hypo_Rep2 PSC_Hypo_Rep3 PSC_Hypo_Rep4 \
+    --colors blue blue blue blue red red red red blue blue blue blue red red red red \
+    --markers 'o' 'o' 'o' 'o' 'o' 'o' 'o' 'o' 's' 's' 's' 's' 's' 's' 's' 's' \
+    -o output/bigwig/multiBigwigSummary_TPM_plotPCA.pdf \
     --plotWidth 7
 
 ## Heatmap
 plotCorrelation \
-    -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    -in output/bigwig/multiBigwigSummary_TPM.npz \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --labels ReN_Norm_Rep1 ReN_Norm_Rep2 ReN_Norm_Rep3 ReN_Norm_Rep4 ReN_Hypo_Rep1 ReN_Hypo_Rep2 ReN_Hypo_Rep3 ReN_Hypo_Rep4 PSC_Norm_Rep1 PSC_Norm_Rep2 PSC_Norm_Rep3 PSC_Norm_Rep4 PSC_Hypo_Rep1 PSC_Hypo_Rep2 PSC_Hypo_Rep3 PSC_Hypo_Rep4 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_heatmap.pdf
+    -o output/bigwig/multiBigwigSummary_TPM_heatmap.pdf
 
 #################################
 
@@ -179,29 +177,30 @@ plotCorrelation \
 # Include X chr - PSC samples #####################
 ###################################
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_STAR_TPM-PSC.sh # 60553025 xxx
+sbatch scripts/multiBigwigSummary_STAR_TPM-PSC.sh # 60553025 ok
 
 ############################################
-# Plot ESC ###########
+# Plot PSC ###########
 ## PCA
-plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+plotPCA -in output/bigwig/multiBigwigSummary_TPM_PSC.npz \
     --transpose \
     --ntop 0 \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
-    --colors black black black red red red blue blue blue \
-    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf \
-    --plotWidth 7
+    --labels PSC_Norm_Rep1 PSC_Norm_Rep2 PSC_Norm_Rep3 PSC_Norm_Rep4 PSC_Hypo_Rep1 PSC_Hypo_Rep2 PSC_Hypo_Rep3 PSC_Hypo_Rep4 \
+    --colors blue blue blue blue red red red red \
+    --markers 's' 'o' '>' 'x' 's' 'o' '>' 'x' \
+    -o output/bigwig/multiBigwigSummary_TPM_PSC_plotPCA.pdf \
+    --plotWidth 6 \
+    --plotHeight 7
 
 ## Heatmap
 plotCorrelation \
-    -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    -in output/bigwig/multiBigwigSummary_TPM_PSC.npz \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --labels PSC_Norm_Rep1 PSC_Norm_Rep2 PSC_Norm_Rep3 PSC_Norm_Rep4 PSC_Hypo_Rep1 PSC_Hypo_Rep2 PSC_Hypo_Rep3 PSC_Hypo_Rep4 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_heatmap.pdf
+    -o output/bigwig/multiBigwigSummary_TPM_PSC_heatmap.pdf
 
 #################################
 
@@ -214,29 +213,29 @@ plotCorrelation \
 # Include X chr - ReN samples #####################
 ###################################
 # Generate compile bigwig (.npz) files
-sbatch scripts/multiBigwigSummary_STAR_TPM-ReN.sh # 60553031 xxx
-
+sbatch scripts/multiBigwigSummary_STAR_TPM-ReN.sh # 60553031 ok
 ############################################
-# Plot ESC ###########
+# Plot ReN ###########
 ## PCA
-plotPCA -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+plotPCA -in output/bigwig/multiBigwigSummary_ReN.npz \
     --transpose \
     --ntop 0 \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
-    --colors black black black red red red blue blue blue \
-    --markers 's' 'o' '>' 's' 'o' '>' 's' 'o' '>' \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_plotPCA.pdf \
-    --plotWidth 7
+    --labels ReN_Norm_Rep1 ReN_Norm_Rep2 ReN_Norm_Rep3 ReN_Norm_Rep4 ReN_Hypo_Rep1 ReN_Hypo_Rep2 ReN_Hypo_Rep3 ReN_Hypo_Rep4 \
+    --colors blue blue blue blue red red red red \
+    --markers 's' 'o' '>' 'x' 's' 'o' '>' 'x' \
+    -o output/bigwig/multiBigwigSummary_ReN_plotPCA.pdf \
+    --plotWidth 6 \
+    --plotHeight 7
 
 ## Heatmap
 plotCorrelation \
-    -in output/bigwig_STAR/multiBigwigSummary_STAR_TPM.npz \
+    -in output/bigwig/multiBigwigSummary_ReN.npz \
     --corMethod pearson --skipZeros \
     --plotTitle "Pearson Correlation" \
     --removeOutliers \
-    --labels ESC_WT_R1 ESC_WT_R2 ESC_WT_R3 ESC_KO_R1 ESC_KO_R2 ESC_KO_R3 ESC_OEKO_R1 ESC_OEKO_R2 ESC_OEKO_R3 \
+    --labels ReN_Norm_Rep1 ReN_Norm_Rep2 ReN_Norm_Rep3 ReN_Norm_Rep4 ReN_Hypo_Rep1 ReN_Hypo_Rep2 ReN_Hypo_Rep3 ReN_Hypo_Rep4 \
     --whatToPlot heatmap --colorMap bwr --plotNumbers \
-    -o output/bigwig_STAR/multiBigwigSummary_STAR_TPM_heatmap.pdf
+    -o output/bigwig/multiBigwigSummary_ReN_heatmap.pdf
 
 #################################
 
@@ -244,9 +243,7 @@ plotCorrelation \
 
 ```
 
---> XXX
-
-
+--> **PSC and ReN cluster well per conditions**; no bio rep batch effect (**PSC cluster a bit better than ReN**; would expect more DEGs in this cell type)
 
 
 
@@ -322,8 +319,8 @@ sbatch scripts/featurecounts.sh # 60547513 ok
 ## The two options below are good:
 sbatch scripts/featurecounts_multi.sh # 60547516 ok
 #--> 55-65% uniquely aligned reads - YES: output/featurecounts_multi
-sbatch scripts/featurecounts_multi_gene.sh # 61302605 xxx
-#--> xxx-xxx% uniquely aligned reads - YES: output/featurecounts_multi_gene
+sbatch scripts/featurecounts_multi_gene.sh # 61302605 ok
+#--> 65-75% uniquely aligned reads - YES: output/featurecounts_multi_gene
 
 
 
@@ -340,7 +337,7 @@ test with `ReN_Norm_Rep1`
 --> Seems **count on exon, stranded, and count multimapped reads is the best approach**: `output/featurecounts_multi` (count on gene as also been generated at `output/featurecounts_multi_gene`)
 
 
-
+--> Looking at IGV, some samples show reads within introns; seems occuring more in PSC than ReN; and seems not dependent on condition (happen for both Norm and Hypo on some replicates)
 
 
 
@@ -372,7 +369,7 @@ mv output/featurecounts_multi_gene/*rpkm* output/rpkm_featurecounts_multi_gene/
 
 
 
-XXXY HERE !!!
+
 
 
 # DEGs with deseq2 (featurecounts)
@@ -381,12 +378,12 @@ XXXY HERE !!!
 --> It is good to do this on the count matrix see [here](https://support.bioconductor.org/p/119932/)
 ### 'one-by-one' comparison
 Comparison WT vs mutant:
-- ESc KO vs WT
-- ESC OEKO vs WT
+- PSC Hypo vs Norm
+- ReN Hypo vs Norm
 
 
 
-### PSC KO vs WT
+### PSC Hypo vs Norm
 
 ```bash
 conda activate deseq2
@@ -420,17 +417,15 @@ colnames(gene_table) <- c("geneId", "geneSymbol")
 
 
 
-
-
 # import featurecounts output and keep only gene ID and counts
 ## collect all samples ID
-samples <- c("ESC_WT_R1", "ESC_WT_R2" ,"ESC_WT_R3" ,"ESC_KO_R1" ,"ESC_KO_R2", "ESC_KO_R3")
+samples <- c("PSC_Norm_Rep1", "PSC_Norm_Rep2" ,"PSC_Norm_Rep3" ,"PSC_Norm_Rep4" ,"PSC_Hypo_Rep1", "PSC_Hypo_Rep2", "PSC_Hypo_Rep3", "PSC_Hypo_Rep4")
 
 ## Make a loop for importing all featurecounts data and keep only ID and count column
 sample_data <- list()
 
 for (sample in samples) {
-  sample_data[[sample]] <- read_delim(paste0("output/featurecounts/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts_multi/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
     dplyr::select(Geneid, starts_with("output/STAR/")) %>%
     rename(!!sample := starts_with("output/STAR/"))
 }
@@ -462,14 +457,9 @@ make_matrix <- function(df,rownames = NULL){
 counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
 
 ## Create colData file that describe all our samples
-### Not including replicate
-coldata_raw <- data.frame(samples) %>%
-  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
-  dplyr::select(-replicate) %>%
-  bind_cols(data.frame(samples))
 ### Including replicate
 coldata_raw <- data.frame(samples) %>%
-  separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
+  separate(samples, into = c("celltype", "condition", "replicate"), sep = "_") %>%
   bind_cols(data.frame(samples))
 
 ## transform df into matrix
@@ -481,7 +471,7 @@ all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
 ## Construct the DESeqDataSet
 dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
                               colData = coldata,
-                              design= ~ genotype)
+                              design= ~ condition)
 
 # DEGs
 ## Filter out gene with less than 5 reads
@@ -489,13 +479,13 @@ keep <- rowSums(counts(dds)) >= 5
 dds <- dds[keep,]
 
 ## Specify the control sample
-dds$genotype <- relevel(dds$genotype, ref = "WT")
+dds$condition <- relevel(dds$condition, ref = "Norm")
 
 ## Differential expression analyses
 dds <- DESeq(dds)
 # res <- results(dds) # This is the classic version, but shrunk log FC is preferable
 resultsNames(dds) # Here print value into coef below
-res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
+res <- lfcShrink(dds, coef="condition_Hypo_vs_Norm", type="apeglm")
 
 
 # Add geneSymbol
@@ -524,12 +514,12 @@ names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.5
 names(keyvals)[keyvals == 'grey'] <- 'Not significant'
 names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
 
-pdf("output/deseq2/plotVolcano_res_q05fc058_ESC_KO_vs_ESC_WT_STAR.pdf", width=7, height=8)    
+pdf("output/deseq2/plotVolcano_res_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.pdf", width=7, height=8)    
 EnhancedVolcano(res,
   lab = res_tibble$geneSymbol,
   x = 'log2FoldChange',
   y = 'padj',
-  title = 'KO vs WT, ESC',
+  title = 'Hypo vs Norm, PSC',
   pCutoff = 5e-2,         #
   FCcutoff = 0.58,
   pointSize = 2.0,
@@ -546,11 +536,14 @@ EnhancedVolcano(res,
            label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
 dev.off()
 
-  
+
+
+
+
 
 # Save as gene list for GO analysis:
 ### Complete table with geneSymbol
-write.table(res_tibble, file = "output/deseq2/res_ESC_KO_vs_ESC_WT-STAR.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+write.table(res_tibble, file = "output/deseq2/res_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
 ### GO EntrezID Up and Down
 #### Filter for up-regulated genes
 upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
@@ -558,11 +551,523 @@ upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$
 #### Filter for down-regulated genes
 downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
 #### Save
-write.table(upregulated$geneSymbol, file = "output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$geneSymbol, file = "output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT-STAR.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+## Label hypoxia gene
+hypoxia_genes <- c(
+  "VEGFA",
+  "ADM",
+  "EGLN3",
+  "BNIP3",
+  "BNIP3L",
+  "CA9",
+  "CA12",
+  "LDHA",
+  "SLC2A1",
+  "ENO1",
+  "PFKP",
+  "HK2",
+  "ALDOA",
+  "PDK1"
+)
+
+pdf("output/deseq2/plotVolcano_res_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-hypoxia_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = hypoxia_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
 
 
 ```
+
+
+
+
+
+
+
+### ReN Hypo vs Norm
+
+```bash
+conda activate deseq2
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+library("rtracklayer")
+
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("geneId", "geneSymbol")
+
+
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("ReN_Norm_Rep1", "ReN_Norm_Rep2" ,"ReN_Norm_Rep3" ,"ReN_Norm_Rep4" ,"ReN_Hypo_Rep1", "ReN_Hypo_Rep2", "ReN_Hypo_Rep3", "ReN_Hypo_Rep4")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts_multi/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    rename(!!sample := starts_with("output/STAR/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Remove X and Y chromosome genes
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
+                   filters = "chromosome_name",
+                   values = c("X", "Y"),
+                   mart = ensembl)
+counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
+counts_all_filtered <- counts_all %>%
+  filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
+counts_all_filtered$stripped_geneid <- NULL
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("celltype", "condition", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ condition)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$condition <- relevel(dds$condition, ref = "Norm")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="condition_Hypo_vs_Norm", type="apeglm")
+
+
+# Add geneSymbol
+res_tibble = as_tibble(rownames_to_column(as.data.frame(res), var = "geneId")) %>%
+  left_join(gene_table)
+
+
+# Identify DEGs and count them
+
+## padj 0.05 FC 0.58 ##################################
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_res_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, ReN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -2, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+
+
+# Save as gene list for GO analysis:
+### Complete table with geneSymbol
+write.table(res_tibble, file = "output/deseq2/res_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+## Label hypoxia gene
+hypoxia_genes <- c(
+  "VEGFA",
+  "ADM",
+  "EGLN3",
+  "BNIP3",
+  "BNIP3L",
+  "CA9",
+  "CA12",
+  "LDHA",
+  "SLC2A1",
+  "ENO1",
+  "PFKP",
+  "HK2",
+  "ALDOA",
+  "PDK1"
+)
+
+pdf("output/deseq2/plotVolcano_res_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-hypoxia_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, ReN',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = hypoxia_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -2, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+```
+
+
+
+
+
+--> Much **more DEGs in PSC** (also samples looks more clean in their PCA)
+
+--> Core **Hypoxia marker genes are induced in both conditions**!
+
+
+
+
+
+
+
+# Functional analysis with enrichGO (single list of genes dotplot)
+
+
+We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
+
+Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the rlog counts. Our background list will be all genes tested for differential expression.
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
+
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v47.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+### GeneSymbol list of signif DEG qval 0.05 FC 0.58
+output/deseq2/upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt
+output/deseq2/downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt
+
+output/deseq2/upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt
+output/deseq2/downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt
+
+
+
+
+############ PSC - UP ############
+
+PSC_up = read_csv("output/deseq2/upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", col_names = "gene_name")
+
+ego <- enrichGO(gene = as.character(PSC_up$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_up$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+
+
+
+############ PSC - DOWN ############
+
+PSC_down = read_csv("output/deseq2/downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", col_names = "gene_name")
+
+ego <- enrichGO(gene = as.character(PSC_down$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP-downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP-downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_down$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+############ ReN - UP ############
+
+ReN_up = read_csv("output/deseq2/upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", col_names = "gene_name")
+
+ego <- enrichGO(gene = as.character(ReN_up$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(ReN_up$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+
+
+
+############ ReN - DOWN ############
+
+ReN_down = read_csv("output/deseq2/downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", col_names = "gene_name")
+
+ego <- enrichGO(gene = as.character(ReN_down$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP-downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP-downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(ReN_down$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+
+```
+
+
+
 
 
 
