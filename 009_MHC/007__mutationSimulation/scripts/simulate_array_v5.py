@@ -11,7 +11,7 @@ from pathlib import Path
 import pyarrow as pa, pyarrow.parquet as pq
 import numpy as np
 from simulate_mutations import ExomeSampler, load_signatures, get_signature_probs
-from annotate_damage4 import DBNSFP
+from annotate_damage5 import DBNSFP
 
 # ---------- helpers ---------------------------------------------------------
 

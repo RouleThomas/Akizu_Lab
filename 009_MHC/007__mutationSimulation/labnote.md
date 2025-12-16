@@ -150,6 +150,27 @@ Here follow `## version4 update for missing dbNSFP5` from `009*/004*`.
 
 --> Updated `scripts/simulate_array_v4.py` into `scripts/simulate_array_v4.py` to use *dbNSFP55.3* and added *stop_lost* count
 
+Need to update  CADD PHRED value score also; `scripts/annotate_damage4.py` into `scripts/annotate_damage5.py`
+
+```python
+import gzip
+
+with gzip.open("ref/dbNSFP5.3a_grch38.gz", "rt") as f:
+    header = f.readline().strip().split("\t")
+
+for i, col in enumerate(header, 1):
+    print(f"{i}: {col}")
+```
+
+--> Double check we are good (by checking `scripts/annotate_damage3.py`):
+  -  IDX_TRANSCRIPTID     = 15 - 1 --> OK
+  -  IDX_VEP_CANONICAL    = 26 - 1 --> OK
+  -  IDX_SIFT4G_SCORE     = 50 - 1 --> OK
+  -  IDX_SIFT4G_PRED      = 52 - 1 --> OK
+  -  IDX_PP2_HDIV_SCORE   = 53 - 1 --> OK
+  -  IDX_PP2_HDIV_PRED    = 55 - 1 --> OK
+  -  IDX_CADD_PHRED       = 150 - 1 --> NOT OK!!! Correct is 150!!!
+
 
 
 
@@ -166,24 +187,28 @@ python scripts/simulate_array_v5.py \
   --sigfile signatures/COSMIC_with_flat.txt \
   --outdir results_v5 # UPDATE PATH
 
+python scripts/simulate_array_v5.py \
+  --signature SBS1 \
+  --n 4000 \
+  --rep 1 \
+  --seed 42 \
+  --sigfile signatures/COSMIC_with_flat.txt \
+  --outdir results_v5 # UPDATE PATH
 
 
 
-
+XXX TO MODIFY 
 
 # Generate plot for all (script updated to use `scripts/simulate_array_v3.py` and `scripts/annotate_damage4.py`)
 
 sbatch scripts/run_filtered_cosmic_v4.slurm #  xxx --> results_v4/
-
-XXX TO MODIFY 
-
 
 sbatch scripts/run_filtered_contexts_v4.slurm #  xxx --> results_contexts_v4/
 sbatch scripts/run_filtered_experimental_v4.slurm #  xxx --> results_experimental_v4/
 ```
 
 
---> XXX Using *GENCODE v49* and *dbNSFP5.3* now decrease the number of missing!
+--> Using *GENCODE v49* with *dbNSFP5.3*, and updated the 0-1based nomenclature now decrease the number of missing *no_region_hit*, but still many *alt_mismatch*
 
 
 
@@ -205,13 +230,11 @@ Let's use audit script from `009*/004*`
 
 # CHECK CADD PHRED - version4 0-based 1-based corrected
 python scripts/audit_cadd_phred.py ref/dbNSFP5.3a_grch38.gz results_v5/SBS90/n_4000/rep_01.annot.parquet
+python scripts/audit_cadd_phred.py ref/dbNSFP5.3a_grch38.gz results_v5/SBS1/n_4000/rep_01.annot.parquet
 
 ```
 
-
-XXXY HER E check output
-
-
+--> FALSE ALERT! `009*/004*` is correct in the end!
 
 
 
