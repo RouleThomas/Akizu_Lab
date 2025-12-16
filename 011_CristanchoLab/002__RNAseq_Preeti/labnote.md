@@ -306,6 +306,15 @@ featureCounts -p -C -M --fraction -s 2 -t gene -g gene_id \
 #--> 66%!
 
 
+## -s 2 for stranded, and test basic gtf
+# wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/gencode.v49.basic.annotation.gtf.gz
+# gunzip gencode.v49.basic.annotation.gtf.gz
+
+featureCounts -p -C -O -M --fraction -s 2 \
+	-a /scr1/users/roulet/Akizu_Lab/Master/meta/gencode.v49.basic.annotation.gtf \
+	-o output/featurecounts/ReN_Norm_Rep1.txt output/STAR/fastp/ReN_Norm_Rep1_Aligned.sortedByCoord.out.bam
+#--> 49% assigned; same value so I can still use the comprehenssive GENCODE version
+
 
 
 # all samples:

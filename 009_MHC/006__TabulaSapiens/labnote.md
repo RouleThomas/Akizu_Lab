@@ -582,7 +582,7 @@ Unbiased marker gene identification with find `FindAllMarkers()` ran in slurm be
 conda activate bpcells_r44 # For seurat v5 with BPCells
 
 sbatch scripts/FindAllMarkers_TabulaSapiens_allCells-FindAllMarkersmipct025logfc025.sh # 59562106 ok
-sbatch scripts/FindAllMarkers_TabulaSapiens_allCells-FindAllMarkersmipct050logfc025.sh # 61873932 xxx
+sbatch scripts/FindAllMarkers_TabulaSapiens_allCells-FindAllMarkersmipct050logfc025.sh # 61873932 ok
 
 ```
 
@@ -826,11 +826,70 @@ write.table(marker_counts_by_fc,
 ###################
 
 
-xxxy
+# Keep genes that appear in only ONE cell_type (ie. remove any genes found as marker in another v)
+all_markers <- read.delim(
+  "output/seurat/srat_TabulaSapiens_allCells-dim30-FindAllMarkersmipct050logfc025-cell_type.txt",
+  row.names = 1
+) %>% as_tibble()
+
+
+## Count number of highly and specficcaly expressed genes per cluster
+all_markers %>%
+  filter(p_val_adj <0.05) %>%
+  group_by(cluster) %>%
+  summarise(exclusive_genes = list(sort(unique(gene))),
+            n = n_distinct(gene)) %>%
+  arrange(desc(n)) %>%
+  dplyr::select(cluster, n) %>%
+  print(n=180) 
+
+
+## Count number of specific genes per cluster
+specific_markers <- all_markers %>%
+  filter(p_val_adj <0.05) %>%
+  group_by(gene) %>%
+  mutate(n_tissues = n_distinct(cluster)) %>%   # 'cluster' column = cell_type name in FindAllMarkers output
+  ungroup() %>%
+  filter(n_tissues == 1)
+
+specific_markers %>%
+  group_by(cluster) %>%
+  summarise(exclusive_genes = list(sort(unique(gene))),
+            n = n_distinct(gene)) %>%
+  arrange(desc(n)) %>%
+  dplyr::select(cluster, n) %>%
+  print(n=180) 
+
+
+## Test different FC treshold
+
+fc_thresholds <- c(0.25, 0.5, 1, 2)
+all_tissues <- sort(unique(all_markers$cluster))  # cluster column holds cell_type names here
+
+marker_counts_by_fc <- tidyr::crossing(
+    cluster = all_tissues,
+    fc_threshold = fc_thresholds
+  ) %>%
+  left_join(
+    all_markers %>%
+      filter(p_val_adj < 0.05) %>%
+      tidyr::crossing(fc_threshold = fc_thresholds) %>%
+      filter(avg_log2FC >= fc_threshold) %>%
+      group_by(cluster, fc_threshold) %>%
+      summarise(n_genes = n_distinct(gene), .groups = "drop"),
+    by = c("cluster", "fc_threshold")
+  ) %>%
+  mutate(n_genes = tidyr::replace_na(n_genes, 0),
+         fc_threshold = paste0("log2FC_ge_", fc_threshold)) %>%
+  pivot_wider(names_from = fc_threshold, values_from = n_genes) %>%
+  arrange(cluster)
 
 
 
-s
+
+write.table(marker_counts_by_fc,
+            "output/seurat/marker_counts-FindAllMarkersmipct050logfc025-cell_type-FC.tsv",
+            sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 ```
