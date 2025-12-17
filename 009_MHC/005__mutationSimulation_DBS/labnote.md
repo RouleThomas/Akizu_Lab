@@ -334,9 +334,6 @@ conda activate mutsim
 
 python scripts/add_csq_v1.py --root results_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
 python scripts/add_csq_v1.py --root results_contexts_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
-
-
-
 ```
 
 --> All good, new `consequence_summary_rep*.sim.json` file generated for each replicate
@@ -356,15 +353,48 @@ The script will:
   - If it’s a boundary (codon_index=2): use the SNV that belongs to the primary codon (the one with the worse AA consequence).
 - Writes one JSON per replicate with counts, fractions and summary stats, and (optionally) a TSV of per-variant primary scores.
 
+--> Work at the codon level: dbNSFP contain AA_ref and AA_alt so we have information at the AA level; simply collect the corresponding score generating the same AA change.
 
+Code will:
+- reads each rep_*.sim.parquet
+- reconstructs the DBS ref2/alt2 from your context_id using your --contexts_list
+- computes AA consequences at codon / AA level (handles the 2-codon spanning case with codon_index==2)
+-  queries dbNSFP by SNVs, but keeps only hits whose dbNSFP aaref/aaalt match the simulated AA change (and aapos too if you have an AA position column; otherwise it will warn and match without aapos)
+- summarizes SIFT4G / PolyPhen2_HDIV / CADD using only numeric scores + your thresholds
+- writes one JSON per replicate (+ optional per-variant TSV for debugging)
+
+
+But we first need to **add AA position (ie. Lysine position 23) to our simulation**; so that we can put together dbNSFP AA and our simulation AA changes.
 
 
 ```bash
 conda activate mutsim
 
-XXXY try code !! see chat
+# Add AA position to our simulation
+## prepare GTF
+bgzip -c gtf/gencode.v45.annotation.gtf > gtf/gencode.v45.annotation.gtf.gz
+tabix -p gff gtf/gencode.v45.annotation.gtf.gz
 
-python scripts/add_path_v1.py --root results_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
+
+XXXY HERE SEE chatpg
+
+python scripts/add_aapos_from_gtf.py \
+  --parquet-in results_DBS/DBS1/n_1000/rep_01.sim.parquet \
+  --gtf gtf/gencode.v45.annotation.gtf.gz \
+  --parquet-out results_DBS/DBS1/n_1000/rep_01.sim.with_aapos.parquet \
+  --cache-pkl meta/cds_cache.pkl
+
+
+# 
+
+python scripts/add_scores_dbnsfp.py \
+  --root results_DBS \
+  --contexts_list signatures/context_signature_list_DBS.txt \
+  --dbnsfp ref/dbNSFP5.2a_grch38.gz \
+  --out-prefix pathogenicity_summary \
+  --write-tsv
+
+
 
 
 
