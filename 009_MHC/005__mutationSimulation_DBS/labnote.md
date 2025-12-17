@@ -385,16 +385,24 @@ python scripts/add_aapos_from_gtf.py \
   --gtf gtf/gencode.v45.annotation.gtf.gz \
   --parquet-out results_DBS/DBS1/n_1000/rep_01.sim.with_aapos.parquet \
   --cache-pkl meta/cds_models_cache.pkl
+#--> Run all good!
 
 # Annotate each replicate by AA change
-
-XXXY RUN THIS BELOW
-
 python scripts/annotate_dbs_scores_by_aa.py \
   --parquet-in results_DBS/DBS1/n_1000/rep_01.sim.with_aapos.parquet \
   --dbnsfp-aa-index ref/dbnsfp_aa_index.parquet \
   --out-prefix results_DBS/DBS1/n_1000/pathogenicity_summary \
   --write-tsv
+#--> Run all good!
+
+
+XXXY do some cehckling that it work well chekc on IGV!!
+
+# Run all
+XXXY double check that is goos!
+sbatch scripts/run_aapos_and_scores_all.slurm
+
+
 
 
 
