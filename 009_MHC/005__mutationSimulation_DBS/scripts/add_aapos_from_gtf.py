@@ -1,165 +1,245 @@
 #!/usr/bin/env python3
-import argparse, re, pickle
+import argparse, gzip, pickle, re
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
 import pandas as pd
 
-ATTR_RE = re.compile(r'(\S+)\s+"([^"]+)"')
+TX_ID_RE = re.compile(r'transcript_id "([^"]+)"')
+GENE_ID_RE = re.compile(r'gene_id "([^"]+)"')
 
-def parse_attrs(s: str) -> dict:
-    return {k:v for k,v in ATTR_RE.findall(s)}
+def parse_attr(attr: str, regex: re.Pattern) -> Optional[str]:
+    m = regex.search(attr)
+    return m.group(1) if m else None
 
-def open_text(path: Path):
-    if str(path).endswith(".gz"):
-        import gzip
-        return gzip.open(path, "rt")
-    return open(path, "rt")
+def strip_version(x: str) -> str:
+    # ENST00000.13 -> ENST00000
+    return re.sub(r"\.\d+$", "", x) if x else x
 
-def load_cds_by_gene(gtf: Path, wanted_genes: set[str], cache: Path | None = None):
-    """
-    Returns:
-      gene_id -> transcript_id -> {"strand": "+/-", "cds": [(start,end)...], "cds_len": int}
-    CDS coords are 1-based inclusive, blocks stored in transcript order.
-    """
-    if cache and cache.exists():
-        with open(cache, "rb") as f:
-            return pickle.load(f)
+def norm_chr(c: str) -> str:
+    return c[3:] if c.startswith("chr") else c
 
-    gene_map = {}
-    with open_text(gtf) as fh:
-        for line in fh:
-            if not line or line[0] == "#":
+@dataclass
+class CDSModel:
+    chrom: str          # normalized (no "chr")
+    strand: int         # +1/-1
+    exons: List[Tuple[int, int]]      # (start,end) 1-based inclusive, transcription order
+    cumlen: List[int]                 # cds bases before each exon
+    gene_id: str
+    tx_id: str
+
+def build_models_from_gtf(gtf_path: Path):
+    opener = gzip.open if str(gtf_path).endswith(".gz") else open
+
+    # collect CDS exons per transcript
+    cds_by_tx: Dict[str, Dict[Tuple[str,int], List[Tuple[int,int]]]] = {}
+    gene_by_tx: Dict[str, str] = {}
+
+    with opener(gtf_path, "rt") as f:
+        for line in f:
+            if not line or line.startswith("#"):
                 continue
-            f = line.rstrip("\n").split("\t")
-            if len(f) < 9:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 9:
                 continue
-            chrom, source, feature, start, end, score, strand, frame, attrs = f
+            chrom, _, feature, start, end, _, strand, _, attr = parts
             if feature != "CDS":
                 continue
-            a = parse_attrs(attrs)
-            gid = a.get("gene_id")
-            tid = a.get("transcript_id")
-            if not gid or not tid or gid not in wanted_genes:
+
+            tx = parse_attr(attr, TX_ID_RE)
+            gene = parse_attr(attr, GENE_ID_RE)
+            if not tx or not gene:
                 continue
-            s = int(start); e = int(end)
-            gene_map.setdefault(gid, {}).setdefault(tid, {"strand": strand, "cds": [], "cds_len": 0})
-            gene_map[gid][tid]["cds"].append((s, e))
 
-    # sort blocks in transcript order + compute cds_len
-    for gid, txs in gene_map.items():
-        for tid, info in txs.items():
-            blocks = info["cds"]
-            if info["strand"] == "+":
-                blocks.sort(key=lambda x: x[0])
+            tx0 = strip_version(tx)
+            gene0 = strip_version(gene)
+
+            st, en = int(start), int(end)
+            sgn = 1 if strand == "+" else -1
+            chrom_n = norm_chr(chrom)
+
+            cds_by_tx.setdefault(tx0, {}).setdefault((chrom_n, sgn), []).append((st, en))
+            gene_by_tx[tx0] = gene0
+
+    # Build CDSModel per transcript, and gene -> transcripts index
+    tx_models: Dict[str, CDSModel] = {}
+    gene2tx: Dict[str, List[str]] = {}
+
+    for tx0, by_chrstrand in cds_by_tx.items():
+        # choose chrom/strand with max CDS length
+        best_key, best_len = None, -1
+        for key, exs in by_chrstrand.items():
+            L = sum(e - s + 1 for s, e in exs)
+            if L > best_len:
+                best_len, best_key = L, key
+        if best_key is None:
+            continue
+
+        chrom_n, sgn = best_key
+        exons = by_chrstrand[best_key]
+
+        # transcription order
+        exons = sorted(exons, key=lambda x: x[0], reverse=(sgn == -1))
+
+        cum, running = [], 0
+        for s, e in exons:
+            cum.append(running)
+            running += (e - s + 1)
+
+        gene0 = gene_by_tx.get(tx0, "")
+        tx_models[tx0] = CDSModel(
+            chrom=chrom_n, strand=sgn, exons=exons, cumlen=cum, gene_id=gene0, tx_id=tx0
+        )
+        if gene0:
+            gene2tx.setdefault(gene0, []).append(tx0)
+
+    return tx_models, gene2tx
+
+def pos_to_aapos(model: CDSModel, chrom: str, strand: int, pos1: int) -> Optional[int]:
+    # pos1 is assumed 1-based genomic, consistent with GTF.
+    # (We are NOT doing any pos+1 conversion trick here.)
+    chrom_n = norm_chr(str(chrom))
+    if chrom_n != model.chrom or int(strand) != model.strand:
+        return None
+
+    for (s, e), before in zip(model.exons, model.cumlen):
+        if s <= pos1 <= e:
+            if model.strand == 1:
+                cds0 = before + (pos1 - s)
             else:
-                blocks.sort(key=lambda x: x[0], reverse=True)
-            info["cds"] = blocks
-            info["cds_len"] = sum(abs(e - s) + 1 for s, e in blocks)
-
-    if cache:
-        cache.parent.mkdir(parents=True, exist_ok=True)
-        with open(cache, "wb") as f:
-            pickle.dump(gene_map, f)
-
-    return gene_map
-
-def cds_offset_for_pos(pos1: int, blocks: list[tuple[int,int]], strand: str):
-    offset = 0
-    for (s, e) in blocks:
-        lo, hi = (s, e) if s <= e else (e, s)
-        if lo <= pos1 <= hi:
-            if strand == "+":
-                return offset + (pos1 - lo)
-            else:
-                return offset + (hi - pos1)
-        offset += (hi - lo + 1)
+                cds0 = before + (e - pos1)
+            return (cds0 // 3) + 1
     return None
 
-def pick_transcript_containing_pos(txs: dict, pos1: int):
-    """
-    Choose among transcripts where pos is in CDS.
-    Return (tid, info, off) or (None,None,None).
-    Preference: transcript with largest CDS length.
-    """
-    candidates = []
-    for tid, info in txs.items():
-        off = cds_offset_for_pos(pos1, info["cds"], info["strand"])
-        if off is not None:
-            candidates.append((info["cds_len"], tid, info, off))
-    if not candidates:
-        return None, None, None
-    candidates.sort(reverse=True)  # max cds_len first
-    _, tid, info, off = candidates[0]
-    return tid, info, off
+def pick_first_id(val: str) -> str:
+    if val is None:
+        return ""
+    s = str(val).strip()
+    if not s or s == ".":
+        return ""
+    if ";" in s:
+        for x in s.split(";"):
+            x = x.strip()
+            if x and x != ".":
+                return x
+        return ""
+    return s
 
 def main():
-    ap = argparse.ArgumentParser(description="Add aapos_primary/aapos_secondary using gene_id + GTF CDS.")
+    ap = argparse.ArgumentParser()
     ap.add_argument("--parquet-in", required=True)
     ap.add_argument("--gtf", required=True)
     ap.add_argument("--parquet-out", required=True)
-    ap.add_argument("--cache-pkl", default=None, help="Optional cache for CDS intervals keyed by gene_id.")
+    ap.add_argument("--cache-pkl", default=None, help="Optional pickle cache for GTF models")
     args = ap.parse_args()
 
-    pin = Path(args.parquet_in)
-    df = pd.read_parquet(pin)
+    parq_in = Path(args.parquet_in)
+    gtf = Path(args.gtf)
+    parq_out = Path(args.parquet_out)
+    cache = Path(args.cache_pkl) if args.cache_pkl else None
 
-    for col in ["gene_id", "pos", "chr", "strand"]:
-        if col not in df.columns:
-            raise SystemExit(f"❌ Missing required column '{col}' in {pin}")
+    df = pd.read_parquet(parq_in)
 
-    wanted_genes = set(df["gene_id"].dropna().astype(str).unique().tolist())
-    gene_map = load_cds_by_gene(Path(args.gtf), wanted_genes, Path(args.cache_pkl) if args.cache_pkl else None)
+    need = ["chr", "pos", "strand"]
+    for c in need:
+        if c not in df.columns:
+            raise SystemExit(f"❌ Missing required column: {c}")
 
-    pos_arr = pd.to_numeric(df["pos"], errors="coerce").astype("Int64")
+    tx_col = "transcript_id" if "transcript_id" in df.columns else None
+    gene_col = "gene_id" if "gene_id" in df.columns else None
+    if not tx_col and not gene_col:
+        raise SystemExit("❌ Need at least transcript_id or gene_id in parquet to map to CDS")
 
-    cds_offset = []
-    within = []
-    a1 = []
-    a2 = []
-    chosen_tid = []
+    if cache and cache.exists():
+        with open(cache, "rb") as f:
+            tx_models, gene2tx = pickle.load(f)
+    else:
+        tx_models, gene2tx = build_models_from_gtf(gtf)
+        if cache:
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            with open(cache, "wb") as f:
+                pickle.dump((tx_models, gene2tx), f)
 
-    for gid, pos1 in zip(df["gene_id"].astype(str), pos_arr):
-        if pd.isna(pos1) or gid not in gene_map:
-            cds_offset.append(None); within.append(None); a1.append(None); a2.append(None); chosen_tid.append(None)
+    # Arrays
+    chr_arr = df["chr"].astype(str).values
+    pos_arr = pd.to_numeric(df["pos"], errors="coerce").fillna(-1).astype(int).values
+    strand_arr = pd.to_numeric(df["strand"], errors="coerce").fillna(0).astype(int).values
+
+    tx_arr = df[tx_col].astype(str).values if tx_col else None
+    gene_arr = df[gene_col].astype(str).values if gene_col else None
+
+    a1, a2, used_tx = [], [], []
+
+    hits_tx = 0
+    hits_gene = 0
+
+    for i in range(len(df)):
+        chrom = chr_arr[i]
+        pos1 = pos_arr[i]          # assume this is already 1-based (no conversion)
+        pos1_b = pos1 + 1          # second base of DBS
+        sgn = int(strand_arr[i])
+
+        if pos1 < 1:
+            a1.append(None); a2.append(None); used_tx.append("")
             continue
 
-        tid, info, off = pick_transcript_containing_pos(gene_map[gid], int(pos1))
-        if off is None:
-            cds_offset.append(None); within.append(None); a1.append(None); a2.append(None); chosen_tid.append(None)
-            continue
+        # --- try transcript_id first ---
+        tx0 = strip_version(strip_version(pick_first_id(tx_arr[i])) if tx_arr is not None else "")
+        model = tx_models.get(tx0) if tx0 else None
 
-        cds_offset.append(int(off))
-        within_c = int(off % 3)
-        within.append(within_c)
-        aapos_primary = int(off // 3 + 1)
-        a1.append(aapos_primary)
-        chosen_tid.append(tid)
+        aa1 = aa2 = None
+        chosen = ""
 
-        # secondary base is pos+1
-        off2 = cds_offset_for_pos(int(pos1) + 1, info["cds"], info["strand"])
-        if off2 is None:
-            a2.append(None)
-        else:
-            a2.append(int(off2 // 3 + 1))
+        if model is not None:
+            aa1 = pos_to_aapos(model, chrom, sgn, pos1)
+            aa2 = pos_to_aapos(model, chrom, sgn, pos1_b)
+            if aa1 is not None:
+                hits_tx += 1
+                chosen = model.tx_id
 
-    df["chosen_transcript_id"] = chosen_tid
-    df["cds_offset"] = cds_offset
-    df["within_codon"] = within
+        # --- fallback: try all transcripts from gene_id ---
+        if aa1 is None and gene_arr is not None:
+            g0 = strip_version(pick_first_id(gene_arr[i]))
+            for cand_tx in gene2tx.get(g0, []):
+                m = tx_models.get(cand_tx)
+                if m is None:
+                    continue
+                aa1t = pos_to_aapos(m, chrom, sgn, pos1)
+                if aa1t is None:
+                    continue
+                aa2t = pos_to_aapos(m, chrom, sgn, pos1_b)
+                aa1, aa2 = aa1t, aa2t
+                hits_gene += 1
+                chosen = m.tx_id
+                break
+
+        a1.append(aa1)
+        a2.append(aa2)
+        used_tx.append(chosen)
+
     df["aapos_primary"] = a1
     df["aapos_secondary"] = a2
-
-    pout = Path(args.parquet_out)
-    pout.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(pout, index=False)
+    df["spans_two_codons"] = (df["aapos_primary"].notna() &
+                              df["aapos_secondary"].notna() &
+                              (df["aapos_primary"] != df["aapos_secondary"]))
+    df["aapos_used_transcript"] = used_tx
 
     n = len(df)
-    n_ok = pd.Series(a1).notna().sum()
-    n_sec = pd.Series(a2).notna().sum()
-    n_span = (pd.Series(a2).notna() & (pd.Series(a2) != pd.Series(a1))).sum()
+    n1 = int(df["aapos_primary"].notna().sum())
+    n2 = int(df["aapos_secondary"].notna().sum())
+    nspan = int(df["spans_two_codons"].sum())
 
-    print(f"✅ wrote {pout}")
-    print(f"QC: aapos_primary present: {n_ok}/{n} ({n_ok/n*100:.1f}%)")
-    print(f"QC: aapos_secondary present: {n_sec}/{n} ({n_sec/n*100:.1f}%)")
-    print(f"QC: spans two codons: {n_span}/{n} ({n_span/n*100:.1f}%)")
+    print(f"✅ wrote {parq_out}")
+    print(f"QC: aapos_primary present:   {n1}/{n} ({(n1/n*100):.1f}%)")
+    print(f"QC: aapos_secondary present: {n2}/{n} ({(n2/n*100):.1f}%)")
+    print(f"QC: spans_two_codons:        {nspan}/{n} ({(nspan/n*100):.1f}%)")
+    print(f"QC: hits via transcript_id:  {hits_tx}/{n}")
+    print(f"QC: hits via gene fallback:  {hits_gene}/{n}")
+    print("Tip: if both hit counts are ~0, it’s almost certainly a coordinate convention mismatch OR chr naming mismatch.")
+
+    parq_out.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(parq_out, index=False)
 
 if __name__ == "__main__":
     main()

@@ -370,31 +370,31 @@ But we first need to **add AA position (ie. Lysine position 23) to our simulatio
 ```bash
 conda activate mutsim
 
-# Add AA position to our simulation
+# Prerequisete
 ## prepare GTF
 bgzip -c gtf/gencode.v45.annotation.gtf > gtf/gencode.v45.annotation.gtf.gz
 tabix -p gff gtf/gencode.v45.annotation.gtf.gz
+## Build AA index version of dbNSFP
+python scripts/build_dbnsfp_aa_index.py \
+  --dbnsfp ref/dbNSFP5.2a_grch38.gz \
+  --out ref/dbnsfp_aa_index.parquet
 
-
-XXXY HERE SEE chatpg
-
+# Add position of AA to our simulation parquet
 python scripts/add_aapos_from_gtf.py \
   --parquet-in results_DBS/DBS1/n_1000/rep_01.sim.parquet \
   --gtf gtf/gencode.v45.annotation.gtf.gz \
   --parquet-out results_DBS/DBS1/n_1000/rep_01.sim.with_aapos.parquet \
-  --cache-pkl meta/cds_cache.pkl
+  --cache-pkl meta/cds_models_cache.pkl
 
+# Annotate each replicate by AA change
 
-# 
+XXXY RUN THIS BELOW
 
-python scripts/add_scores_dbnsfp.py \
-  --root results_DBS \
-  --contexts_list signatures/context_signature_list_DBS.txt \
-  --dbnsfp ref/dbNSFP5.2a_grch38.gz \
-  --out-prefix pathogenicity_summary \
+python scripts/annotate_dbs_scores_by_aa.py \
+  --parquet-in results_DBS/DBS1/n_1000/rep_01.sim.with_aapos.parquet \
+  --dbnsfp-aa-index ref/dbnsfp_aa_index.parquet \
+  --out-prefix results_DBS/DBS1/n_1000/pathogenicity_summary \
   --write-tsv
-
-
 
 
 

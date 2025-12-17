@@ -1,589 +1,303 @@
 #!/usr/bin/env python3
-"""
-Annotate DBS simulations at AA/codon level and summarize pathogenicity scores
-using dbNSFP AA fields (aaref/aaalt[/aapos]) as a proxy.
-
-Key idea:
-- dbNSFP is queried by genomic SNVs (chr/pos/ref/alt),
-- but we KEEP only rows whose (aaref, aaalt, and optionally aapos) match the
-  simulated AA change for the codon side we are evaluating.
-
-Outputs (per replicate):
-- JSON summary with counts/fractions per score class
-- Optional TSV with per-variant primary/secondary labels and matched scores
-
-Requirements:
-- pandas, pysam
-- tabix available in PATH
-- dbNSFP bgzip+tabix indexed
-"""
-
-import argparse
-import json
-import re
-import subprocess
-from dataclasses import dataclass
+from __future__ import annotations
+import argparse, json, re, subprocess
 from pathlib import Path
-from typing import Optional, Dict, Tuple, List
 
 import pandas as pd
 import pysam
 
-# ---------------- Codon table (standard) ----------------
+# ================= thresholds (NUMERIC ONLY) =================
+SIFT4G_DAMAGING_LT = 0.05                 # <0.05 damaging, else benign
+
+PP2_BENIGN_LT      = 0.15                 # PolyPhen-2 HDIV
+PP2_POSS_UPPER     = 0.85                 # [0.15, 0.85] possibly damaging
+# >=0.85 damaging
+
+CADD_BENIGN_LT     = 2.0                  # PHRED
+CADD_UNCERT_LT     = 10.0                 # [2,10)
+CADD_LIKELY_LT     = 20.0                 # [10,20)
+# >=20 damaging
+
+# ================= DBS78 list =================
+DBS78 = [
+    "AC>CA","AC>CG","AC>CT","AC>GA","AC>GG","AC>GT","AC>TA","AC>TG","AC>TT",
+    "AT>CA","AT>CC","AT>CG","AT>GA","AT>GC","AT>TA",
+    "CC>AA","CC>AG","CC>AT","CC>GA","CC>GG","CC>GT","CC>TA","CC>TG","CC>TT",
+    "CG>AT","CG>GC","CG>GT","CG>TA","CG>TC","CG>TT",
+    "CT>AA","CT>AC","CT>AG","CT>GA","CT>GC","CT>GG","CT>TA","CT>TC","CT>TG",
+    "GC>AA","GC>AG","GC>AT","GC>CA","GC>CG","GC>TA",
+    "TA>AT","TA>CG","TA>CT","TA>GC","TA>GG","TA>GT",
+    "TC>AA","TC>AG","TC>AT","TC>CA","TC>CG","TC>CT","TC>GA","TC>GG","TC>GT",
+    "TG>AA","TG>AC","TG>AT","TG>CA","TG>CC","TG>CT","TG>GA","TG>GC","TG>GT",
+    "TT>AA","TT>AC","TT>AG","TT>CA","TT>CC","TT>CG","TT>GA","TT>GC","TT>GG",
+]
+ID2CTX = {i: s for i, s in enumerate(DBS78)}
+
+def split_ctx(s: str) -> tuple[str,str]:
+    a, b = s.split(">")
+    return a, b
+
+DNA_COMP = str.maketrans("ACGT","TGCA")
+def revcomp(s: str) -> str:
+    return s.translate(DNA_COMP)[::-1]
+
+# ================= translation & consequence =================
 CODON2AA = {
-    # Phenylalanine / Leucine
-    "TTT":"F","TTC":"F","TTA":"L","TTG":"L",
-    "CTT":"L","CTC":"L","CTA":"L","CTG":"L",
-    # Isoleucine / Methionine
-    "ATT":"I","ATC":"I","ATA":"I","ATG":"M",
-    # Valine
-    "GTT":"V","GTC":"V","GTA":"V","GTG":"V",
-    # Serine
-    "TCT":"S","TCC":"S","TCA":"S","TCG":"S",
-    "AGT":"S","AGC":"S",
-    # Proline
-    "CCT":"P","CCC":"P","CCA":"P","CCG":"P",
-    # Threonine
-    "ACT":"T","ACC":"T","ACA":"T","ACG":"T",
-    # Alanine
-    "GCT":"A","GCC":"A","GCA":"A","GCG":"A",
-    # Tyrosine / STOP
-    "TAT":"Y","TAC":"Y","TAA":"*","TAG":"*",
-    # Histidine / Glutamine
-    "CAT":"H","CAC":"H","CAA":"Q","CAG":"Q",
-    # Asparagine / Lysine
-    "AAT":"N","AAC":"N","AAA":"K","AAG":"K",
-    # Aspartate / Glutamate
-    "GAT":"D","GAC":"D","GAA":"E","GAG":"E",
-    # Cysteine / Tryptophan / STOP
-    "TGT":"C","TGC":"C","TGA":"*","TGG":"W",
-    # Arginine
-    "CGT":"R","CGC":"R","CGA":"R","CGG":"R",
-    "AGA":"R","AGG":"R",
-    # Glycine
-    "GGT":"G","GGC":"G","GGA":"G","GGG":"G",
+    "TTT":"F","TTC":"F","TTA":"L","TTG":"L","CTT":"L","CTC":"L","CTA":"L","CTG":"L",
+    "ATT":"I","ATC":"I","ATA":"I","ATG":"M","GTT":"V","GTC":"V","GTA":"V","GTG":"V",
+    "TCT":"S","TCC":"S","TCA":"S","TCG":"S","CCT":"P","CCC":"P","CCA":"P","CCG":"P",
+    "ACT":"T","ACC":"T","ACA":"T","ACG":"T","GCT":"A","GCC":"A","GCA":"A","GCG":"A",
+    "TAT":"Y","TAC":"Y","TAA":"*","TAG":"*","CAT":"H","CAC":"H","CAA":"Q","CAG":"Q",
+    "AAT":"N","AAC":"N","AAA":"K","AAG":"K","GAT":"D","GAC":"D","GAA":"E","GAG":"E",
+    "TGT":"C","TGC":"C","TGA":"*","TGG":"W","CGT":"R","CGC":"R","CGA":"R","CGG":"R",
+    "AGT":"S","AGC":"S","AGA":"R","AGG":"R","GGT":"G","GGC":"G","GGA":"G","GGG":"G"
 }
+def aa_of(codon: str) -> str|None:
+    return CODON2AA.get(codon.upper().replace("U","T"))
 
-BASES = ["A","C","G","T"]
-COMP = str.maketrans("ACGTacgt", "TGCAtgca")
+def classify(ref_aa: str, alt_aa: str|None) -> str:
+    if alt_aa is None:
+        return "synonymous"
+    if alt_aa == "*":
+        return "stop_gained"
+    return "missense" if alt_aa != ref_aa else "synonymous"
 
-def revcomp(seq: str) -> str:
-    return seq.translate(COMP)[::-1]
+def worse(a: str, b: str) -> str:
+    rank = {"stop_gained":0, "missense":1, "synonymous":2}
+    return a if rank[a] <= rank[b] else b
 
-# ---------------- thresholds from your screenshot ----------------
-def classify_sift4g(score: Optional[float]) -> str:
-    if score is None:
-        return "missing"
-    return "damaging" if score < 0.05 else "benign"
+# ================= dbNSFP (numeric only) =================
+class DBNSFP:
+    IDX_SIFT4G_SCORE   = 50 - 1
+    IDX_PP2_HDIV_SCORE = 53 - 1
+    IDX_CADD_PHRED     = 144 - 1
 
-def classify_pp2_hdiv(score: Optional[float]) -> str:
-    if score is None:
-        return "missing"
-    if score < 0.15:
-        return "benign"
-    if score < 0.85:
-        return "possibly_damaging"
-    return "damaging"
+    def __init__(self, path: Path):
+        self.path = str(path)
 
-def classify_cadd(phred: Optional[float]) -> str:
-    if phred is None:
-        return "missing"
-    if phred < 2:
-        return "benign"
-    if phred < 10:
-        return "uncertain"
-    if phred < 20:
-        return "likely_damaging"
-    return "damaging"
+    def _split(self, s: str) -> list[str] | None:
+        return s.split(';') if s and s != '.' else None
 
-# ---------------- dbNSFP helper ----------------
-@dataclass
-class DBNSFPCols:
-    IDX_CHR: int = 1-1
-    IDX_POS: int = 2-1
-    IDX_REF: int = 3-1
-    IDX_ALT: int = 4-1
-    IDX_AAREF: int = 5-1
-    IDX_AAALT: int = 6-1
-    IDX_AAPOS: int = 12-1
-
-    IDX_TRANSCRIPTID: int = 15-1
-    IDX_VEP_CANONICAL: int = 26-1
-
-    IDX_SIFT4G_SCORE: int = 50-1
-    IDX_PP2_HDIV_SCORE: int = 53-1
-    IDX_CADD_PHRED: int = 144-1
-
-DB = DBNSFPCols()
-
-def tabix_fetch(path: Path, chrom: str, pos: int) -> List[List[str]]:
-    # try both chr styles
-    chroms = [chrom, chrom.lstrip("chr"), f"chr{chrom.lstrip('chr')}"]
-    seen = set()
-    for c in chroms:
-        if c in seen:
-            continue
-        seen.add(c)
+    def _to_float(self, s: str|None) -> float|None:
         try:
-            res = subprocess.run(
-                ["tabix", str(path), f"{c}:{pos}-{pos}"],
-                capture_output=True, check=True
-            )
-            out = res.stdout.decode("utf-8", errors="replace").strip()
-            if not out:
+            return float(s) if s is not None else None
+        except ValueError:
+            return None
+
+    def _median_from_list(self, vals: list[str]|None) -> float|None:
+        if not vals:
+            return None
+        nums = []
+        for v in vals:
+            try: nums.append(float(v))
+            except: pass
+        if not nums:
+            return None
+        nums.sort()
+        m = len(nums)//2
+        return nums[m] if len(nums)%2 else (nums[m-1]+nums[m])/2
+
+    def query(self, chrom: str, pos: int, ref: str, alt: str) -> dict:
+        for chrom_try in (chrom.lstrip("chr"), f"chr{chrom.lstrip('chr')}"):
+            try:
+                res = subprocess.run(
+                    ["tabix", self.path, f"{chrom_try}:{pos}-{pos}"],
+                    capture_output=True, check=True
+                )
+            except subprocess.CalledProcessError:
                 continue
-            rows = [ln.split("\t") for ln in out.split("\n") if ln.strip()]
-            if rows:
-                return rows
-        except subprocess.CalledProcessError:
-            pass
-    return []
-
-def split_or_none(s: str) -> Optional[List[str]]:
-    if not s or s == ".":
-        return None
-    return s.split(";")
-
-def get_canonical_index(canon_flags: Optional[List[str]]) -> Optional[int]:
-    if not canon_flags:
-        return None
-    try:
-        return canon_flags.index("YES")
-    except ValueError:
-        return None
-
-def safe_float(x: Optional[str]) -> Optional[float]:
-    if x is None or x == "." or x == "":
-        return None
-    try:
-        return float(x)
-    except ValueError:
-        return None
-
-def pick_score_at_index(values: Optional[List[str]], idx: Optional[int]) -> Optional[float]:
-    if values and idx is not None and 0 <= idx < len(values):
-        return safe_float(values[idx])
-    # fallback: first numeric
-    if values:
-        for v in values:
-            f = safe_float(v)
-            if f is not None:
-                return f
-    return None
-
-def best_dbnsfp_match_for_aa_change(
-    dbnsfp_path: Path,
-    chrom: str,
-    pos: int,
-    ref: str,
-    alt: str,
-    aa_ref: str,
-    aa_alt: str,
-    aa_pos: Optional[int] = None,
-) -> Dict[str, Optional[float]]:
-    """
-    Query dbNSFP at chr:pos with SNV ref/alt, then keep only rows matching the AA change.
-    If aa_pos is provided, also require dbNSFP aapos match.
-    Uses canonical transcript if available; otherwise falls back to first numeric.
-    """
-    rows = tabix_fetch(dbnsfp_path, chrom, pos)
-    # filter by ref/alt first
-    rows = [r for r in rows if len(r) > DB.IDX_CADD_PHRED and r[DB.IDX_REF] == ref and r[DB.IDX_ALT] == alt]
-    if not rows:
+            lines = [ln for ln in res.stdout.decode("utf-8","replace").splitlines() if ln]
+            for ln in lines:
+                f = ln.split("\t")
+                if len(f) < 4: 
+                    continue
+                if f[2] != ref or f[3] != alt:
+                    continue
+                sift_scores = self._split(f[self.IDX_SIFT4G_SCORE])
+                pp2_scores  = self._split(f[self.IDX_PP2_HDIV_SCORE])
+                cadd_val    = self._to_float(f[self.IDX_CADD_PHRED])
+                return {
+                    "sift4g_score": self._median_from_list(sift_scores),
+                    "pp2_hdiv_score": self._median_from_list(pp2_scores),
+                    "cadd_phred": cadd_val
+                }
         return {"sift4g_score": None, "pp2_hdiv_score": None, "cadd_phred": None}
 
-    # filter by AA change (and position if available)
-    def aa_ok(r: List[str]) -> bool:
-        if r[DB.IDX_AAREF] != aa_ref or r[DB.IDX_AAALT] != aa_alt:
-            return False
-        if aa_pos is None:
-            return True
-        try:
-            return int(r[DB.IDX_AAPOS]) == int(aa_pos)
-        except:
-            return False
+# ----- numeric category helpers -----
+def sift_cat(score: float|None) -> str:
+    if score is None: return "missing"
+    return "damaging" if score < SIFT4G_DAMAGING_LT else "benign"
 
-    rows2 = [r for r in rows if aa_ok(r)]
-    if not rows2:
-        return {"sift4g_score": None, "pp2_hdiv_score": None, "cadd_phred": None}
+def pp2_cat(score: float|None) -> str:
+    if score is None: return "missing"
+    if score < PP2_BENIGN_LT:  return "benign"
+    if score < PP2_POSS_UPPER: return "possibly_damaging"
+    return "damaging"
 
-    # choose canonical transcript if possible
-    # dbNSFP columns are semicolon lists per transcript for many scores, but REF/ALT are per row
-    # We'll pick using canonical index if present, else first numeric.
-    r = rows2[0]
-    canon_flags = split_or_none(r[DB.IDX_VEP_CANONICAL])
-    idx = get_canonical_index(canon_flags)
+def cadd_cat(score: float|None) -> str:
+    if score is None: return "missing"
+    if score < CADD_BENIGN_LT:  return "benign"
+    if score < CADD_UNCERT_LT:  return "uncertain"
+    if score < CADD_LIKELY_LT:  return "likely_damaging"
+    return "damaging"
 
-    sift_scores = split_or_none(r[DB.IDX_SIFT4G_SCORE])
-    pp2_scores  = split_or_none(r[DB.IDX_PP2_HDIV_SCORE])
+# ================= AA consequence & SNV derivation =================
+def aa_consequences_for_row(row, fasta: pysam.FastaFile) -> tuple[str,str|None,str]:
+    chrom = str(row["chr"]); pos = int(row["pos"]); strand = int(row["strand"])
+    ref_codon = str(row["ref_codon"]).upper(); ref_aa = str(row["ref_aa"]).upper()
+    ci = int(row["codon_index"]); ctx = ID2CTX[int(row["context_id"])]
+    _, alt2_ctx = split_ctx(ctx)
 
+    if ci in (0,1):  # within a codon
+        alt = list(ref_codon)
+        alt[ci]   = alt2_ctx[0]
+        alt[ci+1] = alt2_ctx[1]
+        lbl = classify(ref_aa, aa_of("".join(alt)))
+        return lbl, None, "left"
+
+    # boundary: need next codon on transcript strand
+    if strand == 1:
+        next_start = pos + 1
+        next_trip  = fasta.fetch(chrom, next_start-1, next_start-1+3).upper()
+    else:
+        next_start = pos - 1
+        seq = fasta.fetch(chrom, next_start-3, next_start).upper()
+        next_trip = revcomp(seq)
+
+    alt_left  = list(ref_codon); alt_left[2] = alt2_ctx[0]; alt_left = "".join(alt_left)
+    alt_right = list(next_trip);  alt_right[0] = alt2_ctx[1]; alt_right = "".join(alt_right)
+
+    lbl_left  = classify(ref_aa, aa_of(alt_left))
+    lbl_right = classify(aa_of(next_trip) or "X", aa_of(alt_right))
+    primary   = worse(lbl_left, lbl_right)
+    secondary = lbl_right if primary == lbl_left else lbl_left
+    primary_side = "left" if primary == lbl_left else "right"
+    return primary, secondary, primary_side
+
+def forward_refalt_for_row(row, fasta: pysam.FastaFile):
+    chrom = str(row["chr"]); pos = int(row["pos"])
+    gref2 = fasta.fetch(chrom, pos-1, pos+1).upper()
+    ctx = ID2CTX[int(row["context_id"])]
+    ref2_ctx, alt2_ctx = split_ctx(ctx)
+    if ref2_ctx != gref2:
+        if revcomp(ref2_ctx) == gref2:
+            ref2_ctx = gref2
+            alt2_ctx = revcomp(alt2_ctx)
+        else:
+            alt2_ctx = gref2
+    snv1 = (chrom, pos,     gref2[0], alt2_ctx[0])
+    snv2 = (chrom, pos + 1, gref2[1], alt2_ctx[1])
+    return snv1, snv2
+
+def aggregate_same_codon(s1: dict, s2: dict) -> dict:
+    def max_or_none(a,b):
+        vals=[v for v in (a,b) if v is not None]
+        return max(vals) if vals else None
+    def min_or_none(a,b):
+        vals=[v for v in (a,b) if v is not None]
+        return min(vals) if vals else None
     return {
-        "sift4g_score": pick_score_at_index(sift_scores, idx),
-        "pp2_hdiv_score": pick_score_at_index(pp2_scores, idx),
-        "cadd_phred": safe_float(r[DB.IDX_CADD_PHRED]),
+        "sift4g_score":  min_or_none(s1["sift4g_score"],  s2["sift4g_score"]),   # lower = worse
+        "pp2_hdiv_score":max_or_none(s1["pp2_hdiv_score"],s2["pp2_hdiv_score"]), # higher = worse
+        "cadd_phred":    max_or_none(s1["cadd_phred"],    s2["cadd_phred"])      # higher = worse
     }
 
-# ---------------- DBS context mapping ----------------
-def load_contexts_list(path: Path) -> List[str]:
-    # file can be one per line OR tab/space separated list
-    txt = path.read_text().strip()
-    lines = [ln.strip() for ln in txt.splitlines() if ln.strip()]
-    if len(lines) == 1 and ("\t" in lines[0] or " " in lines[0]):
-        toks = re.split(r"[\t ]+", lines[0].strip())
-        return [t for t in toks if t]
-    return lines
+# ================= summarization =================
+def summarize_replicate(pq: Path, fasta: pysam.FastaFile, db: "DBNSFP", write_tsv: bool):
+    rep_id = pq.stem
+    cols = ["chr","pos","strand","ref_codon","ref_aa","codon_index","context_id"]
+    df = pd.read_parquet(pq, columns=cols)
+    if df.empty:
+        return
 
-def ctxid_to_ref2_alt2(ctx_list: List[str], ctx_id: int) -> Tuple[str, str]:
-    # expects strings like "AC>CA"
-    s = ctx_list[int(ctx_id)]
-    left, right = s.split(">")
-    return left, right
+    # category counters
+    sift_counts  = {"damaging":0, "benign":0, "missing":0}
+    pp2_counts   = {"benign":0, "possibly_damaging":0, "damaging":0, "missing":0}
+    cadd_counts  = {"benign":0, "uncertain":0, "likely_damaging":0, "damaging":0, "missing":0}
+    n = 0
 
-# ---------------- Codon / consequence logic ----------------
-def translate_codon(c: str) -> str:
-    c = c.upper()
-    return CODON2AA.get(c, "X")  # X = unknown/invalid
+    out_rows = []
 
-def label_consequence(aa_ref: str, aa_alt: str) -> str:
-    if aa_alt == aa_ref:
-        return "synonymous"
-    if aa_alt == "*" and aa_ref != "*":
-        return "stop_gained"
-    return "missense"
+    for _, row in df.iterrows():
+        primary_lbl, secondary_lbl, primary_side = aa_consequences_for_row(row, fasta)
+        snv1, snv2 = forward_refalt_for_row(row, fasta)
+        s1 = db.query(*snv1)
+        s2 = db.query(*snv2)
 
-def worse_label(a: str, b: str) -> str:
-    # STOP > missense > synonymous
-    rank = {"synonymous": 0, "missense": 1, "stop_gained": 2}
-    return a if rank.get(a, -1) >= rank.get(b, -1) else b
-
-def mutate_single_codon(ref_codon: str, codon_index: int, ref2: str, alt2: str, strand: int) -> str:
-    """
-    Apply dinuc change to one codon (codon_index 0 or 1).
-    We treat ref_codon as coding (transcript 5'->3').
-
-    If strand == -1, ref2/alt2 are in genomic orientation; convert to transcript orientation by revcomp.
-    """
-    cod = ref_codon.upper()
-    if len(cod) != 3:
-        return cod
-
-    if strand == -1:
-        ref2_t = revcomp(ref2)
-        alt2_t = revcomp(alt2)
-    else:
-        ref2_t = ref2
-        alt2_t = alt2
-
-    i = int(codon_index)
-    # i=0 affects cod[0:2], i=1 affects cod[1:3]
-    seg = cod[i:i+2]
-    # if mismatch, still apply replacement (simulation might have already guaranteed, but keep robust)
-    if seg != ref2_t:
-        # do not block; replace anyway to stay consistent with "event happened"
-        pass
-    newcod = list(cod)
-    newcod[i] = alt2_t[0]
-    newcod[i+1] = alt2_t[1]
-    return "".join(newcod)
-
-def mutate_two_codons(ref_codon: str, next_ref_codon: str, ref2: str, alt2: str, strand: int) -> Tuple[str,str]:
-    """
-    codon_index==2: affects last base of this codon + first base of next codon.
-    Returns (mutated_left_codon, mutated_right_codon)
-    """
-    left = ref_codon.upper()
-    right = next_ref_codon.upper() if isinstance(next_ref_codon, str) else ""
-    if len(left) != 3 or len(right) != 3:
-        return left, right
-
-    if strand == -1:
-        ref2_t = revcomp(ref2)
-        alt2_t = revcomp(alt2)
-    else:
-        ref2_t = ref2
-        alt2_t = alt2
-
-    # transcript orientation: left codon base3 + right codon base1
-    # (index 2 in left, index 0 in right)
-    # Again, tolerate mismatch
-    new_left = list(left)
-    new_right = list(right)
-    new_left[2] = alt2_t[0]
-    new_right[0] = alt2_t[1]
-    return "".join(new_left), "".join(new_right)
-
-# ---------------- Main per-parquet processing ----------------
-def infer_next_codon(df: pd.DataFrame) -> pd.Series:
-    """
-    Best-effort: for codon_index==2 we need the 'next' codon.
-    If your parquet already has something like next_ref_codon, we use it.
-    Otherwise we approximate by shifting within transcript_id ordered by genomic pos.
-    """
-    for col in ["next_ref_codon", "ref_codon_next", "next_codon"]:
-        if col in df.columns:
-            return df[col].astype(str)
-
-    # fallback: sort by transcript_id then by pos, shift ref_codon by -1
-    if "transcript_id" in df.columns and "pos" in df.columns:
-        tmp = df.sort_values(["transcript_id", "pos"]).copy()
-        nxt = tmp.groupby("transcript_id")["ref_codon"].shift(-1)
-        # map back
-        nxt = nxt.reindex(df.index)
-        return nxt.astype(str)
-
-    return pd.Series([""]*len(df), index=df.index)
-
-def get_aa_pos_column(df: pd.DataFrame) -> Optional[str]:
-    for col in ["aa_pos", "aapos", "aa_position", "protein_pos", "ref_aapos"]:
-        if col in df.columns:
-            return col
-    return None
-
-def process_replicate(
-    parquet_in: Path,
-    contexts_list: List[str],
-    dbnsfp: Path,
-    out_json: Path,
-    out_tsv: Optional[Path] = None,
-):
-    df = pd.read_parquet(parquet_in)
-    need = ["chr","pos","strand","codon_index","ref_codon","ref_aa","context_id"]
-    miss = [c for c in need if c not in df.columns]
-    if miss:
-        raise SystemExit(f"❌ Missing required columns in {parquet_in}: {miss}")
-
-    aa_pos_col = get_aa_pos_column(df)
-    if aa_pos_col is None:
-        print("⚠️ No AA-position column found in parquet (aapos/aa_pos/etc). "
-              "Will match dbNSFP proxies by aaref/aaalt only (less specific).")
-
-    next_codon = infer_next_codon(df)
-
-    # per-variant results (primary & secondary)
-    rows = []
-    for i, r in df.iterrows():
-        chrom = str(r["chr"])
-        pos = int(r["pos"])
-        strand = int(r["strand"])
-        ci = int(r["codon_index"])
-        ref_codon = str(r["ref_codon"]).upper()
-        ref_aa = str(r["ref_aa"]).upper()
-        ctx_id = int(r["context_id"])
-
-        ref2, alt2 = ctxid_to_ref2_alt2(contexts_list, ctx_id)
-
-        # compute AA changes
-        if ci in (0,1):
-            alt_codon = mutate_single_codon(ref_codon, ci, ref2, alt2, strand)
-            aa_alt = translate_codon(alt_codon)
-            primary_label = label_consequence(ref_aa, aa_alt)
-
-            secondary_label = None
-            primary_side = "single"
-            aa_ref_primary, aa_alt_primary = ref_aa, aa_alt
-            aa_pos = int(r[aa_pos_col]) if aa_pos_col else None
-
-            # enumerate proxy SNVs within codon: try each base position substitution
-            # We must query dbNSFP by chr/pos/ref/alt (SNV) at the 2bp positions only is fine too,
-            # but proxy should represent any SNV inside this codon that yields same AA change.
-            # Minimal approach: query only the two mutated positions as SNVs using ref2->alt2 bases.
-            # (This is usually enough to find AA-matching proxies; and keeps runtime sane.)
-            # Position mapping: use DBS genomic pos and strand:
-            # - the dinuc is at pos,pos+1 on the genome (1-based, increasing coords).
-            # We make SNVs at those 2 positions.
-            ref2g, alt2g = (ref2, alt2)  # genomic orientation already
-            snv_candidates = [
-                (pos,     ref2g[0], alt2g[0]),
-                (pos + 1, ref2g[1], alt2g[1]),
-            ]
-
-            best = {"sift4g_score": None, "pp2_hdiv_score": None, "cadd_phred": None}
-            for p_snv, refb, altb in snv_candidates:
-                hit = best_dbnsfp_match_for_aa_change(
-                    dbnsfp, chrom, p_snv, refb, altb, aa_ref_primary, aa_alt_primary, aa_pos=aa_pos
-                )
-                # keep the one with any non-missing score (preference: CADD then PP2 then SIFT)
-                def score_key(d):
-                    return (
-                        d["cadd_phred"] is not None,
-                        d["pp2_hdiv_score"] is not None,
-                        d["sift4g_score"] is not None
-                    )
-                if score_key(hit) > score_key(best):
-                    best = hit
-
-            rows.append({
-                "chr": chrom, "pos": pos, "codon_index": ci,
-                "primary_label": primary_label,
-                "secondary_label": secondary_label,
-                "primary_side": primary_side,
-                "sift4g_score": best["sift4g_score"],
-                "pp2_hdiv_score": best["pp2_hdiv_score"],
-                "cadd_phred": best["cadd_phred"],
-            })
-
-        elif ci == 2:
-            # spans two codons
-            ref_codon_R = str(next_codon.loc[i]).upper()
-            altL, altR = mutate_two_codons(ref_codon, ref_codon_R, ref2, alt2, strand)
-
-            aa_alt_L = translate_codon(altL)
-            aa_alt_R = translate_codon(altR)
-
-            label_L = label_consequence(ref_aa, aa_alt_L)
-            # ref_aa for right codon may not be available; best-effort: translate ref_codon_R
-            ref_aa_R = translate_codon(ref_codon_R)
-            label_R = label_consequence(ref_aa_R, aa_alt_R)
-
-            # primary = most deleterious label
-            if worse_label(label_L, label_R) == label_L:
-                primary_side = "left"
-                primary_label = label_L
-                secondary_side = "right"
-                secondary_label = label_R
-                aa_ref_primary, aa_alt_primary = ref_aa, aa_alt_L
-                aa_ref_secondary, aa_alt_secondary = ref_aa_R, aa_alt_R
-            else:
-                primary_side = "right"
-                primary_label = label_R
-                secondary_side = "left"
-                secondary_label = label_L
-                aa_ref_primary, aa_alt_primary = ref_aa_R, aa_alt_R
-                aa_ref_secondary, aa_alt_secondary = ref_aa, aa_alt_L
-
-            aa_pos = int(r[aa_pos_col]) if aa_pos_col else None
-
-            # proxy SNVs: two positions of the dinuc
-            ref2g, alt2g = (ref2, alt2)
-            snv_candidates = [
-                (pos,     ref2g[0], alt2g[0]),
-                (pos + 1, ref2g[1], alt2g[1]),
-            ]
-
-            # primary proxy
-            bestP = {"sift4g_score": None, "pp2_hdiv_score": None, "cadd_phred": None}
-            for p_snv, refb, altb in snv_candidates:
-                hit = best_dbnsfp_match_for_aa_change(
-                    dbnsfp, chrom, p_snv, refb, altb, aa_ref_primary, aa_alt_primary, aa_pos=aa_pos
-                )
-                def score_key(d):
-                    return (d["cadd_phred"] is not None, d["pp2_hdiv_score"] is not None, d["sift4g_score"] is not None)
-                if score_key(hit) > score_key(bestP):
-                    bestP = hit
-
-            # secondary proxy (optional, keep it for QC)
-            bestS = {"sift4g_score": None, "pp2_hdiv_score": None, "cadd_phred": None}
-            for p_snv, refb, altb in snv_candidates:
-                hit = best_dbnsfp_match_for_aa_change(
-                    dbnsfp, chrom, p_snv, refb, altb, aa_ref_secondary, aa_alt_secondary, aa_pos=aa_pos
-                )
-                def score_key(d):
-                    return (d["cadd_phred"] is not None, d["pp2_hdiv_score"] is not None, d["sift4g_score"] is not None)
-                if score_key(hit) > score_key(bestS):
-                    bestS = hit
-
-            rows.append({
-                "chr": chrom, "pos": pos, "codon_index": ci,
-                "primary_label": primary_label,
-                "secondary_label": secondary_label,
-                "primary_side": primary_side,
-                "sift4g_score": bestP["sift4g_score"],
-                "pp2_hdiv_score": bestP["pp2_hdiv_score"],
-                "cadd_phred": bestP["cadd_phred"],
-                "secondary_sift4g_score": bestS["sift4g_score"],
-                "secondary_pp2_hdiv_score": bestS["pp2_hdiv_score"],
-                "secondary_cadd_phred": bestS["cadd_phred"],
-            })
+        if int(row["codon_index"]) in (0,1):
+            sc = aggregate_same_codon(s1, s2)
         else:
-            # unexpected codon_index
-            continue
+            sc = s1 if primary_side == "left" else s2
 
-    out_df = pd.DataFrame(rows)
-    n = len(out_df)
+        n += 1
+        sift_counts[ sift_cat(sc["sift4g_score"]) ] += 1
+        pp2_counts[  pp2_cat(sc["pp2_hdiv_score"]) ] += 1
+        cadd_counts[ cadd_cat(sc["cadd_phred"]) ]    += 1
 
-    # classify scores
-    sift_cls = out_df["sift4g_score"].apply(classify_sift4g)
-    pp2_cls  = out_df["pp2_hdiv_score"].apply(classify_pp2_hdiv)
-    cadd_cls = out_df["cadd_phred"].apply(classify_cadd)
-
-    def summarize_classes(series: pd.Series, order: List[str]) -> Dict:
-        counts = {k: int((series == k).sum()) for k in order}
-        counts["missing"] = int((series == "missing").sum()) if "missing" not in counts else counts["missing"]
-        denom = max(n, 1)
-        fracs = {k: round(counts[k]/denom, 6) for k in counts}
-        return {"counts": counts, "fractions": fracs}
+        if write_tsv:
+            out_rows.append({
+                "chr": row["chr"], "pos": int(row["pos"]), "codon_index": int(row["codon_index"]),
+                "primary_label": primary_lbl, "secondary_label": secondary_lbl, "primary_side": primary_side,
+                "sift4g_score": sc["sift4g_score"],
+                "pp2_hdiv_score": sc["pp2_hdiv_score"],
+                "cadd_phred": sc["cadd_phred"]
+            })
 
     summary = {
-        "replicate": parquet_in.stem,
-        "n_variants": int(n),
-        "note": "Scores are dbNSFP proxy SNVs filtered by AA change (aaref/aaalt[/aapos]) to match simulated AA effects.",
-        "thresholds": {
-            "SIFT4G": {"damaging": "< 0.05", "benign": ">= 0.05"},
-            "PolyPhen2_HDIV": {"benign": "< 0.15", "possibly_damaging": "0.15-0.85", "damaging": ">= 0.85"},
-            "CADD_PHRED": {"benign": "< 2", "uncertain": "2-10", "likely_damaging": "10-20", "damaging": ">= 20"},
+        "replicate": rep_id,
+        "n_variants": n,
+        "SIFT4G": {
+            "counts": sift_counts,
+            "fractions": {k: (v/max(n,1)) for k,v in sift_counts.items()},
+            "thresholds": {"damaging": f"< {SIFT4G_DAMAGING_LT}", "benign": f">= {SIFT4G_DAMAGING_LT}"}
         },
-        "SIFT4G": summarize_classes(sift_cls, ["damaging","benign","missing"]),
-        "PolyPhen2_HDIV": summarize_classes(pp2_cls, ["benign","possibly_damaging","damaging","missing"]),
-        "CADD_PHRED": summarize_classes(cadd_cls, ["benign","uncertain","likely_damaging","damaging","missing"]),
-        "consequence_primary": {
-            "counts": {
-                "synonymous": int((out_df["primary_label"]=="synonymous").sum()),
-                "missense": int((out_df["primary_label"]=="missense").sum()),
-                "stop_gained": int((out_df["primary_label"]=="stop_gained").sum()),
-            },
-            "fractions": {
-                "synonymous": round((out_df["primary_label"]=="synonymous").mean(), 6) if n else 0.0,
-                "missense": round((out_df["primary_label"]=="missense").mean(), 6) if n else 0.0,
-                "stop_gained": round((out_df["primary_label"]=="stop_gained").mean(), 6) if n else 0.0,
+        "PolyPhen2_HDIV": {
+            "counts": pp2_counts,
+            "fractions": {k: (v/max(n,1)) for k,v in pp2_counts.items()},
+            "thresholds": {
+                "benign": f"< {PP2_BENIGN_LT}",
+                "possibly_damaging": f"[{PP2_BENIGN_LT}, {PP2_POSS_UPPER}]",
+                "damaging": f">= {PP2_POSS_UPPER}"
+            }
+        },
+        "CADD_PHRED": {
+            "counts": cadd_counts,
+            "fractions": {k: (v/max(n,1)) for k,v in cadd_counts.items()},
+            "thresholds": {
+                "benign": f"< {CADD_BENIGN_LT}",
+                "uncertain": f"[{CADD_BENIGN_LT}, {CADD_UNCERT_LT})",
+                "likely_damaging": f"[{CADD_UNCERT_LT}, {CADD_LIKELY_LT})",
+                "damaging": f">= {CADD_LIKELY_LT}"
             }
         }
     }
 
-    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json = pq.parent / f"pathogenicity_summary_{rep_id}.json"
     out_json.write_text(json.dumps(summary, indent=2))
-    print(f"✅ wrote {out_json}")
 
-    if out_tsv:
-        out_tsv.parent.mkdir(parents=True, exist_ok=True)
-        out_df.to_csv(out_tsv, sep="\t", index=False)
-        print(f"✅ wrote {out_tsv}")
+    if write_tsv and out_rows:
+        out_tsv = pq.parent / f"pathogenicity_primary_scores_{rep_id}.tsv"
+        pd.DataFrame(out_rows).to_csv(out_tsv, sep="\t", index=False)
 
-def walk_tree_and_process(root: Path, contexts_list: List[str], dbnsfp: Path, out_name: str, write_tsv: bool):
-    for sig_dir in sorted(root.glob("*")):
-        if not sig_dir.is_dir():
-            continue
-        for n_dir in sorted(sig_dir.glob("n_*")):
-            if not n_dir.is_dir():
-                continue
-            for parq in sorted(n_dir.glob("rep_*.sim.parquet")):
-                m = re.search(r"rep_(\d+)", parq.stem)
-                rep = f"rep_{m.group(1)}" if m else parq.stem
-                out_json = n_dir / f"{out_name}_{rep}.json"
-                out_tsv = n_dir / f"{out_name}_{rep}.tsv" if write_tsv else None
-                process_replicate(parq, contexts_list, dbnsfp, out_json, out_tsv)
+    print(f"✅ {pq.parent.name}/{rep_id}: wrote {out_json.name}")
 
+# ================= main =================
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--root", required=True, help="Root like results_DBS (contains DBS*/n_*/rep_*.sim.parquet)")
-    ap.add_argument("--contexts_list", required=True, help="File listing contexts in context_id order (e.g. context_signature_list_DBS.txt)")
-    ap.add_argument("--dbnsfp", required=True, help="bgzip+tabix dbNSFP file (e.g. ref/dbNSFP5.2a_grch38.gz)")
-    ap.add_argument("--out-prefix", default="pathogenicity_summary", help="Prefix for output files (per replicate)")
-    ap.add_argument("--write-tsv", action="store_true", help="Also write per-variant TSV per replicate (debug/QC)")
+    ap = argparse.ArgumentParser(description="Compile NUMERIC dbNSFP scores for DBS sims (AA-centric).")
+    ap.add_argument("--root", required=True, help="Root with DBS*/n_*/rep_*.sim.with_aapos.parquet")
+    ap.add_argument("--fasta", required=True, help="Reference FASTA (indexed .fai)")
+    ap.add_argument("--dbnsfp", required=True, help="bgzip+tabix dbNSFP file")
+    ap.add_argument("--write-tsv", action="store_true", help="Also write per-variant TSV with primary numeric scores")
     args = ap.parse_args()
 
-    root = Path(args.root)
-    if not root.exists():
-        raise SystemExit(f"❌ root not found: {root}")
+    root  = Path(args.root)
+    fasta = pysam.FastaFile(args.fasta)
+    db    = DBNSFP(Path(args.dbnsfp))
 
-    ctx_list = load_contexts_list(Path(args.contexts_list))
-    if not ctx_list:
-        raise SystemExit("❌ contexts_list is empty")
-
-    dbnsfp = Path(args.dbnsfp)
-    if not dbnsfp.exists():
-        raise SystemExit(f"❌ dbNSFP not found: {dbnsfp}")
-
-    walk_tree_and_process(root, ctx_list, dbnsfp, args.out_prefix, args.write_tsv)
+    for sig_dir in sorted(root.glob("DBS*")):
+        for n_dir in sorted(sig_dir.glob("n_*")):
+            for pq in sorted(n_dir.glob("rep_*.sim.with_aapos.parquet")):
+                summarize_replicate(pq, fasta, db, args.write_tsv)
 
 if __name__ == "__main__":
     main()
