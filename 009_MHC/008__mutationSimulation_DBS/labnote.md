@@ -158,11 +158,10 @@ python scripts/simulate_array_DBS_v2.py \
 #--> Works!
 
 
-XXXY RUN BELOW
 
 
-sbatch scripts/run_filtered_cosmic_DBS.slurm # 55679243 ok   --> results_DBS
-sbatch scripts/run_filtered_contexts_DBS.slurm # 56796158 ok   --> results_contexts_DBS
+sbatch scripts/run_filtered_cosmic_DBS_v2.slurm # 62172664 xxx --> results_DBS
+sbatch scripts/run_filtered_contexts_DBS_v2.slurm # 62172724 xxx --> results_contexts_DBS
 
 # Check it is all good
 parquet-tools show --head 5 results_DBS/DBS1/n_500/rep_01.sim.parquet
@@ -353,8 +352,6 @@ python scripts/build_dbnsfp_aa_index.py \
   --out ref/dbnsfp_aa_index.parquet
 
 
-XXXY HER E!! DO TEST BELOW!
-
 # Annotate each replicate by AA change
 python scripts/annotate_dbs_scores_by_aa_v2.py \
   --parquet-in results_DBS/DBS1/n_500/rep_01.sim.parquet \
@@ -363,20 +360,21 @@ python scripts/annotate_dbs_scores_by_aa_v2.py \
   --write-tsv
 
 
-#--> Run all good!
+#--> Look good!
 
-
-XXXY do some cehckling that it work well chekc on IGV!!
 
 # Run all
 XXXY double check that is goos!
-sbatch scripts/run_aapos_and_scores_all.slurm
+sbatch scripts/run_annotate_dbs_scores_by_aa_v2.slurm
 
 
 
 
 
 ```
+
+
+
 
 
 
