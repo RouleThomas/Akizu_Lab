@@ -971,3 +971,18 @@ python scripts/plot_distributions_per_replicate_version2-experimental.py
 
 
 
+
+
+
+
+# CODE RED!
+
+
+
+All right working on 009/005 I noticed our chromosome parquet file were NOT correct... Issue with exon exon junction; the codon phase was not taken into account, thus ref codon and AA are wrong sometime; after exon junction they are often wrong... So in 009/007 lets do:
+- Work with 1-based to avoid any confusion when checking IGV
+- Take phase into account when generated chromosome parquet files
+- Use common dbNSFP and GENCODE gene annotations version
+
+
+

@@ -2,10 +2,12 @@
 
 Simulation of Experimental and SBS signatures.
 
-Previous version `004` got issues, notably with the dbNSFP, many score were missing: lets make things clean and corect the pos based simulation (see version4 in 009/004) + use the same GENCODE version as in the dbNSFP: **dbNSFP v5.3 with GENCODE release 49 (Ensembl release 115, September 2025)**
-
-
-
+Previous version `004` got issues:
+- dbNSFP, many score were missing; likely because of mismatch GENCODE use and GENCODE version used by dbNSFP;
+  - now lets use: **dbNSFP v5.3 with GENCODE release 49 (Ensembl release 115, September 2025)**
+- chromosme parquet not correct; phase exon junction not taken into account
+  - Re-generate chromosome parquet correctly
+- Work with 1-based
 
 
 
@@ -68,8 +70,23 @@ bedtools getfasta \
 # build parquet
 conda activate mutsim
 
-sbatch scripts/build_parquet_array.slurm # 61905518 ok
+sbatch scripts/build_parquet_array.slurm # 61905518 NOT GOOD, phase not taken into account
+
+sbatch scripts/build_parquet_array_version2.slurm # 62161823 xxx
+
+
+
+# To check file
+parquet-tools show --head 5 parquet/chr1.parquet 
+
+
+
 ```
+
+
+--> All good:
+- parquet are now 1-based
+- ref_AA and ref_codon are correct! Even after exon exon junction
 
 
 
@@ -86,14 +103,15 @@ sbatch scripts/build_parquet_array.slurm # 61905518 ok
 
 ```bash
 conda activate mutsim
-# To check file
-parquet-tools show --head 5 parquet/chr1.parquet 
 
 # Build pkl
-python scripts/build_context_index.py # ok
+python scripts/build_context_index_version2.py #  
+
+
+
 ```
 
---> 495,018,673 total indices
+--> 653,843,189 total indices
 --> 324,923,277 positions
 
 
@@ -146,11 +164,13 @@ print(f"🔍 Unique positions covered (non-redundant rows): {len(unique_indices)
 
 # Simulate mutation  - SBS, Exp, context
 
+
+
 Here follow `## version4 update for missing dbNSFP5` from `009*/004*`.
 
---> Updated `scripts/simulate_array_v4.py` into `scripts/simulate_array_v4.py` to use *dbNSFP55.3* and added *stop_lost* count
-
-Need to update  CADD PHRED value score also; `scripts/annotate_damage4.py` into `scripts/annotate_damage5.py`
+- Update `scripts/simulate_array_v4.py` into `scripts/simulate_array_v4.py` to use *dbNSFP55.3* and added *stop_lost* count + work with 1-based
+- Update  CADD PHRED value score also; `scripts/annotate_damage4.py` into `scripts/annotate_damage5.py`
+- Update `scripts/simulate_mutations.py` into `scripts/simulate_mutations_v2.py`
 
 ```python
 import gzip
@@ -197,18 +217,15 @@ python scripts/simulate_array_v5.py \
 
 
 
-XXX TO MODIFY 
+XXX TO RUN BELOW!!! 
 
-# Generate plot for all (script updated to use `scripts/simulate_array_v3.py` and `scripts/annotate_damage4.py`)
+# Generate plot for all 
 
-sbatch scripts/run_filtered_cosmic_v4.slurm #  xxx --> results_v4/
-
-sbatch scripts/run_filtered_contexts_v4.slurm #  xxx --> results_contexts_v4/
-sbatch scripts/run_filtered_experimental_v4.slurm #  xxx --> results_experimental_v4/
+sbatch scripts/run_filtered_cosmic_v5.slurm #  xxx --> results_v5/
+sbatch scripts/run_filtered_contexts_v5.slurm #  xxx --> results_contexts_v5/
+sbatch scripts/run_filtered_experimental_v5.slurm #  xxx --> results_experimental_v5/
 ```
 
-
---> Using *GENCODE v49* with *dbNSFP5.3*, and updated the 0-1based nomenclature now decrease the number of missing *no_region_hit*, but still many *alt_mismatch*
 
 
 
@@ -234,9 +251,10 @@ python scripts/audit_cadd_phred.py ref/dbNSFP5.3a_grch38.gz results_v5/SBS1/n_40
 
 ```
 
---> FALSE ALERT! `009*/004*` is correct in the end!
+--> All good, I check on dbNSFP and the missing are really missing!
 
 
 
 
 
+XXXY HERE !!!

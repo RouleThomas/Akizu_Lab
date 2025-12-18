@@ -1,18 +1,15 @@
 # Project
 
-Simulation DBS signature; lets follow `004*` version; but many changes will be needed; we will also need a context version for DBS!
-
---> CDS and parquet of genome file can still be used: `../004__mutationSimulation/parquet/chr*.parquet`
-    --> Then the pkl need this time to follow a 78 context size (ie. not 96 as for SBS)
-
-
+Simulation DBS signature; Let's remodify `009*/005*`; but using the correct genome parquet file, re-generated in `009*/007*`
 
 
 
 
 # Build the pkl 
 
-Let's first build the *pkl* (label each bp that are in one of the 78 DBS mutation context) from the *parquet* (File with chr, pos, strand, ref_base, gene_id, codon_index, ref_codon, ref_aa for each bp of CDS):
+--> copy all parquets files from `009*/007*`
+
+Then build the *pkl* (label each bp that are in one of the 78 DBS mutation context) from the *parquet* (File with chr, pos, strand, ref_base, gene_id, codon_index, ref_codon, ref_aa for each bp of CDS):
 - Parquet files already generated in `004` and has been copied in `parquet/`
 
 --> Tricky part is to build the `CONTEXTS_78`; for that we need to find all 
@@ -24,13 +21,10 @@ Let's first build the *pkl* (label each bp that are in one of the 78 DBS mutatio
 conda activate mutsim
 # To check file
 parquet-tools show --head 5 parquet/chr1.parquet 
-#--> GOOD, but watch out, this is 0-based (fisrt position is 0) and IGV is 1-based (fisrt position is 1); so add 1 when checking IGV
+#--> GOOD, and 1-based
 
 # Build pkl
-python scripts/build_context78_index.py # work but issue as i force all ref to start with C or T; so fail at simulation
-
-
-python scripts/build_context78_index_v2.py # OK!
+python scripts/build_context78_index_v3.py # ok
 ```
 
 
@@ -53,7 +47,7 @@ for parquet in sorted(PARQ_DIR.glob("chr*.parquet")):
     total_rows += num_rows
     print(f"{parquet.name}: {num_rows:,} rows")
 
-print(f"\n📦 Total positions in parquet: {total_rows:,}") # 126,870,005
+print(f"\n📦 Total positions in parquet: {total_rows:,}") # 324,923,277
 ```
 
 
@@ -72,11 +66,11 @@ with open("indices/context78.pkl", "rb") as f:
 all_indices = np.concatenate(list(context_index.values()))
 unique_indices = np.unique(all_indices)
 
-print(f"🧠 Total indices stored across all 78 contexts: {len(all_indices):,}") # 2,967,684
-print(f"🔍 Unique positions covered (non-redundant rows): {len(unique_indices):,}") # 126,870,005
+print(f"🧠 Total indices stored across all 78 contexts: {len(all_indices):,}") # 126,870,005
+print(f"🔍 Unique positions covered (non-redundant rows): {len(unique_indices):,}") # 324,923,277
 ```
 
---> 126,870,005 positions (= all CDS bp) in both parquet and pkl index. 
+--> 324,923,277 positions (= all CDS bp) in both parquet and pkl index. 
 
 
 # Prerequiste files
@@ -120,41 +114,22 @@ END {
 
 # Simulate mutation  - DBS, context
 
-Lets follow/adapt `## version3 .json corrected and path. score corrected` from `004*`
-
-BUT, lets ONLY do **simulation, not annotation**, as I cannot use *dbNSFP5.2a* which is designed for SNP.
+Follow `009*/005*` but update `scripts/simulate_array_DBS.py` into `scripts/simulate_array_DBS_v2.py`
 
 
 --> Need to update:
-- `scripts/simulate_array_v3.py` into `scripts/simulate_array_DBS.py`
-- `scripts/simulate_mutations` into `scripts/simulate_mutations_DBS.py`
+- `scripts/simulate_array_v3.py` into `scripts/simulate_array_DBS.py` then into `scripts/simulate_array_DBS_v2.py`
+- `scripts/simulate_mutations` into `scripts/simulate_mutations_DBS.py` then into `scripts/simulate_mutations_DBS_v2.py`
 
 
 
 ```bash
 conda activate mutsim
 
-########################
-# VERSION 1 ############
-########################
-
-# light test context
-python scripts/simulate_array_DBS.py \
-  --signature "AC>CA" \
-  --n 500 \
-  --rep 1 \
-  --seed 1 \
-  --sigfile signatures/context_sigs_fixed_DBS.txt \
-  --contexts_list signatures/context_signature_list_DBS.txt \
-  --context indices/context78.pkl \
-  --exome parquet \
-  --outdir results_contexts_DBS
-
-#--> Works!
 
 # light test DBS
 
-python scripts/simulate_array_DBS.py \
+python scripts/simulate_array_DBS_v2.py \
   --signature "DBS1" \
   --n 500 \
   --rep 1 \
@@ -168,21 +143,32 @@ python scripts/simulate_array_DBS.py \
 #--> Works!
 
 
+# light test context
+python scripts/simulate_array_DBS_v2.py \
+  --signature "AC>CA" \
+  --n 500 \
+  --rep 1 \
+  --seed 1 \
+  --sigfile signatures/context_sigs_fixed_DBS.txt \
+  --contexts_list signatures/context_signature_list_DBS.txt \
+  --context indices/context78.pkl \
+  --exome parquet \
+  --outdir results_contexts_DBS
+
+#--> Works!
+
+
+XXXY RUN BELOW
+
+
 sbatch scripts/run_filtered_cosmic_DBS.slurm # 55679243 ok   --> results_DBS
 sbatch scripts/run_filtered_contexts_DBS.slurm # 56796158 ok   --> results_contexts_DBS
 
 # Check it is all good
-parquet-tools show --head 5 results_DBS/DBS1/n_1000/rep_01.sim.parquet
-#--> Look good but watch out my simulation is 0-based!!! Which means it start at chr1:0 and not chr1:1... And IGV is 1-based, start at chr1-1
-#--> So when looking on IGV; always add +1!
+parquet-tools show --head 5 results_DBS/DBS1/n_500/rep_01.sim.parquet
+parquet-tools show --head 5 results_contexts_DBS/AC\>CA/n_500/rep_01.sim.parquet
 
-
-
-########################
-# VERSION 2 ############
-########################
-
-
+#--> Looks good!
 
 
 
@@ -190,7 +176,7 @@ parquet-tools show --head 5 results_DBS/DBS1/n_1000/rep_01.sim.parquet
 ```
 
 
---> **VERSION 1 is not correct**, investing on IGV show a shift of codon usage; the ref AA and codon is not the good one!
+--> 
 
 
 
@@ -212,52 +198,21 @@ plot_dbs78_from_parquet.py
 # Check a few samples
 
 python scripts/plot_dbs78_from_parquet.py \
-  --parquet results_DBS/DBS19/n_4000/rep_05.sim.parquet \
+  --parquet results_DBS/DBS1/n_500/rep_01.sim.parquet \
   --fasta ref/GRCh38.primary_assembly.genome.fa \
-  --sample-name DBS19-n_4000-rep_05 \
-  --output-pdf plot/DBS19-n_4000-rep_05_plot.pdf
+  --sample-name DBS1-n_500-rep_01 \
+  --output-pdf plot/DBS1-n_500-rep_01-plot.pdf
 
 #--> Works!!!
 
 
 ```
 
---> It seems to be working!!!
-
-
-
-
-
-
-
-# QC simulation
-
-
-
-Check that the simulation is correct by investigating simulating parquet file
-
-
---> Generate `scripts/dbs_ref_alt.py` custom script that:
-- Transform our parquet to indicate ref and alt BPs instead of using context IDs
-- Generate a preview TSV (top 1000 rows)
-- Generate a simple VCF for vizualization on IGV
-
-
-
-```bash
-scripts/dbs_ref_alt.py
-
-
-python scripts/dbs_ref_alt.py \
-  --parquet-in results_DBS/DBS19/n_4000/rep_01.sim.parquet \
-  --fasta ref/GRCh38.primary_assembly.genome.fa \
-  --parquet-out results_DBS/DBS19/n_4000/rep_01.with_refalt.parquet \
-  --tsv-out results_DBS/DBS19/n_4000/rep_01.preview.tsv \
-  --vcf-out results_DBS/DBS19/n_4000/rep_01.with_refalt.vcf
-
-```
-
 --> All good
+
+
+
+
 
 
 
@@ -281,6 +236,8 @@ The below script used the codon_index (0,1,2) column from each parquet file:
 --> Count in each parquet `codon_index ==2`
 
 
+--> Scripts updated from `009*/005*` to account for the 1-based
+
 
 ```bash
 conda activate mutsim
@@ -292,7 +249,9 @@ parquet-tools show --head 5 results_DBS/DBS1/n_4000/rep_01.sim.parquet
 
 # DBS ################
 ## Summarise/count double_AA mutation
-python scripts/summarize_doubleAA.py --root results_DBS
+python scripts/summarize_doubleAA_v2.py --root results_DBS
+
+XXXY RUN AND MODIFY BELOW AFTER ALL IS RAN
 
 ## plot all double_AA mutation
 python scripts/plot_doubleAA.py --root results_DBS --out results_DBS/DBS_doubleAA_prop.pdf
@@ -342,6 +301,7 @@ Let's compute consequences at the codon level (not bp level); so from each simul
   - When codon_index == 2, we touch two codons: pos2 of the first and pos0 of the next. We compute both AA outcomes and pick the most deleterious as primary (and keep the other as secondary for QC).
 
 
+Updated `scripts/add_csq_v1.py` into `scripts/add_csq_v2.py`
 
 
 
@@ -349,8 +309,13 @@ Let's compute consequences at the codon level (not bp level); so from each simul
 conda activate mutsim
 
 
-python scripts/add_csq_v1.py --root results_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
-python scripts/add_csq_v1.py --root results_contexts_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
+XXXY ALL GOOD RUN THIS WHEN simu generated
+
+python scripts/add_csq_v2.py --root results_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
+python scripts/add_csq_v2.py --root results_contexts_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
+
+
+
 
 
 ```
@@ -374,44 +339,30 @@ The script will:
 
 --> Work at the codon level: dbNSFP contain AA_ref and AA_alt so we have information at the AA level; simply collect the corresponding score generating the same AA change.
 
-Code will:
-- reads each rep_*.sim.parquet
-- reconstructs the DBS ref2/alt2 from your context_id using your --contexts_list
-- computes AA consequences at codon / AA level (handles the 2-codon spanning case with codon_index==2)
--  queries dbNSFP by SNVs, but keeps only hits whose dbNSFP aaref/aaalt match the simulated AA change (and aapos too if you have an AA position column; otherwise it will warn and match without aapos)
-- summarizes SIFT4G / PolyPhen2_HDIV / CADD using only numeric scores + your thresholds
-- writes one JSON per replicate (+ optional per-variant TSV for debugging)
 
 
-But we first need to **add AA position (ie. Lysine position 23) to our simulation**; so that we can put together dbNSFP AA and our simulation AA changes.
 
 
 ```bash
 conda activate mutsim
 
 # Prerequisete
-## prepare GTF
-bgzip -c gtf/gencode.v45.annotation.gtf > gtf/gencode.v45.annotation.gtf.gz
-tabix -p gff gtf/gencode.v45.annotation.gtf.gz
 ## Build AA index version of dbNSFP
 python scripts/build_dbnsfp_aa_index.py \
-  --dbnsfp ref/dbNSFP5.2a_grch38.gz \
+  --dbnsfp ref/dbNSFP5.3a_grch38.gz \
   --out ref/dbnsfp_aa_index.parquet
 
-# Add position of AA to our simulation parquet
-python scripts/add_aapos_from_gtf.py \
-  --parquet-in results_DBS/DBS1/n_1000/rep_01.sim.parquet \
-  --gtf gtf/gencode.v45.annotation.gtf.gz \
-  --parquet-out results_DBS/DBS1/n_1000/rep_01.sim.with_aapos.parquet \
-  --cache-pkl meta/cds_models_cache.pkl
-#--> Run all good!
+
+XXXY HER E!! DO TEST BELOW!
 
 # Annotate each replicate by AA change
-python scripts/annotate_dbs_scores_by_aa.py \
-  --parquet-in results_DBS/DBS1/n_1000/rep_01.sim.with_aapos.parquet \
+python scripts/annotate_dbs_scores_by_aa_v2.py \
+  --parquet-in results_DBS/DBS1/n_500/rep_01.sim.parquet \
   --dbnsfp-aa-index ref/dbnsfp_aa_index.parquet \
-  --out-prefix results_DBS/DBS1/n_1000/pathogenicity_summary \
+  --out-prefix results_DBS/DBS1/n_500/pathogenicity_summary \
   --write-tsv
+
+
 #--> Run all good!
 
 
@@ -437,16 +388,6 @@ XXXY  do annotatio nplot for consequences and path., score
 
 
 
-
-
-
-
-
-# CODE RED!
- 
-Issue with chromosome parquet file... See `009*/004*`  `# CODE RED!`
-
---> Solve the issue with SBS; and when it work all good, repeat DBS, use exact same code, but using the new chromomose parquet files.
 
 
 
