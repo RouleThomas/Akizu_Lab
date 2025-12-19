@@ -2,9 +2,9 @@
 #SBATCH --job-name=filtered
 #SBATCH --output=logs/sim_%A_%a.out
 #SBATCH --error=logs/sim_%A_%a.err
-#SBATCH --array=0-6719%50  # 6720 total jobs= "$TOTAL_SIGNATURES * $TOTAL_NS * $REPS"; will run 50 at same time
+#SBATCH --array=0-6719%10  # 6720 total jobs= "$TOTAL_SIGNATURES * $TOTAL_NS * $REPS"; will run 50 at same time
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=100G
+#SBATCH --mem=250G
 #SBATCH --time=01:00:00
 #SBATCH --partition=defq # default long run time check name with `sinfo`
 

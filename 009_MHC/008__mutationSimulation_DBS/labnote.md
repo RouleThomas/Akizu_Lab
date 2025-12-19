@@ -160,8 +160,8 @@ python scripts/simulate_array_DBS_v2.py \
 
 
 
-sbatch scripts/run_filtered_cosmic_DBS_v2.slurm # 62172664 xxx --> results_DBS
-sbatch scripts/run_filtered_contexts_DBS_v2.slurm # 62172724 xxx --> results_contexts_DBS
+sbatch scripts/run_filtered_cosmic_DBS_v2.slurm # 62172664 FAIL OOM error; increase mem and decrease array 62190656 xxx --> results_DBS
+sbatch scripts/run_filtered_contexts_DBS_v2.slurm # 62172724 FAIL OOM error; 62190666 xxx --> results_contexts_DBS
 
 # Check it is all good
 parquet-tools show --head 5 results_DBS/DBS1/n_500/rep_01.sim.parquet
@@ -175,7 +175,7 @@ parquet-tools show --head 5 results_contexts_DBS/AC\>CA/n_500/rep_01.sim.parquet
 ```
 
 
---> 
+--> All good
 
 
 

@@ -221,9 +221,9 @@ XXX TO RUN BELOW!!!
 
 # Generate plot for all 
 
-sbatch scripts/run_filtered_cosmic_v5.slurm #  xxx --> results_v5/
-sbatch scripts/run_filtered_contexts_v5.slurm #  xxx --> results_contexts_v5/
-sbatch scripts/run_filtered_experimental_v5.slurm #  xxx --> results_experimental_v5/
+sbatch scripts/run_filtered_cosmic_v5.slurm # 62192890 xxx --> results_v5/
+sbatch scripts/run_filtered_contexts_v5.slurm # 62192892 xxx --> results_contexts_v5/
+sbatch scripts/run_filtered_experimental_v5.slurm # 62192893 xxx --> results_experimental_v5/
 ```
 
 
