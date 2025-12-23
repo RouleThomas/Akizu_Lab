@@ -160,8 +160,8 @@ python scripts/simulate_array_DBS_v2.py \
 
 
 
-sbatch scripts/run_filtered_cosmic_DBS_v2.slurm # 62172664 FAIL OOM error; increase mem and decrease array 62190656 xxx --> results_DBS
-sbatch scripts/run_filtered_contexts_DBS_v2.slurm # 62172724 FAIL OOM error; 62190666 xxx --> results_contexts_DBS
+sbatch scripts/run_filtered_cosmic_DBS_v2.slurm # 62172664 FAIL OOM error; increase mem and decrease array 62190656 ok --> results_DBS
+sbatch scripts/run_filtered_contexts_DBS_v2.slurm # 62172724 FAIL OOM error; 62190666 ok --> results_contexts_DBS
 
 # Check it is all good
 parquet-tools show --head 5 results_DBS/DBS1/n_500/rep_01.sim.parquet
@@ -232,7 +232,9 @@ The below script used the codon_index (0,1,2) column from each parquet file:
 - value of 1= Bases 2 and 3 of the same codon are mutated (1 AA affected)
 - value of 2= Bases 3 of this codond, and 1 of the next codon is affected (2 AA)
 
---> Count in each parquet `codon_index ==2`
+--> Here `scripts/summarize_doubleAA.py` updatred to `scripts/summarize_doubleAA_v2.py` with: `double = (cp == 3)` and not `double = (cp == 2)` to account for 1-based
+
+
 
 
 --> Scripts updated from `009*/005*` to account for the 1-based
@@ -250,20 +252,19 @@ parquet-tools show --head 5 results_DBS/DBS1/n_4000/rep_01.sim.parquet
 ## Summarise/count double_AA mutation
 python scripts/summarize_doubleAA_v2.py --root results_DBS
 
-XXXY RUN AND MODIFY BELOW AFTER ALL IS RAN
-
 ## plot all double_AA mutation
-python scripts/plot_doubleAA.py --root results_DBS --out results_DBS/DBS_doubleAA_prop.pdf
-python scripts/plot_doubleAA-highlight_random.py --root results_DBS --out results_DBS/DBS_doubleAA_prop-highlight_random.pdf
+python scripts/plot_doubleAA_v2.py --root results_DBS --out results_DBS/DBS_doubleAA_prop.pdf
+python scripts/plot_doubleAA-highlight_random_v2.py --root results_DBS --out results_DBS/DBS_doubleAA_prop-highlight_random.pdf
+
 
 
 # context ################
 ## Summarise/count double_AA mutation
-python scripts/summarize_doubleAA.py --root results_contexts_DBS
+python scripts/summarize_doubleAA_v2.py --root results_contexts_DBS
 
 ## plot all double_AA mutation
-python scripts/plot_doubleAA.py --root results_contexts_DBS --out results_contexts_DBS/contexts_DBS_doubleAA_prop.pdf
-python scripts/plot_doubleAA-highlight_random.py --root results_contexts_DBS --flat results_DBS/Flat --out results_contexts_DBS/contexts_DBS_doubleAA_prop-highlight_random.pdf
+python scripts/plot_doubleAA_v2.py --root results_contexts_DBS --out results_contexts_DBS/contexts_DBS_doubleAA_prop.pdf
+python scripts/plot_doubleAA-highlight_random_v2.py --root results_contexts_DBS --flat results_DBS/Flat --out results_contexts_DBS/contexts_DBS_doubleAA_prop-highlight_random.pdf
 
 
 ```
@@ -274,11 +275,12 @@ python scripts/plot_doubleAA-highlight_random.py --root results_contexts_DBS --f
 
 Let's investigate whether result make sense, notably whether the context with higher probability to affect 2 AA are sequences that are often found overlapping two codons.
 
+--> Here `scripts/quantify_dbs_boundary_propensity.py` updated to `scripts/quantify_dbs_boundary_propensity_v2.py` to work with 1-based
 
 ```bash
 conda activate mutsim
 
-python scripts/quantify_dbs_boundary_propensity.py
+python scripts/quantify_dbs_boundary_propensity_v2.py
 ```
 
 --> Output file: `dbs_ref2_boundary_propensity.tsv`; provide proportion of each context spanning two codons

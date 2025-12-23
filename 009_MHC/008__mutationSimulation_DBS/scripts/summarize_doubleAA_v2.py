@@ -14,7 +14,7 @@ def single_double_counts(parq: Path) -> tuple[int,int,int]:
 
     if "codon_pos" in df.columns and df["codon_pos"].notna().any():
         cp = pd.to_numeric(df["codon_pos"], errors="coerce")
-        # expected 0/1/2
+        # expected 1,2,2 (codon position)
         double = (cp == 2)
     else:
         # legacy fallback ONLY (not ideal, but keeps script usable)

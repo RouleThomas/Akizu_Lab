@@ -72,7 +72,7 @@ conda activate mutsim
 
 sbatch scripts/build_parquet_array.slurm # 61905518 NOT GOOD, phase not taken into account
 
-sbatch scripts/build_parquet_array_version2.slurm # 62161823 xxx
+sbatch scripts/build_parquet_array_version2.slurm # 62161823 ok
 
 
 
