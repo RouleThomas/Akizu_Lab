@@ -11560,6 +11560,18 @@ samples <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
 
 
 
+
+#### Only WT and KO ESC NPC 2d 8wn
+samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
+   "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
+   "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "8wN_KO_R1",
+   "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4",
+   "ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3",
+   "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3",
+   "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3",
+   "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3")
+
+
 #### collect all samples ID
 samples <- c("2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3",
    "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3",
@@ -11661,6 +11673,13 @@ signif_TC_genes = as_tibble(resTC, rownames = "gene") %>%
   select(gene) %>%
   unique() 
 
+signif_TC_genes = as_tibble(resTC, rownames = "gene") %>%
+  filter(padj<= 0.01,
+    abs(log2FoldChange) >= 1) %>%               # !!! Here change qvalue accordingly !!!
+  select(gene) %>%
+  unique() 
+
+
 ## Convert into vector 
 signif_TC_genes_vector <- signif_TC_genes$gene
 
@@ -11737,7 +11756,7 @@ row_dist <- dist(rlog_counts_matrix_sig, method = "euclidean")
 row_hclust <- hclust(row_dist, method = "complete")
 
 ## Cut the tree into k clusters
-row_clusters <- cutree(row_hclust, k = 5)                   # !!! Here change tree nb accordingly !!!
+row_clusters <- cutree(row_hclust, k = 6)                   # !!! Here change tree nb accordingly !!!
 ## Create a data frame with gene names and their corresponding clusters
 cluster_gene <- data.frame(gene = rownames(rlog_counts_matrix_sig),
                            cluster = row_clusters)
@@ -11746,7 +11765,34 @@ cluster_gene <- data.frame(gene = rownames(rlog_counts_matrix_sig),
 # write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_8cl_WTvsHET.txt")
 # write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_15cl_ESC_NPC.txt")
 # write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_HET.txt")
-# write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog_5cl_ESC_NPC_WT_KO.txt")
+# write.csv(cluster_gene, file="output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO.txt")
+
+### Convert to geneSymbol
+library(org.Hs.eg.db)
+cluster_gene <- cluster_gene %>%
+  mutate(ensembl_id = sub("\\..*$", "", gene))
+cluster_gene <- cluster_gene %>%
+  mutate(
+    gene_symbol = mapIds(
+      org.Hs.eg.db,
+      keys = ensembl_id,
+      keytype = "ENSEMBL",
+      column = "SYMBOL",
+      multiVals = "first"
+    )
+  )
+
+
+write.table(
+  cluster_gene,
+  file = "output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+#####
+
 
 # Make a clean table with significant deseq2-TC genes
 rlog_counts_tidy <- as_tibble(rlog_counts_matrix_sig, rownames = "gene") %>%
@@ -11775,10 +11821,12 @@ pdf("output/deseq2_hg38/line_rlog_p0.05_cl15_pretty_noSmooth_ESC_NPC_WT_HET.pdf"
 pdf("output/deseq2_hg38/line_rlog_p0.05_cl5_pretty_noSmooth_ESC_NPC_WT_KO.pdf", width=20, height=5)   # !!! Here change tree nb accordingly !!
 pdf("output/deseq2_hg38/line_rlog_p0.05_cl5_pretty_noSmooth_4wN_8wN_WT_HET.pdf", width=20, height=5)   # !!! Here change tree nb accordingly !!
 
+
+pdf("output/deseq2_hg38/line_rlog_p0.01FC1_cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO.pdf", width=10, height=3)   # !!! Here change tree nb accordingly !!
 ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts, color = genotype, group = genotype)) +
   geom_line(stat = "summary", fun = mean) +
-  geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.2, size = 1) +
-  geom_point(stat = "summary", fun = mean, shape = 18, size = 3, stroke = 1.5) +
+  geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.3, size = 1) +
+  geom_point(stat = "summary", fun = mean, shape = 18, size = 1, stroke = 1.5) +
   geom_text(data = genes_per_cluster, aes(label = paste0("Genes: ", num_genes), x = Inf, y = Inf), hjust = 1, vjust = 1, size = 5, inherit.aes = FALSE) +
   facet_wrap(~cluster, scale = "free", nrow = 1) +
   scale_color_manual(values=c("WT" = "black", "HET" = "blue", "KO" = "red")) +
@@ -11790,6 +11838,30 @@ ggplot(rlog_counts_tidy, aes(x = time, y = rlog_counts, color = genotype, group 
 dev.off()
 
 
+
+# Clustered heatmap with 10 clusters
+
+## Reorder columns
+ordered_columns <- c("ESC_WT_R1", "ESC_WT_R2", "ESC_WT_R3", "NPC_WT_R1", "NPC_WT_R2", "NPC_WT_R3", "2dN_WT_R1", "2dN_WT_R2", "2dN_WT_R3", "8wN_WT_R1", "8wN_WT_R2", "8wN_WT_R3", "8wN_WT_R4", "ESC_KO_R1", "ESC_KO_R2", "ESC_KO_R3", "NPC_KO_R1", "NPC_KO_R2", "NPC_KO_R3", "2dN_KO_R1", "2dN_KO_R2", "2dN_KO_R3", "8wN_KO_R1", "8wN_KO_R2", "8wN_KO_R3", "8wN_KO_R4")
+
+rlog_counts_matrix_sig_ordered <- rlog_counts_matrix_sig[, ordered_columns]
+
+
+
+pdf("output/deseq2_hg38/heatmap_rlog_p0.01FC1_cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO.pdf", width=8, height=10)  # !!! Here change qvalue accordingly !!!
+pheatmap(rlog_counts_matrix_sig_ordered, 
+                    scale = "row", 
+                    clustering_distance_rows = "euclidean", 
+                    clustering_distance_cols = "euclidean", 
+                    clustering_method = "complete", 
+                    show_rownames = FALSE,
+                    cluster_rows = TRUE,
+                    cluster_cols = FALSE,
+                    cutree_rows = 6,                                   # !!! Here change tree accordingly !!!
+                    gaps_col = 13,   # white space between WT and KO
+                    annotation_colors = colorRampPalette(RColorBrewer::brewer.pal(n = 9, name = "Set1"))(10))
+
+dev.off()
 
 
 ## Put together with the H3K27me3-dynamic gene (from ChIPseq ESC vs NPC in WT)__HET
@@ -12622,6 +12694,40 @@ dev.off()
 
 
 # Other comparionsv
+## BRIDGE center pres
+cluster_6= read_tsv("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol.tsv") %>%
+  filter(cluster == 6) %>%
+  dplyr::select(gene_symbol)
+
+
+
+ego <- enrichGO(gene = as.character(cluster_6$gene_symbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+
+pdf("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol-cluster6.pdf", width = 6, height = 3)
+dotplot(ego, showCategory = 5)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```
 

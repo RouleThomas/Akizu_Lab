@@ -6947,7 +6947,6 @@ dev.off()
 
 
 
-
 # Identify diff access regions (DAR)
 DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- 'ATAC'
 

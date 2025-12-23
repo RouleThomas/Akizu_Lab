@@ -9,6 +9,8 @@ Design:
 
 --> Previous marker genes used by Ana can be found at `011*/docs/Annotation.xlsx`
 
+--> BD Rhapsody work with mm39 (not mm10!)
+
 # Data access
 
 Access Cristancho lab folder from CHOP computer: `/mnt/isilon/cristancho_data`
@@ -1344,15 +1346,404 @@ DotPlot(ATACMultiomewithST_SMK_V2QCv2.sct, assay = "GeneActivity", features = ma
 dev.off()
 
 
+
+
+
+
+# Identify diff access regions (DAR)
+DefaultAssay(ATACMultiomewithST_SMK_V2QCv2.sct) <- 'peaks'
+
+Idents(ATACMultiomewithST_SMK_V2QCv2.sct) <- "celltype.stim"
+
+### Here is to automatize the process clsuter per cluster:
+#### Define the cluster pairs for comparison
+cluster_pairs <- list(
+  c("Astro-Normoxia",   "Astro-Hypoxia",   "Astro"),
+  c("Endo-Normoxia",   "Endo-Hypoxia",    "Endo"),
+  c("Glut1-Normoxia",  "Glut1-Hypoxia",   "Glut1"),
+  c("Glut2-Normoxia",  "Glut2-Hypoxia",   "Glut2"),
+  c("Glut3-Normoxia",  "Glut3-Hypoxia",   "Glut3"),
+  c("Glut4-Normoxia",  "Glut4-Hypoxia",   "Glut4"),
+  c("Glut5-Normoxia",  "Glut5-Hypoxia",   "Glut5"),
+  c("Glut6-Normoxia",  "Glut6-Hypoxia",   "Glut6"),
+  c("In1-Normoxia",    "In1-Hypoxia",     "In1"),
+  c("In2-Normoxia",    "In2-Hypoxia",     "In2"),
+  c("In3-Normoxia",    "In3-Hypoxia",     "In3"),
+  c("In4-Normoxia",    "In4-Hypoxia",     "In4"),
+  c("Mg-Normoxia",     "Mg-Hypoxia",      "Mg"),
+  c("Neuron-Normoxia", "Neuron-Hypoxia",  "Neuron"),
+  c("NPC-Normoxia",    "NPC-Hypoxia",     "NPC"),
+  c("NSC-Normoxia",    "NSC-Hypoxia",     "NSC"),
+  c("OPC-Normoxia",    "OPC-Hypoxia",     "OPC"),
+  c("RG-Normoxia",     "RG-Hypoxia",      "RG")
+)
+
+
+## Function to run FindMarkers and return a tibble with cluster and gene information
+run_find_markers <- function(pair) {
+  ident_1 <- pair[1]
+  ident_2 <- pair[2]
+  cluster_name <- pair[3]
+  
+  # Run FindMarkers for each pair of clusters
+  markers <- FindMarkers(
+    object = ATACMultiomewithST_SMK_V2QCv2.sct,
+    ident.1 = ident_1,
+    ident.2 = ident_2,
+    test.use = 'wilcox',
+    min.pct = 0.1
+  ) %>%
+  rownames_to_column(var = "query_region") %>%  # Add gene names as a column
+  add_column(cluster = cluster_name)    # Add cluster name as a new column
+  
+  return(markers)
+}
+
+## Combine all FindMarkers results into one tibble
+all_markers_tibble <- map_dfr(cluster_pairs, run_find_markers) %>%
+  as_tibble()
+## save output
+write.table(all_markers_tibble, file = "output/seurat/DAR_peaks-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+
+## Find closest gene to DAR
+# PREREQUISETE #################
+# Download genome file mm39 and gene version v106 - work with BD Rhapsody
+### Link peaks to genes - Find peaks that are correlated with the expression of nearby genes
+#### Install the BS genome (GC content, region lengths, and dinucleotide base frequencies for regions in the assay and add to the feature metadata)
+# BiocManager::install(c("AnnotationHub"))
+
+library("AnnotationHub")
+library("ensembldb")
+
+ah <- AnnotationHub()
+
+# Query EnsDb mouse + Ensembl release 106 (GRCm39/mm39-era)
+hits <- query(ah, c("EnsDb", "Mus musculus", "Ensembl", "106"))
+hits
+EnsDb.Mmusculus.v106 <- ah[["AH100674"]]   # Replace with correct names()
+EnsDb.Mmusculus.v106
+library("BSgenome.Mmusculus.UCSC.mm39") # BiocManager::install("BSgenome.Mmusculus.UCSC.mm39")
+
+## Add genomic information to Seurat object
+### Convert rownames of ATAC counts to GRanges
+grange.counts <- StringToGRanges(rownames(ATACMultiomewithST_SMK_V2QCv2.sct[["peaks"]]), sep = c(":", "-"))
+### Filter for standard chromosomes
+grange.use <- seqnames(grange.counts) %in% standardChromosomes(grange.counts)
+atac_counts <- ATACMultiomewithST_SMK_V2QCv2.sct[as.vector(grange.use), ]
+### Get annotations for the mouse genome
+annotations <- GetGRangesFromEnsDb(ensdb = EnsDb.Mmusculus.v106) # EnsDb.Mmusculus.v79 if using mm10
+### Adjust chromosome naming style
+seqlevelsStyle(annotations) <- 'UCSC'
+###################################################
+
+# Identify closest gene to DAR
+DAR_closestGene <- ClosestFeature(ATACMultiomewithST_SMK_V2QCv2.sct, regions = all_markers_tibble$query_region, annotation = annotations)
+DAR_genes = all_markers_tibble %>% 
+  left_join(DAR_closestGene) %>%
+  as_tibble() %>%
+  unique()
+
+## save output
+write.table(DAR_genes, file = "output/seurat/DAR_genes-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04.txt", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+########### COUNT UP DOWN PEAK PER CLUSTER ##################################################################
+all_markers_tibble = read_tsv("output/seurat/DAR_peaks-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04.txt")
+
+all_markers_tibble %>%
+  dplyr::filter(p_val_adj < 0.05) %>%
+  group_by(cluster) %>%
+  summarize(
+    nb_upregulated = sum(avg_log2FC > 0.58),
+    nb_downregulated = sum(avg_log2FC < -0.58)
+  )
+
+DAR_genes = read_tsv("output/seurat/DAR_genes-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04.txt")
+
+dar_gene_summary <- DAR_genes %>%
+  dplyr::filter(p_val_adj < 0.05) %>%
+  dplyr::select(cluster, gene_name, avg_log2FC) %>%
+  dplyr::filter(!is.na(gene_name), gene_name != "NA") %>%          # optional cleanup
+  group_by(cluster, gene_name) %>%
+  summarise(
+    any_open  = any(avg_log2FC >  0.58),
+    any_close = any(avg_log2FC < -0.58),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    class = case_when(
+      any_open & any_close ~ "Mix",
+      any_open             ~ "Opening",
+      any_close            ~ "Closing",
+      TRUE                 ~ "NoStrongChange"
+    )
+  )
+
+## Count genes once per cluster, by class
+dar_counts <- dar_gene_summary %>%
+  dplyr::filter(class != "NoStrongChange") %>%                     # keep only strong changes, optional
+  count(cluster, class) %>%
+  tidyr::pivot_wider(names_from = class, values_from = n, values_fill = 0) %>%
+  mutate(total = Opening + Closing + Mix)
+
+dar_counts
+
+
+
+##############################################################################################################
+# Link peaks to genes - Find peaks that are correlated with the expression of nearby genes
+
+#### Troubleshooting section ####################################
+DefaultAssay(ATACMultiomewithST_SMK_V2QCv2.sct) <- "peaks"
+ATACMultiomewithST_SMK_V2QCv2.sct <- RegionStats(
+  object = ATACMultiomewithST_SMK_V2QCv2.sct,
+  genome = BSgenome.Mmusculus.UCSC.mm10,
+  assay = "peaks",
+  verbose = TRUE
+)
+gr <- granges(ATACMultiomewithST_SMK_V2QCv2.sct[["peaks"]])
+c(max_chr4 = max(end(gr[seqnames(gr)=="chr4"])),
+  mm10_chr4 = seqlengths(BSgenome.Mmusculus.UCSC.mm10)["chr4"])
+gr <- granges(ATACMultiomewithST_SMK_V2QCv2.sct[["peaks"]])
+c(max_chr4 = max(end(gr[seqnames(gr)=="chr4"])),
+  mm10_chr4 = seqlengths(BSgenome.Mmusculus.UCSC.mm10)["chr4"],
+  mm39_chr4 = seqlengths(BSgenome.Mmusculus.UCSC.mm39)["chr4"])
+
+#--> Some peaks, notably at chr4 are invalid: occur after the end of chr4! Probably issue with BD Rhapsody calling peak at extremities... 
+#--> Using mm39 solve the issue!!!
+################################################################
+
+
+ATACMultiomewithST_SMK_V2QCv2.sct <- RegionStats(
+  object = ATACMultiomewithST_SMK_V2QCv2.sct,
+  genome = BSgenome.Mmusculus.UCSC.mm39,
+  assay = "peaks",
+  verbose = TRUE
+)
+
+
+## Run  LinkPeaks
+ATACMultiomewithST_SMK_V2QCv2.sct = LinkPeaks(
+  ATACMultiomewithST_SMK_V2QCv2.sct,
+  peak.assay = "peaks",
+  expression.assay = "RNA",
+  peak.slot = "counts",
+  expression.slot = "data",
+  method = "pearson",
+  gene.coords = NULL,
+  distance = 5e+05,
+  min.distance = NULL,
+  min.cells = 10,
+  genes.use = NULL,
+  n_sample = 200,
+  pvalue_cutoff = 0.05,
+  score_cutoff = 0.05,
+  gene.id = FALSE,
+  verbose = TRUE
+)
+
+
+
+
+###########################################################################
+# saveRDS(ATACMultiomewithST_SMK_V2QCv2.sct, file = "output/seurat/ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04-labelV1GeneActivityLinkPeaks.rds") 
+ATACMultiomewithST_SMK_V2QCv2.sct <- readRDS(file = "output/seurat/ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04-labelV1GeneActivityLinkPeaks.rds")
+###########################################################################
+
+
+
+
+
+XXXY BELOW NOT MOD!!!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+gr <- granges(ATACMultiomewithST_SMK_V2QCv2.sct[["peaks"]])
+c(max_chr4 = max(end(gr[seqnames(gr)=="chr4"])),
+  mm10_chr4 = seqlengths(BSgenome.Mmusculus.UCSC.mm10)["chr4"])
+
+
+
+
+## Run  LinkPeaks
+multiome_WT_Bap1KO_QCV2vC1.sct = LinkPeaks(
+  multiome_WT_Bap1KO_QCV2vC1.sct,
+  peak.assay = "ATAC",
+  expression.assay = "RNA",
+  peak.slot = "counts",
+  expression.slot = "data",
+  method = "pearson",
+  gene.coords = NULL,
+  distance = 5e+05,
+  min.distance = NULL,
+  min.cells = 10,
+  genes.use = NULL,
+  n_sample = 200,
+  pvalue_cutoff = 0.05,
+  score_cutoff = 0.05,
+  gene.id = FALSE,
+  verbose = TRUE
+)
+
+
+
+# SAVE ##########################################################################################
+## saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_XXXTOLOADANDRUNLINKPEAKS.rds") 
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_XXXTOLOADANDRUNLINKPEAKS.rds")
+# --> JUST A VERIFICATION THAT correct1 did not messedup linkpeaks; run this and check whether the Values are similar.
+## saveRDS(LinkPeaks, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds") 
+# --> Value is not exactly, the same. Maybe because of random calculation, maybe not, as we don't know lets prefer use correct1 version.
+# PAST version:
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000GeneActivityLinkPeaks.sct_numeric_label.rds")
+# NEW correct1:
+#saveRDS(multiome_WT_Bap1KO_QCV2vC1.sct, file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds") 
+multiome_WT_Bap1KO_QCV2vC1.sct <- readRDS(file = "output/seurat/multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1GeneActivityLinkPeaks.sct_numeric_label.rds")
+##########################################################################################
+
+
+
+Links = as_tibble(Links(multiome_WT_Bap1KO_QCV2vC1.sct))
+
+
+
+### Adjust the pvalue and select positive corr as in the https://www.nature.com/articles/s41467-024-45199-x#Fig2 paper
+Links$adjusted_pvalue <- p.adjust(Links$pvalue, method = "BH")
+#write.table(Links, file = c("output/Signac/LinkPeaks_multiome_WT_Bap1KO_QCV2vC1_dim40kparam42res065algo4feat2000correct1.txt"),sep="\t", quote=FALSE, row.names=FALSE)
+
+### Isolate signif genes
+Links_signif = Links %>%
+  dplyr::filter(adjusted_pvalue < 0.05, score >0) %>%  # 28,201 Link Signif
+  dplyr::select(gene) %>%
+  unique()
+### Reorder the gene based on their cluster max expression
+
+Links %>%
+  dplyr::filter(adjusted_pvalue < 0.05, score >0) %>%  
+  dplyr::select(peak) %>% # 22,747 Link peak Signif
+  unique()
+
+## log norm and Scale GeneActivity assay
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "GeneActivity"
+
+multiome_WT_Bap1KO_QCV2vC1.sct <- NormalizeData(multiome_WT_Bap1KO_QCV2vC1.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(multiome_WT_Bap1KO_QCV2vC1.sct)
+multiome_WT_Bap1KO_QCV2vC1.sct <- ScaleData(multiome_WT_Bap1KO_QCV2vC1.sct, features = all.genes) # zero-centres and scales it
+
+
+
+###### Find all markers 
+Idents(multiome_WT_Bap1KO_QCV2vC1.sct) <- "cluster.annot"
+DefaultAssay(multiome_WT_Bap1KO_QCV2vC1.sct) <- "RNA"
+
+Links_markers <- FindAllMarkers(multiome_WT_Bap1KO_QCV2vC1.sct, features = Links_signif$gene, assay = "RNA", only.pos = TRUE, min.pct = 0.01, logfc.threshold = 0.1)
+###### Identify in which cluster the Links_markers gene is highly express
+Links_markers_pval= as_tibble(Links_markers) %>%
+  group_by(gene) %>%
+  dplyr::filter(p_val == min(p_val)) %>%
+  dplyr::select(gene, cluster)
+#write.table(Links_markers, file = "output/Signac/srat_multiome_WT_Bap1KO-QCV2vC1_dim40kparam42res065algo4feat2000correct1_noCellCycleRegression-Links_markers.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+
+
+# plot heatmap
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_SCTscaledata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_SCTdata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", slot= "data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_RNAdata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", slot= "data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_RNArawdata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "RNA", slot= "raw.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivitydata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityrawdata.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "raw.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5)
+dev.off()
+
+# testing aesthetics
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata-dispminmax1.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , disp.min = -1, disp.max = 1, angle = 0, hjust = 0.5)
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata-dispmin25max05.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , disp.min = -2.5, disp.max = 0.5, angle = 0, hjust = 0.5)
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata-bluewhitered.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, 
+          assay = "GeneActivity", 
+          slot= "scale.data", 
+          features = Links_markers_pval$gene, 
+          group.by = "cluster.annot", 
+          angle = 0, 
+          hjust = 0.5) + 
+  scale_fill_gradientn(colors = c("blue", "white", "red"))  # Adjust colors for higher contrast
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000_LinksPadj05Score0_GeneActivityScaldata-bluewhiteredBreaks.pdf", width=8, height=4)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, 
+          assay = "GeneActivity", 
+          slot= "scale.data", 
+          features = Links_markers_pval$gene, 
+          group.by = "cluster.annot", 
+          angle = 0, 
+          hjust = 0.5) + 
+  scale_fill_gradientn(colors = c("blue", "white", "red"), 
+                       breaks = seq(-2, 2, by = 0.5))  # Modify breaks to increase color contrast
+dev.off()
+
+
+# final aesthetics - pretty
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000correct1_LinksPadj05Score0_SCTscaledata_pretty.pdf", width=6, height=3)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "SCT", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE)
+dev.off()
+
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000correct1_LinksPadj05Score0_GeneActivtiyscaledata_pretty.pdf", width=6, height=3)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000correct1_LinksPadj05Score0_GeneActivtiyscaledata_pretty1.pdf", width=6, height=3)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE, disp.max = 2)
+dev.off()
+pdf("output/Signac/DoHeatmap_QCV2vC1_dim40kparam42res065algo4feat2000correct1_LinksPadj05Score0_GeneActivtiyscaledata_pretty2.pdf", width=6, height=3)
+DoHeatmap(multiome_WT_Bap1KO_QCV2vC1.sct, assay = "GeneActivity", slot= "scale.data", features = Links_markers_pval$gene, group.by = "cluster.annot" , angle = 0, hjust = 0.5, draw.lines = FALSE, label = FALSE, disp.max = 2, disp.min = -2)
+dev.off()
+
+
+
+# more stringeant filtering
+
+
+
+
+
+
+
 ```
-
-
-
-
-
-
-
-
 
 
 

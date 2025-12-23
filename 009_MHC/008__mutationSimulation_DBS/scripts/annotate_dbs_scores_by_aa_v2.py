@@ -167,26 +167,31 @@ def build_score_lookup(db: pd.DataFrame, use_aapos: bool):
 # ---------------- AA consequence / AA change for one DBS row ----------------
 def compute_primary_secondary(row, fasta: pysam.FastaFile):
     chrom     = str(row["chr"])
-    pos       = int(row["pos"])       # 1-based
+    pos       = int(row["pos"])       # 1-based genomic position of DBS start base
     strand    = int(row["strand"])    # +1 / -1
-    ref_codon = str(row["ref_codon"]).upper()
+    ref_codon = str(row["ref_codon"]).upper()   # coding orientation
     ref_aa    = str(row["ref_aa"]).upper()
     ctx       = ID2CTX[int(row["context_id"])]
 
-    # Use codon_pos (0/1/2) if present, otherwise codon_index (old meaning).
+    # codon_pos is 0/1/2 within coding codon
     if "codon_pos" in row and pd.notna(row["codon_pos"]):
         ci = int(row["codon_pos"])
     else:
-        ci = int(row["codon_index"])
+        # if codon_pos missing, we can't safely infer boundary behavior from codon_index codon-number
+        return {
+            "primary_label": "synonymous",
+            "secondary_label": None,
+            "primary_side": "unknown",
+            "aaref_primary": ref_aa,
+            "aaalt_primary": ref_aa,
+            "aaref_secondary": None,
+            "aaalt_secondary": None,
+        }
 
-    _, alt2 = split_ctx(ctx)  # alt2 always written forward in your context list
+    _, alt2 = split_ctx(ctx)  # ALT dinucleotide in the same orientation as the ref dinucleotide in DBS78
+    # IMPORTANT: apply alt2 in CODING space; do NOT revcomp based on strand here.
 
-    # IMPORTANT: if the transcript strand is -1, the actual ALT applied on genome is revcomp(alt2)
-    # because the simulation "strand" indicates coding strand direction.
-    if strand == -1:
-        alt2 = revcomp(alt2)
-
-    # within-codon (codon_pos 0 or 1)
+    # within-codon
     if ci in (0, 1):
         alt = list(ref_codon)
         alt[ci]   = alt2[0]
@@ -204,29 +209,43 @@ def compute_primary_secondary(row, fasta: pysam.FastaFile):
             "aaalt_secondary": None,
         }
 
-    # boundary (codon_pos 2): left codon gets base0, right codon gets base1
+    # boundary start must be ci == 2
+    if ci != 2:
+        return {
+            "primary_label": "synonymous",
+            "secondary_label": None,
+            "primary_side": "unknown",
+            "aaref_primary": ref_aa,
+            "aaalt_primary": ref_aa,
+            "aaref_secondary": None,
+            "aaalt_secondary": None,
+        }
+
+    # fetch the right-hand codon in CODING orientation
     if strand == 1:
-        next_start = pos + 1  # next base after the DBS start
+        next_start = pos + 1
         next_trip  = fasta.fetch(chrom, next_start-1, next_start-1+3).upper()
     else:
+        # on minus strand, the next coding base is genomic pos-1, and the codon is the 3 bases ending at that position
         next_start = pos - 1
         seq = fasta.fetch(chrom, next_start-3, next_start).upper()
         next_trip = revcomp(seq)
 
     ref_right_aa = aa_of(next_trip) or "X"
 
+    # left codon changes at position 2 with alt2[0]
     alt_left = list(ref_codon)
     alt_left[2] = alt2[0]
     alt_left = "".join(alt_left)
     alt_left_aa = aa_of(alt_left)
 
+    # right codon changes at position 0 with alt2[1]
+    alt_right_aa = None
     if len(next_trip) == 3 and "N" not in next_trip:
         alt_right = list(next_trip)
         alt_right[0] = alt2[1]
         alt_right = "".join(alt_right)
         alt_right_aa = aa_of(alt_right)
-    else:
-        alt_right_aa = None
 
     lbl_left  = classify(ref_aa, alt_left_aa)
     lbl_right = classify(ref_right_aa, alt_right_aa)
@@ -251,6 +270,8 @@ def compute_primary_secondary(row, fasta: pysam.FastaFile):
         "aaref_secondary": aaref_s,
         "aaalt_secondary": aaalt_s,
     }
+
+
 
 def detect_sim_aapos_columns(df: pd.DataFrame) -> list[str]:
     # accept a few possibilities if you created these in older pipelines

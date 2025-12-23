@@ -150,6 +150,24 @@ sbatch scripts/TPM_bw.sh #
 --> Script will output bigwig coverage files to `output/bigwig`
 
 
+To generate **median tracks**; first create a **BedToBigwig conda environment**
+```bash
+conda create -n BedToBigwig
+conda install -c bioconda bedtools
+conda install -c bioconda ucsc-bedgraphtobigwig
+conda install -n ucsc openssl=1.0 
+```
+
+Then generate bigwig files:
+```bash
+# Activate conda environment
+conda activate BedToBigwig
+
+# run 
+sbatch scripts/bigwigmerge_STAR_TPM_bw.sh # 
+```
+
+
 
 # Calculate TPM and RPKM
 

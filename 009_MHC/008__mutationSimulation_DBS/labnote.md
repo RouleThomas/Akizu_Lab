@@ -24,7 +24,16 @@ parquet-tools show --head 5 parquet/chr1.parquet
 #--> GOOD, and 1-based
 
 # Build pkl
-python scripts/build_context78_index_v3.py # ok
+python scripts/build_context78_index_v3.py # fail, not strand aware! Only for F strand. 
+
+python scripts/build_context78_index_v4.py \
+  --exome parquet \
+  --fasta ref/GRCh38.primary_assembly.genome.fa \
+  --contexts-list signatures/context_signature_list_DBS.txt \
+  --out indices/context78.pkl
+#--> GOOD
+
+
 ```
 
 
@@ -66,7 +75,7 @@ with open("indices/context78.pkl", "rb") as f:
 all_indices = np.concatenate(list(context_index.values()))
 unique_indices = np.unique(all_indices)
 
-print(f"🧠 Total indices stored across all 78 contexts: {len(all_indices):,}") # 126,870,005
+print(f"🧠 Total indices stored across all 78 contexts: {len(all_indices):,}") # 1,488,358,497
 print(f"🔍 Unique positions covered (non-redundant rows): {len(unique_indices):,}") # 324,923,277
 ```
 
@@ -160,8 +169,8 @@ python scripts/simulate_array_DBS_v2.py \
 
 
 
-sbatch scripts/run_filtered_cosmic_DBS_v2.slurm # 62172664 FAIL OOM error; increase mem and decrease array 62190656 ok --> results_DBS
-sbatch scripts/run_filtered_contexts_DBS_v2.slurm # 62172724 FAIL OOM error; 62190666 ok --> results_contexts_DBS
+sbatch scripts/run_filtered_cosmic_DBS_v2.slurm # 62172664 FAIL OOM error; increase mem and decrease array 62190656 fail; only + strand where simualted... pkl updated; 62351034 XXX --> results_DBS
+sbatch scripts/run_filtered_contexts_DBS_v2.slurm # 62172724 FAIL OOM error; 62190666 FAIL strand; 62351043 XXX --> results_contexts_DBS
 
 # Check it is all good
 parquet-tools show --head 5 results_DBS/DBS1/n_500/rep_01.sim.parquet
@@ -170,7 +179,7 @@ parquet-tools show --head 5 results_contexts_DBS/AC\>CA/n_500/rep_01.sim.parquet
 #--> Looks good!
 
 
-
+XXXY HER E!!!!!!!!!!!!!!!!!!
 
 ```
 
@@ -310,15 +319,8 @@ Updated `scripts/add_csq_v1.py` into `scripts/add_csq_v2.py`
 conda activate mutsim
 
 
-XXXY ALL GOOD RUN THIS WHEN simu generated
-
 python scripts/add_csq_v2.py --root results_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
 python scripts/add_csq_v2.py --root results_contexts_DBS --fasta ref/GRCh38.primary_assembly.genome.fa
-
-
-
-
-
 ```
 
 --> All good, new `consequence_summary_rep*.sim.json` file generated for each replicate
@@ -361,12 +363,9 @@ python scripts/annotate_dbs_scores_by_aa_v2.py \
   --out-prefix results_DBS/DBS1/n_500/pathogenicity_summary \
   --write-tsv
 
-
 #--> Look good!
 
-
 # Run all
-XXXY double check that is goos!
 sbatch scripts/run_annotate_dbs_scores_by_aa_v2.slurm
 
 
