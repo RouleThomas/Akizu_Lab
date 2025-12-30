@@ -609,7 +609,7 @@ pattern_strength <- rowSums(abs(delta_mat))
 
 ## at least one timepoint with |log2FC| ≥ 0.58
 
-keep <- apply(abs(delta_mat), 1, max) >= 0.5
+keep <- apply(abs(delta_mat), 1, max) >= 0.58
 
 ## Filter
 delta_mat_filt    <- delta_mat[keep, ]
@@ -643,6 +643,25 @@ pheatmap(
 )
 dev.off()
 
+## Save gene list
+
+cluster_tidy <- data.frame(
+  row_name = rownames(mat_log_ord),
+  cluster  = clusters_filt[ord],
+  stringsAsFactors = FALSE
+) %>%
+  separate(
+    row_name,
+    into = c("GeneSymbol", "Accession"),
+    sep = "__",
+    remove = TRUE,
+    fill = "right"
+  ) %>%
+  mutate(
+    GeneSymbol = ifelse(is.na(GeneSymbol) | GeneSymbol == "",
+                        Accession,
+                        GeneSymbol)
+  ) 
 
 write.table(
   cluster_tidy,
@@ -743,12 +762,6 @@ for (k in sort(unique(df_plot$cluster))) {
 }
 
 
-
-
-
-
-
-
 ## Test abundance values directly ##
 mat_disp <- mat_log_ord
 # cap by global quantiles (makes heatmap readable without changing ordering)
@@ -769,16 +782,100 @@ dev.off()
 
 
 
+
+
+
+
+
+
+
+##################################################
+# HIGH Protein AND detected (no NaN) only ########
+# Scram vs SNX13  ################################
+# Filter high changes - FC 1 ############################
+##################################################
+
+
+pattern_strength <- rowSums(abs(delta_mat))
+
+## at least one timepoint with |log2FC| ≥ 1
+
+keep <- apply(abs(delta_mat), 1, max) >= 1
+
+## Filter
+delta_mat_filt    <- delta_mat[keep, ]
+mat_log_filt      <- mat_log[keep, ]
+pattern_strength_filt <- pattern_strength[keep]
+
+
+delta_scaled_filt <- t(scale(t(delta_mat_filt)))
+hc_filt <- hclust(dist(delta_scaled_filt), method = "ward.D2")
+clusters_filt <- cutree(hc_filt, k = 10)
+
+
+ord <- order(clusters_filt, -pattern_strength_filt)
+mat_log_ord <- mat_log_filt[ord, ]
+
+
+cluster_annot <- data.frame(
+  Cluster = factor(clusters_filt[ord])
+)
+rownames(cluster_annot) <- rownames(mat_log_ord)
+
+
+
+pdf("output/pheatmap-Norm_High_noNA-scram_SNX13_10Cluster-FC1.pdf", width = 3, height = 4)
+pheatmap(
+  t(scale(t(mat_log_ord))),  # row-scaled DISPLAY
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  annotation_row = cluster_annot,
+  show_rownames = FALSE
+)
+dev.off()
+
+
+## Save gene list
+
+cluster_tidy <- data.frame(
+  row_name = rownames(mat_log_ord),
+  cluster  = clusters_filt[ord],
+  stringsAsFactors = FALSE
+) %>%
+  separate(
+    row_name,
+    into = c("GeneSymbol", "Accession"),
+    sep = "__",
+    remove = TRUE,
+    fill = "right"
+  ) %>%
+  mutate(
+    GeneSymbol = ifelse(is.na(GeneSymbol) | GeneSymbol == "",
+                        Accession,
+                        GeneSymbol)
+  ) 
+
+
+write.table(
+  cluster_tidy,
+  file = "output/pheatmap-Norm_High_noNA-scram_SNX13_10Cluster-FC1.csv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+#--> NOT enough proteins with FC 1
+
+
 ```
 
 
 
 
+Best so far:
 - Only keep `Accession == High` and **remove any Accession if values is NaN** in one condition
-- Then perform **Relative value (ie. FC) relative to Scram**; so:
-    - 0 = behaves like Scram
-    - positive = enriched vs Scram
-    - negative = depleted vs Scram
+- Work with Scram vs SNX13; or Scram vs SNX14 and filter to keep delta FC > 0.58
 
 
 
@@ -794,6 +891,155 @@ Pipeline:
 
 --> Generate plot of unique genes to check if that respect the heamtap: yes, kind of.. Maybe increase clustering
 
+
+
+
+
+
+
+# Functional analysis 
+
+
+
+We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
+
+
+Let's test functional analyses (GO BP; KEGG) on the `pheatmap-Norm_High_noNA-scram_SNX13_10Cluster-FC058.csv` version
+
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
+
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v47.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+### GeneSymbol list of signif DEG qval 0.05 FC 0.58
+output/pheatmap-Norm_High_noNA-scram_SNX13_10Cluster-FC058.csv
+
+
+
+
+############ scram_SNX13_10Cluster-FC058 ############
+scram_SNX13_10Cluster <- read_tsv("output/pheatmap-Norm_High_noNA-scram_SNX13_10Cluster-FC058.csv")
+
+ego <- enrichGO(gene = as.character(scram_SNX13_10Cluster$GeneSymbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+
+## Loop
+df <- read_tsv("output/pheatmap-Norm_High_noNA-scram_SNX13_10Cluster-FC058.csv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%      
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_GOBP-Norm_High_noNA-scram_SNX13_10Cluster.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+  genes <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+  ego <- enrichGO(
+    gene          = genes,
+    keyType       = "SYMBOL",
+    OrgDb         = org.Hs.eg.db,
+    ont           = "BP",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05,
+    readable      = TRUE
+  )
+  if (is.null(ego) || nrow(as.data.frame(ego)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant GO BP terms (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ego, showCategory = 10) +
+      ggtitle(paste0("GO BP — Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_up$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+
+
+
+
+
+
+```
 
 
 
