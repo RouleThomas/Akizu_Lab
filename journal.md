@@ -210,6 +210,9 @@ WORK great!
 
 --> Same `scRNAseqV2` but with MuSic2 and bisque and without  SeuratDisk, anndata, zellkonverter : Can use `algorithm = 4` please see note in `### scRNAseqV2`
 
+--> Also `scran` installed (for cell cycle)
+
+
 
 ### cytotrace2
 

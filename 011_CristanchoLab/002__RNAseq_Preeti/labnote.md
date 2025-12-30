@@ -350,7 +350,7 @@ test with `ReN_Norm_Rep1`
 
 
 
-## Calculate TPM and RPKM
+# Calculate TPM and RPKM
 
 
 Use custom R script `RPKM_TPM_featurecounts.R` as follow:
@@ -377,6 +377,131 @@ mv output/featurecounts_multi_gene/*rpkm* output/rpkm_featurecounts_multi_gene/
 
 
 
+**Display gene with TPM**:
+
+```R
+# library
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+library("rtracklayer")
+
+set.seed(42)
+
+
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("Geneid", "geneSymbol")
+
+
+
+# Plot with TPM
+## import tpm
+#### Generate TPM for ALL samples
+#### collect all samples ID
+samples <- c("PSC_Norm_Rep1", "PSC_Norm_Rep2" ,"PSC_Norm_Rep3" ,"PSC_Norm_Rep4" ,"PSC_Hypo_Rep1", "PSC_Hypo_Rep2", "PSC_Hypo_Rep3", "PSC_Hypo_Rep4", "ReN_Norm_Rep1", "ReN_Norm_Rep2" ,"ReN_Norm_Rep3" ,"ReN_Norm_Rep4" ,"ReN_Hypo_Rep1", "ReN_Hypo_Rep2", "ReN_Hypo_Rep3", "ReN_Hypo_Rep4")
+
+
+## Make a loop for importing all tpm data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/tpm_featurecounts_multi/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    dplyr::select(Geneid, starts_with("output.STAR.")) %>%
+    dplyr::rename(!!sample := starts_with("output.STAR."))
+}
+
+## Merge all dataframe into a single one and add gene names
+tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid") 
+
+tpm_all_sample = tpm_all_sample %>%
+  left_join(gene_table)
+
+
+
+# write.table(  tpm_all_sample,  file = "output/tpm_featurecounts_multi/tpm_all_sample.tsv",  sep = "\t",  row.names = FALSE,  quote = FALSE)
+### If need to import: read.table(  "output/tpm_featurecounts_multi/tpm_all_sample.tsv",  sep = "\t",  header = TRUE)
+
+# plot some genes
+tpm_all_sample_tidy <- tpm_all_sample %>%
+  pivot_longer(
+    cols = -c(Geneid, geneSymbol),
+    names_to = "variable",
+    values_to = "tpm"
+  ) %>%
+  separate(
+    variable,
+    into = c("tissue", "condition", "replicate"),
+    sep = "_"
+  ) %>%
+  dplyr::rename(
+    gene = Geneid
+  )
+
+
+# genes 
+c("EFNB2", "EPHA4") # 
+
+
+plot_data <- tpm_all_sample_tidy %>%
+  unique() %>%
+  filter(geneSymbol %in% c("EFNB2")) %>%
+  group_by(geneSymbol, tissue, condition) %>%
+  summarise(mean_log2tpm = mean(log2(tpm + 1)),
+            se_log2tpm = sd(log2(tpm + 1)) / sqrt(n())) %>%
+  ungroup()
+
+
+plot_data$tissue <-
+  factor(plot_data$tissue,
+         c("PSC", "ReN"))
+plot_data$condition <-
+  factor(plot_data$condition,
+         c("Norm", "Hypo"))
+
+
+# Plot with ggpubr
+c("EFNB2", "EPHA4", "MKI67", "TOP2A", "PCNA", "MCM2", "MCM5", "MCM7") # 
+
+
+
+library("ggpubr")
+my_comparisons <- list( c("Norm", "Hypo") )
+
+pdf("output/tpm_featurecounts_multi/tpm-MCM7.pdf", width=4, height=3)
+tpm_all_sample_tidy %>%
+  filter(geneSymbol %in% c("MCM7") ) %>% 
+  unique() %>%
+  mutate(TPM = log2(tpm + 1) ) %>%
+    ggboxplot(., x = "condition", y = "TPM",
+                 fill = "condition",
+                 palette = c("blue","red")) +
+      # Add the statistical comparisons
+      stat_compare_means(comparisons = my_comparisons, 
+                        method = "t.test", 
+                        aes(group = condition)) +
+      theme_bw() +
+      facet_wrap(~tissue) +
+      ylab("log2(TPM + 1)") +
+      ggtitle("MCM7")
+dev.off()
+
+```
 
 
 
@@ -392,7 +517,7 @@ Comparison WT vs mutant:
 
 
 
-### PSC Hypo vs Norm
+### PSC Hypo vs Norm - without X/Y chr
 
 ```bash
 conda activate deseq2
@@ -412,6 +537,7 @@ library("pheatmap")
 library("AnnotationDbi")
 library("rtracklayer")
 
+set.seed(42)
 
 # import GTF for gene name
 gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
@@ -436,7 +562,7 @@ sample_data <- list()
 for (sample in samples) {
   sample_data[[sample]] <- read_delim(paste0("output/featurecounts_multi/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
     dplyr::select(Geneid, starts_with("output/STAR/")) %>%
-    rename(!!sample := starts_with("output/STAR/"))
+    dplyr::rename(!!sample := starts_with("output/STAR/"))
 }
 
 # Merge all dataframe into a single one
@@ -564,8 +690,8 @@ write.table(upregulated$geneSymbol, file = "output/deseq2/upregulated_q05fc058_P
 write.table(downregulated$geneSymbol, file = "output/deseq2/downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 
-
-## Label hypoxia gene
+########################################
+## Label hypoxia gene ####################
 hypoxia_genes <- c(
   "VEGFA",
   "ADM",
@@ -619,6 +745,336 @@ dev.off()
 
 
 
+
+
+
+########################################
+## Label Ephrin gene ####################
+Ephrin_CellChat_genes <- c(
+  "EFNB2",
+  "EFNB1",
+  "EFNA5",
+  "EPHB2",
+  "EPHA4",
+  "EPHA3"
+)
+
+pdf("output/deseq2/plotVolcano_res_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-Ephrin_CellChat_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = Ephrin_CellChat_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+```
+
+
+--> EFNB1 on X chr...
+
+
+
+
+
+
+
+### PSC Hypo vs Norm - including X/Y chr
+
+```bash
+conda activate deseq2
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+library("rtracklayer")
+
+set.seed(42)
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("geneId", "geneSymbol")
+
+
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("PSC_Norm_Rep1", "PSC_Norm_Rep2" ,"PSC_Norm_Rep3" ,"PSC_Norm_Rep4" ,"PSC_Hypo_Rep1", "PSC_Hypo_Rep2", "PSC_Hypo_Rep3", "PSC_Hypo_Rep4")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts_multi/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    dplyr::rename(!!sample := starts_with("output/STAR/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("celltype", "condition", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ condition)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$condition <- relevel(dds$condition, ref = "Norm")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="condition_Hypo_vs_Norm", type="apeglm")
+
+
+# Add geneSymbol
+res_tibble = as_tibble(rownames_to_column(as.data.frame(res), var = "geneId")) %>%
+  left_join(gene_table)
+
+
+# Identify DEGs and count them
+
+## padj 0.05 FC 0.58 ##################################
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+
+
+# Save as gene list for GO analysis:
+### Complete table with geneSymbol
+write.table(res_tibble, file = "output/deseq2/resXinclude_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+########################################
+## Label hypoxia gene ####################
+hypoxia_genes <- c(
+  "VEGFA",
+  "ADM",
+  "EGLN3",
+  "BNIP3",
+  "BNIP3L",
+  "CA9",
+  "CA12",
+  "LDHA",
+  "SLC2A1",
+  "ENO1",
+  "PFKP",
+  "HK2",
+  "ALDOA",
+  "PDK1"
+)
+
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-hypoxia_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = hypoxia_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+
+
+########################################
+## Label Ephrin gene ####################
+Ephrin_CellChat_genes <- c(
+  "EFNB2",
+  "EFNB1",
+  "EFNA5",
+  "EPHB2",
+  "EPHA4",
+  "EPHA3"
+)
+
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-Ephrin_CellChat_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = Ephrin_CellChat_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
 ```
 
 
@@ -627,7 +1083,8 @@ dev.off()
 
 
 
-### ReN Hypo vs Norm
+
+### ReN Hypo vs Norm - without X/Y chr
 
 ```bash
 conda activate deseq2
@@ -860,6 +1317,283 @@ dev.off()
 
 
 
+
+### ReN Hypo vs Norm - including X/Y chr
+
+```bash
+conda activate deseq2
+```
+Go in R
+```R
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("EnhancedVolcano")
+library("apeglm")
+library("org.Hs.eg.db")
+library("biomaRt")
+
+library("RColorBrewer")
+library("pheatmap")
+library("AnnotationDbi")
+library("rtracklayer")
+
+set.seed(42)
+
+
+# import GTF for gene name
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+## Extract geneId and geneSymbol
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+## Rename columns
+colnames(gene_table) <- c("geneId", "geneSymbol")
+
+
+
+# import featurecounts output and keep only gene ID and counts
+## collect all samples ID
+samples <- c("ReN_Norm_Rep1", "ReN_Norm_Rep2" ,"ReN_Norm_Rep3" ,"ReN_Norm_Rep4" ,"ReN_Hypo_Rep1", "ReN_Hypo_Rep2", "ReN_Hypo_Rep3", "ReN_Hypo_Rep4")
+
+## Make a loop for importing all featurecounts data and keep only ID and count column
+sample_data <- list()
+
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts_multi/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    rename(!!sample := starts_with("output/STAR/"))
+}
+
+# Merge all dataframe into a single one
+counts_all <- reduce(sample_data, full_join, by = "Geneid")
+
+
+
+# Pre-requisetes for the DESeqDataSet
+## Transform merged_data into a matrix
+### Function to transform tibble into matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+### execute function
+counts_all_matrix = make_matrix(dplyr::select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Create colData file that describe all our samples
+### Including replicate
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("celltype", "condition", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## transform df into matrix
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+## Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ condition)
+
+# DEGs
+## Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Specify the control sample
+dds$condition <- relevel(dds$condition, ref = "Norm")
+
+## Differential expression analyses
+dds <- DESeq(dds)
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
+resultsNames(dds) # Here print value into coef below
+res <- lfcShrink(dds, coef="condition_Hypo_vs_Norm", type="apeglm")
+
+
+# Add geneSymbol
+res_tibble = as_tibble(rownames_to_column(as.data.frame(res), var = "geneId")) %>%
+  left_join(gene_table)
+
+
+# Identify DEGs and count them
+
+## padj 0.05 FC 0.58 ##################################
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.05 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, ReN',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -2, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+
+
+# Save as gene list for GO analysis:
+### Complete table with geneSymbol
+write.table(res_tibble, file = "output/deseq2/resXinclude_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, row.names = TRUE) # that is without X and Y chr genes
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulatedXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulatedXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+## Label hypoxia gene
+hypoxia_genes <- c(
+  "VEGFA",
+  "ADM",
+  "EGLN3",
+  "BNIP3",
+  "BNIP3L",
+  "CA9",
+  "CA12",
+  "LDHA",
+  "SLC2A1",
+  "ENO1",
+  "PFKP",
+  "HK2",
+  "ALDOA",
+  "PDK1"
+)
+
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-hypoxia_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, ReN',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = hypoxia_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -2, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+########################################
+## Label Ephrin gene ####################
+Ephrin_CellChat_genes <- c(
+  "EFNB2",
+  "EFNB1",
+  "EFNA5",
+  "EPHB2",
+  "EPHA4",
+  "EPHA3"
+)
+
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-Ephrin_CellChat_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, ReN',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = Ephrin_CellChat_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+```
+
+
+
+
+
+
 --> Much **more DEGs in PSC** (also samples looks more clean in their PCA)
 
 --> Core **Hypoxia marker genes are induced in both conditions**!
@@ -1081,3 +1815,289 @@ dev.off()
 
 
 
+# GSEA
+
+
+Let's do GSEA analysis related to:
+- [GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY](https://www.gsea-msigdb.org/gsea/msigdb/human/geneset/GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY.html): Ephrin genes (many seen downregulated from scRNAseq; *cellchat genes downreg: Efnb2, Efnb1, Efna5; and receptors: Ephb2, Epha4, Epha3*)
+- [REACTOME_EPHRIN_SIGNALING](https://www.gsea-msigdb.org/gsea/msigdb/human/geneset/REACTOME_EPHRIN_SIGNALING.html)
+
+
+Two method tested; rank on:
+- log2fc only
+- log2fc and pvalue ranking (combined_score = log2FoldChange * -log10(pvalue) )
+
+```R
+# Packages
+library("tidyverse")
+library("clusterProfiler")
+library("msigdbr") # BiocManager::install("msigdbr")
+library("org.Mm.eg.db")
+library("enrichplot") # for gseaplot2()
+library("pheatmap")
+
+
+set.seed(42)
+
+
+####################
+# FC only ##########
+####################
+# import DEGs
+PSC = read.table("output/deseq2/res_PSC_Hypo_vs_Norm-featurecounts_multi.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+  
+ReN = read.table("output/deseq2/res_ReN_Hypo_vs_Norm-featurecounts_multi.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() 
+
+# import gene signature marker lists
+EPHRIN = read.table("output/GSEA/geneList-GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY.txt", header = FALSE, sep = "\t") %>%
+  as_tibble() %>%
+  dplyr::rename("gene" = "V1") %>%
+  add_column(term = "EPHRIN")
+EPHRIN_REACTOME = read.table("output/GSEA/geneList-REACTOME_EPHRIN_SIGNALING.txt", header = FALSE, sep = "\t") %>%
+  as_tibble() %>%
+  dplyr::rename("gene" = "V1") %>%
+  add_column(term = "EPHRIN_REACTOME")
+
+# Order our DEG
+## Let's create a named vector ranked based on the log2 fold change values
+lfc_vector <- ReN$log2FoldChange  ### CHAGNE HERE DATA!!!!!!!
+names(lfc_vector) <- ReN$geneSymbol ### CHAGNE HERE DATA!!!!!!!
+## We need to sort the log2 fold change values in descending order here
+lfc_vector <- sort(lfc_vector, decreasing = TRUE)
+
+# run GSEA
+## without pvalue
+gsea_results <- GSEA(
+  geneList = lfc_vector,
+  minGSSize = 1,
+  maxGSSize = 5000,
+  pvalueCutoff = 1,
+  eps = 0,
+  seed = TRUE,
+  pAdjustMethod = "BH",
+  TERM2GENE = EPHRIN %>% dplyr::select(term,gene), # Need to be in that order...
+)
+
+gsea_result_df <- data.frame(gsea_results@result)
+# Save output
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/GSEA/gsea_results-ReN-FC-GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY.tsv"
+  )
+)
+
+# plots
+pdf("output/GSEA/gsea_results-ReN-FC-GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY.pdf", width=8, height=8)
+enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "EPHRIN",
+  title = "GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY",
+  color.line = "#0d76ff"
+)
+dev.off()
+
+
+
+
+
+
+
+
+
+####################
+# FC+pvalue ########
+####################
+# import DEGs
+PSC = read.table("output/deseq2/res_PSC_Hypo_vs_Norm-featurecounts_multi.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() %>%
+  mutate(combined_score = log2FoldChange * -log10(pvalue))
+  
+ReN = read.table("output/deseq2/res_ReN_Hypo_vs_Norm-featurecounts_multi.txt", header = TRUE, sep = "\t") %>%
+  as_tibble() %>%
+  mutate(combined_score = log2FoldChange * -log10(pvalue))
+
+# import gene signature marker lists
+EPHRIN = read.table("output/GSEA/geneList-GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY.txt", header = FALSE, sep = "\t") %>%
+  as_tibble() %>%
+  dplyr::rename("gene" = "V1") %>%
+  add_column(term = "EPHRIN")
+EPHRIN_REACTOME = read.table("output/GSEA/geneList-REACTOME_EPHRIN_SIGNALING.txt", header = FALSE, sep = "\t") %>%
+  as_tibble() %>%
+  dplyr::rename("gene" = "V1") %>%
+  add_column(term = "EPHRIN_REACTOME")
+
+# Order our DEG
+## Let's create a named vector ranked based on the log2 fold change values
+lfc_vector <- ReN$combined_score  ### CHAGNE HERE DATA!!!!!!!
+names(lfc_vector) <- ReN$geneSymbol ### CHAGNE HERE DATA!!!!!!!
+## We need to sort the log2 fold change values in descending order here
+lfc_vector <- sort(lfc_vector, decreasing = TRUE)
+
+# run GSEA
+## without pvalue
+gsea_results <- GSEA(
+  geneList = lfc_vector,
+  minGSSize = 1,
+  maxGSSize = 5000,
+  pvalueCutoff = 1,
+  eps = 0,
+  seed = TRUE,
+  pAdjustMethod = "BH",
+  TERM2GENE = EPHRIN %>% dplyr::select(term,gene), # Need to be in that order...
+)
+
+gsea_result_df <- data.frame(gsea_results@result)
+# Save output
+readr::write_tsv(
+  gsea_result_df,
+  file.path("output/GSEA/gsea_results-ReN-FCpvalue-GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY.tsv"
+  )
+)
+
+# plots
+pdf("output/GSEA/gsea_results-ReN-FCpvalue-GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY.pdf", width=8, height=8)
+enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "EPHRIN",
+  title = "GOBP_EPHRIN_RECEPTOR_SIGNALING_PATHWAY",
+  color.line = "#0d76ff"
+)
+dev.off()
+
+```
+
+
+--> **Nothing significant** for PSC, ReN for GO and REACTOME Ephrin-related terms; both gene ranking method tested
+
+
+
+
+
+# Cell cycle
+
+Let's use `cyclone` from `scran` to predict cell cycle (method for scRNAseq originally, but require a matrix of gene and expression)
+--> Let's try it with log2tpm+1
+
+
+
+
+```bash
+conda activate scRNAseqV3
+```
+
+
+
+```R
+# packages
+library("scran")
+library("tidyverse")
+
+# import tpm
+tpm_all_sample=  read.table(  "output/tpm_featurecounts_multi/tpm_all_sample.tsv",  sep = "\t",  header = TRUE) %>%
+  as_tibble()
+
+# Remove version suffix (ENSG... .12)
+tpm_all_sample2 <- tpm_all_sample %>%
+  mutate(Geneid = sub("\\..*$", "", Geneid)) %>%
+  distinct(Geneid, .keep_all = TRUE) # keep first if duplicates
+
+
+# Convert numeric columns to log2(TPM+1)
+logtpm_tbl <- tpm_all_sample2 %>%
+  mutate(across(-c(Geneid, geneSymbol), ~ log2(.x + 1)))
+
+# Build expression matrix for cyclone: genes x samples, rownames = Ensembl IDs
+logtpm_mat <- logtpm_tbl %>%
+  column_to_rownames("Geneid") %>%
+  select(-geneSymbol) %>%
+  as.matrix()
+
+
+#----------------------------
+# 2) Build sample metadata by parsing column names
+#   expected pattern: <tissue>_<condition>_<replicate>
+#   e.g. PSC_Norm_Rep1, ReN_Hypo_Rep4
+#----------------------------
+sample_meta <- tibble(sample = colnames(logtpm_mat)) %>%
+  separate(sample, into = c("tissue", "condition", "replicate"), sep = "_", remove = FALSE) %>%
+  mutate(
+    tissue = factor(tissue, levels = c("PSC", "ReN")),
+    condition = factor(condition, levels = c("Norm", "Hypo")),
+    replicate = factor(replicate, levels = paste0("Rep", 1:4))
+  )
+
+
+
+
+#----------------------------
+# 3) Load HUMAN cyclone marker pairs
+#   scran often ships 'human_cycle_markers.rds'
+#   We'll check and stop with a clear message if not present.
+#----------------------------
+hs_path <- system.file("exdata", "human_cycle_markers.rds", package = "scran")
+if (hs_path == "") {
+  stop(
+    "Could not find 'human_cycle_markers.rds' inside scran.\n",
+    "Run: list.files(system.file('exdata', package='scran'), full.names=TRUE)\n",
+    "If only mouse markers are present, tell me what files you see and I’ll adapt."
+  )
+}
+hs.pairs <- readRDS(hs_path)
+
+#----------------------------
+# 4) Function to run cyclone on a subset of samples
+#   Returns a tidy per-sample table with phase + scores.
+#----------------------------
+run_cyclone_subset <- function(mat_genes_x_samples, meta_subset, pairs) {
+  # cyclone expects expression matrix genes x samples
+  cyc <- cyclone(mat_genes_x_samples, pairs)
+
+  # Convert results to tidy df
+  out <- meta_subset %>%
+    select(sample, tissue, condition, replicate) %>%
+    mutate(
+      phase = cyc$phases,
+      G1 = cyc$scores[,"G1"],
+      S  = cyc$scores[,"S"],
+      G2M = cyc$scores[,"G2M"]
+    )
+
+  return(out)
+}
+
+#----------------------------
+# 5) Run cyclone separately for each tissue x condition
+#----------------------------
+results_by_group <- sample_meta %>%
+  group_split(tissue, condition) %>%
+  map_dfr(function(meta_sub) {
+    samples <- meta_sub$sample
+    mat_sub <- logtpm_mat[, samples, drop = FALSE]
+    run_cyclone_subset(mat_sub, meta_sub, hs.pairs)
+  })
+
+#----------------------------
+# 6) Output
+#----------------------------
+results_by_group <- results_by_group %>%
+  arrange(tissue, condition, replicate)
+
+print(results_by_group)
+
+
+#----------------------------
+# 7) (Optional) quick visualization: scores per group
+#----------------------------
+# Long format for ggplot if you want:
+scores_long <- results_by_group %>%
+  pivot_longer(cols = c(G1, S, G2M), names_to = "phase_score", values_to = "score")
+
+# Example quick summaries:
+print(results_by_group %>% group_by(tissue, condition) %>%
+        summarize(mean_G1 = mean(G1), mean_S = mean(S), mean_G2M = mean(G2M), .groups="drop"))
+```
+
+
+--> Result is weird as 0% cells in S phase; as tool design for scRNAseq not sure it is good to use it here.
