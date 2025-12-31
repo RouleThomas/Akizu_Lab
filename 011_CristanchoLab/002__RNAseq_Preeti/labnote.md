@@ -2115,24 +2115,25 @@ conda activate kallisto
 
 
 ## run in sbatch
-sbatch scripts/kallisto_count_gtf.sh # 62901198 xxx
+sbatch scripts/kallisto_count_gtf.sh # 62901198 ok
 
 # Convert pseudoalignment to bigwig
 conda activate deeptools
 
-sbatch --dependency=afterany:62901198 scripts/TPM_kallisto_bw.sh # 62901271 xxx
+sbatch --dependency=afterany:62901198 scripts/TPM_kallisto_bw.sh # 62901271 ok
 
 
 # Calculate median
 conda activate BedToBigwig
 
-sbatch --dependency=afterany:62901271 scripts/bigwigmerge_TPM_kallisto_bw.sh # 62901282 xxx
+sbatch --dependency=afterany:62901271 scripts/bigwigmerge_TPM_kallisto_bw.sh # 62901282 ok
 ```
 
 - *NOTE: Added `--rf-stranded --genomebam` options for strandness and pseudobam alignemt generation*
 
+--> ~70-80% pseudoalign reads
 
-XXXY HERE !!!
+
 
 ## Differential alternative mRNA splicing
 
@@ -2144,6 +2145,8 @@ After running `isoformSwitchAnalysisPart1()` from  `## IsoformSwitchAnalyzeR usa
 **Run these in Webserver** :
 - coding potential with [CPC2](https://cpc2.gao-lab.org/), I put `output/IsoformSwitchAnalyzeR/isoformSwitchAnalyzeR_isoform_nt.fasta`;
   --> `IsoformSwitchAnalyzeR_kallisto/result_cpc2.txt`
+    - PSC: Batch 260101661605011 
+    - ReN: Batch 260101270241233 
 - protein domain with [PFAM](https://www.ebi.ac.uk/Tools/hmmer/search/hmmscan), manually on the cluster, see below:
   --> OK
 - Prediction of Intrinsically Unstructured Proteins with [IUPred2](https://iupred2a.elte.hu/); V3 do not support multi FASTA file with Default: `IUPred2 long disorder (default)`;
@@ -2165,12 +2168,14 @@ cd ../../Master/software
 cd pfam_scan
 
 # Run it
-./pfam_scan.py ../../../001_EZH1_Project/019__RNAseq_ESC_V1/output/IsoformSwitchAnalyzeR_kallisto/isoformSwitchAnalyzeR_isoform_AA_complete.fasta ../pfamdb/ -out ../../../001_EZH1_Project/019__RNAseq_ESC_V1/output/pfam/pfam_results_kallisto.txt
-
+./pfam_scan.py ../../../011_CristanchoLab/002__RNAseq_Preeti/output/IsoformSwitchAnalyzeR_kallisto/PSC/isoformSwitchAnalyzeR_isoform_AA_complete.fasta ../pfamdb/ -out ../../../011_CristanchoLab/002__RNAseq_Preeti/output/pfam/pfam_results_kallisto-PSC.txt
+./pfam_scan.py ../../../011_CristanchoLab/002__RNAseq_Preeti/output/IsoformSwitchAnalyzeR_kallisto/ReN/isoformSwitchAnalyzeR_isoform_AA_complete.fasta ../pfamdb/ -out ../../../011_CristanchoLab/002__RNAseq_Preeti/output/pfam/pfam_results_kallisto-ReN.txt
 
 # Re-format the output
-cd ../../../001_EZH1_Project/019__RNAseq_ESC_V1
-python3 scripts/reformat_pfam_kallisto.py
+cd ../../../011_CristanchoLab/002__RNAseq_Preeti
+python3 scripts/reformat_pfam_kallisto-PSC.py
+python3 scripts/reformat_pfam_kallisto-ReN.py
+
 ```
 
 
@@ -2194,15 +2199,21 @@ set.seed(42)
 
 
 # Kallisto ####################################################
+#########
+## PSC ##
+#########
+
 
 # Importing the Data
 salmonQuant <- importIsoformExpression(
-    parentDir = "output/kallisto/")
+  parentDir = "output/kallisto/",
+  pattern = "/PSC_"
+)
 
 # metadata file
-myDesign = data.frame(
-    sampleID = colnames(salmonQuant$abundance)[-1],
-    condition = gsub('.*_(WT|KO|OEKO)_.*', '\\1', colnames(salmonQuant$abundance)[-1])
+myDesign <- data.frame(
+  sampleID  = colnames(salmonQuant$abundance)[-1],
+  condition = sub("^PSC_(Hypo|Norm)_.*", "\\1", colnames(salmonQuant$abundance)[-1])
 )
 
 
@@ -2221,10 +2232,15 @@ summary(aSwitchList)
 
 SwitchList <- isoformSwitchAnalysisPart1(
     switchAnalyzeRlist   = aSwitchList,
-    pathToOutput = 'output/IsoformSwitchAnalyzeR_kallisto',
+    pathToOutput = 'output/IsoformSwitchAnalyzeR_kallisto/PSC',
     outputSequences      = TRUE, # change to TRUE whan analyzing your own data 
     prepareForWebServers = TRUE  # change to TRUE if you will use webservers for external sequence analysis
 )
+
+## SAVE IMAGE R SESSION
+# save.image("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_PSC.RData")
+# load("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_PSC.RData")
+##
 
 
 #--> Run in WebServer the CPC2, PFAM, IUPRED2A, SIGNALP
@@ -2240,10 +2256,7 @@ analysSwitchList <- isoformSwitchAnalysisPart2(
   outputPlots               = TRUE
 )
 
-## SAVE IMAGE R SESSION
-# save.image("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto.RData")
-# load("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto.RData")
-##
+
 
 
 ## Generate plot for a gene - All panels
@@ -2489,6 +2502,225 @@ dev.off()
 
 
 
+
+
+
+#########
+## ReN ##
+#########
+
+
+# Importing the Data
+salmonQuant <- importIsoformExpression(
+  parentDir = "output/kallisto/",
+  pattern = "/ReN_"
+)
+
+# metadata file
+myDesign <- data.frame(
+  sampleID  = colnames(salmonQuant$abundance)[-1],
+  condition = sub("^ReN_(Hypo|Norm)_.*", "\\1", colnames(salmonQuant$abundance)[-1])
+)
+myDesign$condition <- factor(myDesign$condition, levels = c("Norm", "Hypo"))
+myDesign <- myDesign[order(myDesign$condition, myDesign$sampleID), ]
+rownames(myDesign) <- myDesign$sampleID
+
+myDesign
+# 
+aSwitchList <- importRdata(
+    isoformCountMatrix   = salmonQuant$counts,
+    isoformRepExpression = salmonQuant$abundance,
+    designMatrix         = myDesign,
+    isoformExonAnnoation = "../../Master/meta/gencode.v47.chr_patch_hapl_scaff.annotation.gtf", # gencode.v47.annotation.gtf gencode.v47.chr_patch_hapl_scaff.annotation.gtf
+    isoformNtFasta       = "../../Master/meta/salmon/Homo_sapiens.GRCh38.cdna.all.fa.gz",
+    fixStringTieAnnotationProblem = TRUE,
+    showProgress = FALSE
+)
+summary(aSwitchList)
+
+
+
+
+SwitchList <- isoformSwitchAnalysisPart1(
+    switchAnalyzeRlist   = aSwitchList,
+    pathToOutput = 'output/IsoformSwitchAnalyzeR_kallisto/ReN',
+    outputSequences      = TRUE, # change to TRUE whan analyzing your own data 
+    prepareForWebServers = TRUE  # change to TRUE if you will use webservers for external sequence analysis
+)
+
+## SAVE IMAGE R SESSION
+# save.image("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_ReN.RData")
+# load("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_ReN.RData")
+##
+
+
+#--> Run in WebServer the CPC2, PFAM, IUPRED2A, SIGNALP
+
+analysSwitchList <- isoformSwitchAnalysisPart2(
+  switchAnalyzeRlist        = SwitchList, 
+  n                         = 10,    # if plotting was enabled, it would only output the top 10 switches
+  removeNoncodinORFs        = TRUE,
+  pathToCPC2resultFile      = "output/IsoformSwitchAnalyzeR_kallisto/ReN/result_cpc2-ReN.txt",
+  pathToPFAMresultFile      = "output/pfam/pfam_results_kallisto_reformat-ReN.txt",
+  pathToIUPred2AresultFile  = "output/IsoformSwitchAnalyzeR_kallisto/ReN/isoformSwitchAnalyzeR_isoform_AA_complete-ReN.result",
+  pathToSignalPresultFile   = "output/IsoformSwitchAnalyzeR_kallisto/ReN/prediction_results_SignalIP6-ReN.txt",
+  outputPlots               = TRUE
+)
+
+## SAVE IMAGE R SESSION
+# save.image("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_ReN.RData")
+# load("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_ReN.RData")
+##
+
+
+
+
+
+
+# Genome-wide Summaries
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/ReN/extractSwitchOverlap.pdf', onefile = FALSE, height=6, width = 9)
+extractSwitchOverlap(
+    analysSwitchList,
+    filterForConsequences=TRUE,
+    plotIsoforms = FALSE
+)
+dev.off()
+
+
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/ReN/extractConsequenceSummary.pdf', onefile = FALSE, height=5, width = 9)
+extractConsequenceSummary(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    plotGenes = FALSE,           # enables analysis of genes (instead of isoforms)
+    asFractionTotal = FALSE      # enables analysis of fraction of significant features
+)
+dev.off()
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/ReN/extractConsequenceSummary_Genes.pdf', onefile = FALSE, height=5, width = 9)
+extractConsequenceSummary(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    plotGenes = TRUE,           # enables analysis of genes (instead of isoforms)
+    asFractionTotal = FALSE      # enables analysis of fraction of significant features
+)
+dev.off()
+
+
+# Consequence Enrichment Analysis
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/ReN/extractConsequenceEnrichment.pdf', onefile = FALSE, height=4, width = 8)
+extractConsequenceEnrichment(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    analysisOppositeConsequence = TRUE,
+    localTheme = theme_bw(base_size = 14), # Increase font size in vignette
+    returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
+)
+dev.off()
+
+
+
+# Splicing Enrichment Analysis
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/ReN/extractSplicingEnrichment.pdf', onefile = FALSE, height=4, width = 8)
+extractSplicingEnrichment(
+    analysSwitchList,
+    returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
+)
+dev.off()
+
+#Overview Plots
+## Volcano like plot
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/ReN/Overview_Plots.pdf', onefile = FALSE, height=3, width = 4)
+ggplot(data=analysSwitchList$isoformFeatures, aes(x=dIF, y=-log10(isoform_switch_q_value))) +
+     geom_point(
+        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
+        size=1
+    ) +
+    geom_hline(yintercept = -log10(0.05), linetype='dashed') + # default cutoff
+    geom_vline(xintercept = c(-0.1, 0.1), linetype='dashed') + # default cutoff
+    facet_wrap( ~ condition_1) +
+    #facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
+    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
+    labs(x='dIF', y='-Log10 ( Isoform Switch Q Value )') +
+    theme_bw()
+dev.off()
+
+## count nb of isoforms:
+significant_isoforms <- analysSwitchList$isoformFeatures %>%
+  filter(abs(dIF) > 0.1 & isoform_switch_q_value < 0.05) %>%
+  nrow()
+
+
+
+## Import GTF to have gene name chromosome 
+gtf <- import("../../Master/meta/gencode.v47.chr_patch_hapl_scaff.annotation.gtf")
+## Convert to data frame
+gtf_df <- as.data.frame(gtf)
+## Keep only gene entries
+gene_df <- gtf_df %>%
+  filter(type == "gene") %>%
+  dplyr::select(seqnames, gene_name) %>%
+  distinct() %>%
+  rename(chromosome = seqnames) %>%
+  as_tibble()
+
+# Save output list of genes
+## Signif only AND with consequence
+significant_isoforms__ReN_geneSymbol =  analysSwitchList$isoformFeatures %>%
+  filter(abs(dIF) > 0.1 & isoform_switch_q_value < 0.05) %>%
+  filter(switchConsequencesGene == TRUE) %>%
+  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>%   dplyr::select(gene_name)
+write.table(
+  significant_isoforms__ReN_geneSymbol,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/ReN/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-ReN.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
+
+### Switch vs Gene changes:
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/ReN/Overview_Plots2.pdf', onefile = FALSE, height=3, width = 4)
+ggplot(data=analysSwitchList$isoformFeatures, aes(x=gene_log2_fold_change, y=dIF)) +
+    geom_point(
+        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
+        size=1
+    ) + 
+    facet_wrap(~ condition_1) +
+    #facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
+    geom_hline(yintercept = 0, linetype='dashed') +
+    geom_vline(xintercept = 0, linetype='dashed') +
+    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
+    labs(x='Gene log2 fold change', y='dIF') +
+    theme_bw()
+dev.off()
+
+
+
+
+
+## Generate plot for a gene - All panels
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/ReN/switchPlot-NormHypo-GAB1.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(analysSwitchList, gene= "GAB1", condition1= "Norm", condition2= "Hypo", reverseMinus = FALSE)
+dev.off()
+
+
+## Only gene and isoform expression
+pdf("output/IsoformSwitchAnalyzeR_kallisto/ReN/switchPlotGeneExp-NormHypo-RRM2.pdf", width=3, height=5)
+switchPlotGeneExp(
+  switchAnalyzeRlist = analysSwitchList,
+  gene = "RRM2",
+  condition1 = "Norm",
+  condition2 = "Hypo"
+)  +
+  scale_fill_manual(values = c("Norm" = "blue", "Hypo" = "red")) +
+  scale_color_manual(values = c("Norm" = "blue", "Hypo" = "red"))
+dev.off()
+
+
+
+## SAVE IMAGE R SESSION
+# save.image("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_ReN.RData")
+# load("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_ReN.RData")
+##
 
 
 ```
