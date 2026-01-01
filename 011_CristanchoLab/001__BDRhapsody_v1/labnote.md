@@ -1184,7 +1184,7 @@ cluster_centers <- aggregate(cbind(umap_1, umap_2) ~ cluster, data = umap_coordi
 ## Create a UMAP plot colored by DEG values, with cluster DEG counts as text annotations
 pdf("output/seurat/FeaturePlot-ATACMultiomewithST_SMK_V2QCv2-padj05fc025_numeric_dim30kparam30res04.pdf", width=6, height=6)
 FeaturePlot(ATACMultiomewithST_SMK_V2QCv2.sct, features = "DEG", pt.size = 0.5, reduction = "umap") +
-  scale_colour_viridis(option="magma") + # option="magma"
+  scale_colour_viridis() + # option="magma"
   geom_text(data = cluster_centers, aes(x = umap_1, y = umap_2, label = Num_DEGs), 
             size = 4, color = "red", fontface = "bold") 
 dev.off()
@@ -1623,6 +1623,141 @@ dev.off()
 # , disp.max = 2, disp.min = -2)
 
 
+
+# Select top 3 Link genes for each cluster in dotplot
+
+top_genes <- Links_markers %>%
+  group_by(cluster) %>%
+  arrange(p_val_adj, desc(avg_log2FC)) %>%
+  slice_head(n = 4) %>%
+  ungroup()
+
+# View the result
+top_genes
+
+
+
+
+all_markers <- c(
+  "Tril", "Pla2g7", "Lrig1", # Astro
+  "Anpep", "Vtn", "Kcnj8", # Endo
+  "Satb2", "Clstn2", "Syt4", # Glut1
+  "Sstr2", "Mfap4", "Unc5d", # Glut2
+  "Nnat", "Tafa1", "Tmem130", # Glut3
+  "Nxph3", "Ramp3", "Hs3st4", # Glut4
+  "Nrp1", "ENSMUSG00000121092", "Gabra2", # Glut5
+  "Nell2", "Cdh6", "Spock1", # Glut6 Npy remove
+  "Nxph1", "Maf", "Lhx6", # In1
+  "Six3", "Zfhx3", "Adora2a", # In2
+  "Ebf1", "Tac1", "Ikzf1", # In3
+  "Npy", "Sst", "Elfn1", # In4
+  "Cd79b", "Csf1r", "Csf2rb", # Mg
+  "Lhx1os", "Ndnf", "Lhx5", # Neuron
+  "Mki67", "Neil3", "ENSMUSG00000120992", # NPC
+  "Adarb2", "Dlx6os1", "Dlx1", # NSC
+  "Gpr17", "Pdgfra", "Matn4", # OPC
+  "Entpd2", "Ecrg4", "Casq1" # RG
+)
+
+
+levels(ATACMultiomewithST_SMK_V2QCv2.sct) <- c(
+  "Astro",
+  "Endo",
+  "Glut1",
+  "Glut2",
+  "Glut3",
+  "Glut4",
+  "Glut5",
+  "Glut6",
+  "In1",
+  "In2",
+  "In3",
+  "In4",
+  "Mg",
+  "Neuron",
+  "NPC",
+  "NSC",
+  "OPC",
+  "RG"
+)
+
+
+
+pdf("output/seurat/DotPlot-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04-labelV1GeneActivityLinkPeaks-LinksPadj05Score0-top3Links_GeneActivity.pdf", , width=11, height=5)
+DotPlot(ATACMultiomewithST_SMK_V2QCv2.sct, assay = "GeneActivity", features = all_markers)   +
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") + # option="magma"
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white"))) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+
+pdf("output/seurat/DotPlot-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04-labelV1GeneActivityLinkPeaks-LinksPadj05Score0-top3Links_SCT.pdf", , width=11, height=5)
+DotPlot(ATACMultiomewithST_SMK_V2QCv2.sct, assay = "SCT", features = all_markers)    +
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis() + # option="magma"
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white"))) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+        axis.text.y = element_text(angle = 0, hjust = 1, vjust = 0.5))
+dev.off()
+
+
+
+
+
+# DARs number colored in a UMAP
+Idents(ATACMultiomewithST_SMK_V2QCv2.sct) <- "cluster.annot"
+
+
+DAR_genes = read_tsv("output/seurat/DAR_genes-ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04.txt")
+
+DAR_count <- DAR_genes %>%
+  filter(!is.na(p_val_adj), !is.na(avg_log2FC)) %>%
+  group_by(cluster) %>%
+  summarise(
+    Num_DARs = sum(p_val_adj < 0.05 & abs(avg_log2FC) > 0.25),
+    .groups = "drop"
+  ) %>%
+  rename(Cell_Type = cluster)
+
+cell_clusters <- ATACMultiomewithST_SMK_V2QCv2.sct@meta.data$cluster.annot
+names(cell_clusters) <- rownames(ATACMultiomewithST_SMK_V2QCv2.sct@meta.data)
+
+DAR_named_vector <- DAR_count$Num_DARs[match(cell_clusters, DAR_count$Cell_Type)]
+names(DAR_named_vector) <- names(cell_clusters)
+
+ATACMultiomewithST_SMK_V2QCv2.sct <- AddMetaData(
+  ATACMultiomewithST_SMK_V2QCv2.sct,
+  metadata = DAR_named_vector,
+  col.name = "DAR"
+)
+# ---- UMAP coordinates + cluster centers ----
+umap_coordinates <- as.data.frame(ATACMultiomewithST_SMK_V2QCv2.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- ATACMultiomewithST_SMK_V2QCv2.sct@meta.data$cluster.annot
+# robustly handle UMAP column names (UMAP_1/UMAP_2 vs umap_1/umap_2)
+umap_x <- colnames(umap_coordinates)[1]
+umap_y <- colnames(umap_coordinates)[2]
+
+cluster_centers <- umap_coordinates %>%
+  group_by(cluster) %>%
+  summarise(
+    x = mean(.data[[umap_x]]),
+    y = mean(.data[[umap_y]]),
+    .groups = "drop"
+  ) %>%
+  left_join(DAR_count %>% mutate(cluster = as.character(Cell_Type)), by = "cluster")
+pdf("output/seurat/FeaturePlot-ATACMultiomewithST_SMK_V2QCv2-DAR_padj05fc025_numeric_dim30kparam30res04.pdf", width=6, height=6)
+FeaturePlot(ATACMultiomewithST_SMK_V2QCv2.sct, features = "DAR", pt.size = 0.5, reduction = "umap") +
+  scale_colour_viridis(option="magma") +
+  geom_text(
+    data = cluster_centers,
+    aes(x = x, y = y, label = Num_DARs),
+    size = 4, color = "red", fontface = "bold"
+  )
+dev.off()
 
 
 
