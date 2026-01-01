@@ -2211,10 +2211,15 @@ salmonQuant <- importIsoformExpression(
 )
 
 # metadata file
+
 myDesign <- data.frame(
   sampleID  = colnames(salmonQuant$abundance)[-1],
   condition = sub("^PSC_(Hypo|Norm)_.*", "\\1", colnames(salmonQuant$abundance)[-1])
 )
+myDesign$condition <- factor(myDesign$condition, levels = c("Norm", "Hypo"))
+myDesign <- myDesign[order(myDesign$condition, myDesign$sampleID), ]
+rownames(myDesign) <- myDesign$sampleID
+
 
 
 # 
@@ -2249,70 +2254,19 @@ analysSwitchList <- isoformSwitchAnalysisPart2(
   switchAnalyzeRlist        = SwitchList, 
   n                         = 10,    # if plotting was enabled, it would only output the top 10 switches
   removeNoncodinORFs        = TRUE,
-  pathToCPC2resultFile      = "output/IsoformSwitchAnalyzeR_kallisto/result_cpc2.txt",
-  pathToPFAMresultFile      = "output/pfam/pfam_results_kallisto_reformat.txt",
-  pathToIUPred2AresultFile  = "output/IsoformSwitchAnalyzeR_kallisto/isoformSwitchAnalyzeR_isoform_AA_complete.result",
-  pathToSignalPresultFile   = "output/IsoformSwitchAnalyzeR_kallisto/prediction_results_SignalIP6.txt",
+  pathToCPC2resultFile      = "output/IsoformSwitchAnalyzeR_kallisto/PSC/result_cpc2-PSC.txt",
+  pathToPFAMresultFile      = "output/pfam/pfam_results_kallisto_reformat-PSC.txt",
+  pathToIUPred2AresultFile  = "output/IsoformSwitchAnalyzeR_kallisto/PSC/isoformSwitchAnalyzeR_isoform_AA_complete-PSC.result",
+  pathToSignalPresultFile   = "output/IsoformSwitchAnalyzeR_kallisto/PSC/prediction_results_SignalIP6-PSC.txt",
   outputPlots               = TRUE
 )
 
 
 
-
-## Generate plot for a gene - All panels
-LSAMP
-### WT vs KO
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot-WTKO-ECEL1.pdf', onefile = FALSE, height=6, width = 9)
-switchPlot(analysSwitchList, gene= "ECEL1", condition1= "WT", condition2= "KO", reverseMinus = FALSE)
-dev.off()
-### WT vs OEKO
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/switchPlot-WTOEKO-HTRA1.pdf', onefile = FALSE, height=6, width = 9)
-switchPlot(analysSwitchList, gene= "HTRA1", condition1= "WT", condition2= "OEKO", reverseMinus = FALSE)
-dev.off()
-
-
-## Only gene and isoform expression
-### WT vs KO
-pdf("output/IsoformSwitchAnalyzeR_kallisto/switchPlotGeneExp-WTKO-ECEL1.pdf", width=3, height=5)
-switchPlotGeneExp(
-  switchAnalyzeRlist = analysSwitchList,
-  gene = "ECEL1",
-  condition1 = "WT",
-  condition2 = "KO"
-)  
-dev.off()
-pdf("output/IsoformSwitchAnalyzeR_kallisto/switchPlotIsoExp-WTKO-ECEL1.pdf", width=5, height=5)
-switchPlotIsoExp(
-  switchAnalyzeRlist = analysSwitchList,
-  gene = "ECEL1",
-  condition1 = "WT",
-  condition2 = "KO"
-) +
-  scale_fill_manual(values = c("WT" = "black", "KO" = "red")) +
-  scale_color_manual(values = c("WT" = "black", "KO" = "red"))
-dev.off()
-
-
-### WT vs OEKO
-
-pdf("output/IsoformSwitchAnalyzeR_kallisto/switchPlotGeneExp-WTOEKO-HTRA1.pdf", width=3, height=5)
-switchPlotGeneExp(
-  switchAnalyzeRlist = analysSwitchList,
-  gene = "HTRA1",
-  condition1 = "WT",
-  condition2 = "OEKO"
-) 
-dev.off()
-pdf("output/IsoformSwitchAnalyzeR_kallisto/switchPlotIsoExp-WTOEKO-HTRA1.pdf", width=5, height=5)
-switchPlotIsoExp(
-  switchAnalyzeRlist = analysSwitchList,
-  gene = "HTRA1",
-  condition1 = "WT",
-  condition2 = "OEKO"
-) +
-  scale_fill_manual(values = c("WT" = "black", "OEKO" = "blue")) +
-  scale_color_manual(values = c("WT" = "black", "OEKO" = "blue"))
-dev.off()
+## SAVE IMAGE R SESSION
+# save.image("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_PSC.RData")
+# load("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_PSC.RData")
+##
 
 
 
@@ -2320,7 +2274,7 @@ dev.off()
 
 
 # Genome-wide Summaries
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractSwitchOverlap.pdf', onefile = FALSE, height=6, width = 9)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/extractSwitchOverlap.pdf', onefile = FALSE, height=6, width = 9)
 extractSwitchOverlap(
     analysSwitchList,
     filterForConsequences=TRUE,
@@ -2329,7 +2283,7 @@ extractSwitchOverlap(
 dev.off()
 
 
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractConsequenceSummary.pdf', onefile = FALSE, height=6, width = 9)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceSummary.pdf', onefile = FALSE, height=5, width = 9)
 extractConsequenceSummary(
     analysSwitchList,
     consequencesToAnalyze='all',
@@ -2337,7 +2291,7 @@ extractConsequenceSummary(
     asFractionTotal = FALSE      # enables analysis of fraction of significant features
 )
 dev.off()
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractConsequenceSummary_Genes.pdf', onefile = FALSE, height=6, width = 9)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceSummary_Genes.pdf', onefile = FALSE, height=5, width = 9)
 extractConsequenceSummary(
     analysSwitchList,
     consequencesToAnalyze='all',
@@ -2348,7 +2302,7 @@ dev.off()
 
 
 # Consequence Enrichment Analysis
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractConsequenceEnrichment.pdf', onefile = FALSE, height=6, width = 12)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceEnrichment.pdf', onefile = FALSE, height=6, width = 8)
 extractConsequenceEnrichment(
     analysSwitchList,
     consequencesToAnalyze='all',
@@ -2361,8 +2315,7 @@ dev.off()
 
 
 # Splicing Enrichment Analysis
-
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/extractSplicingEnrichment.pdf', onefile = FALSE, height=6, width = 12)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/extractSplicingEnrichment.pdf', onefile = FALSE, height=4, width = 8)
 extractSplicingEnrichment(
     analysSwitchList,
     returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
@@ -2371,8 +2324,7 @@ dev.off()
 
 #Overview Plots
 ## Volcano like plot
-
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/Overview_Plots.pdf', onefile = FALSE, height=3, width = 6)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/Overview_Plots.pdf', onefile = FALSE, height=3, width = 4)
 ggplot(data=analysSwitchList$isoformFeatures, aes(x=dIF, y=-log10(isoform_switch_q_value))) +
      geom_point(
         aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
@@ -2387,34 +2339,12 @@ ggplot(data=analysSwitchList$isoformFeatures, aes(x=dIF, y=-log10(isoform_switch
     theme_bw()
 dev.off()
 
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/Overview_Plots3.pdf', onefile = FALSE, height=6, width = 6)
-ggplot(data=analysSwitchList$isoformFeatures, aes(x=dIF, y=-log10(isoform_switch_q_value))) +
-     geom_point(
-        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
-        size=1
-    ) +
-    geom_hline(yintercept = -log10(0.05), linetype='dashed') + # default cutoff
-    geom_vline(xintercept = c(-0.1, 0.1), linetype='dashed') + # default cutoff
-    facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
-    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
-    labs(x='dIF', y='-Log10 ( Isoform Switch Q Value )') +
-    theme_bw()
-dev.off()
-
 ## count nb of isoforms:
 significant_isoforms <- analysSwitchList$isoformFeatures %>%
-  filter(abs(dIF) > 0.1 & isoform_switch_q_value < 0.05)
-###  Count for WT vs KO
-WT_vs_KO <- significant_isoforms %>%
-  filter(condition_1 == "KO" & condition_2 == "WT") %>%
+  filter(abs(dIF) > 0.1 & isoform_switch_q_value < 0.05) %>%
   nrow()
-### Count for WT vs OEKO
-WT_vs_OEKO <- significant_isoforms %>%
-  filter(condition_1 == "OEKO" & condition_2 == "WT") %>%
-  nrow()
-### Print the counts
-cat("Number of significant isoform switches (WT vs KO):", WT_vs_KO, "\n")
-cat("Number of significant isoform switches (WT vs OEKO):", WT_vs_OEKO, "\n")
+
+
 
 ## Import GTF to have gene name chromosome 
 gtf <- import("../../Master/meta/gencode.v47.chr_patch_hapl_scaff.annotation.gtf")
@@ -2429,62 +2359,22 @@ gene_df <- gtf_df %>%
   as_tibble()
 
 # Save output list of genes
-## Signif only without X chr
-significant_isoforms__KO_geneSymbol =  significant_isoforms %>%
-  filter(condition_1 == "KO" & condition_2 == "WT") %>%
-  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>% dplyr::filter(chromosome != "chrX") %>%   dplyr::select(gene_name)
+## Signif only AND with consequence
+significant_isoforms__PSC_geneSymbol =  analysSwitchList$isoformFeatures %>%
+  filter(abs(dIF) > 0.1 & isoform_switch_q_value < 0.05) %>%
+  filter(switchConsequencesGene == TRUE) %>%
+  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>%   dplyr::select(gene_name)
 write.table(
-  significant_isoforms__KO_geneSymbol,
-  file = "output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__KO_geneSymbol.txt",
+  significant_isoforms__PSC_geneSymbol,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/PSC/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.txt",
   sep = "\t",
   quote = FALSE,
   row.names = FALSE,
   col.names = FALSE
 )
-## Signif only without X chr AND with consequence
-significant_isoforms__KO_geneSymbol =  significant_isoforms %>%
-  filter(condition_1 == "KO" & condition_2 == "WT" & switchConsequencesGene == TRUE) %>%
-  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>% dplyr::filter(chromosome != "chrX") %>%   dplyr::select(gene_name)
-write.table(
-  significant_isoforms__KO_geneSymbol,
-  file = "output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE__KO_geneSymbol.txt",
-  sep = "\t",
-  quote = FALSE,
-  row.names = FALSE,
-  col.names = FALSE
-)
-
-
-## Signif only without X chr
-significant_isoforms__OEKO_geneSymbol =  significant_isoforms %>%
-  filter(condition_1 == "OEKO" & condition_2 == "WT") %>%
-  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>% dplyr::filter(chromosome != "chrX")  %>%   dplyr::select(gene_name)
-write.table(
-  significant_isoforms__OEKO_geneSymbol,
-  file = "output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05__OEKO_geneSymbol.txt",
-  sep = "\t",
-  quote = FALSE,
-  row.names = FALSE,
-  col.names = FALSE
-)
-## Signif only without X chr AND with consequence
-significant_isoforms__OEKOKO_geneSymbol =  significant_isoforms %>%
-  filter(condition_1 == "OEKO" & condition_2 == "WT" & switchConsequencesGene == TRUE) %>%
-  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>% dplyr::filter(chromosome != "chrX") %>%   dplyr::select(gene_name)
-write.table(
-  significant_isoforms__OEKOKO_geneSymbol,
-  file = "output/IsoformSwitchAnalyzeR_kallisto/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE__OEKO_geneSymbol.txt",
-  sep = "\t",
-  quote = FALSE,
-  row.names = FALSE,
-  col.names = FALSE
-)
-
-
-
 
 ### Switch vs Gene changes:
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/Overview_Plots2.pdf', onefile = FALSE, height=3, width = 6)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/Overview_Plots2.pdf', onefile = FALSE, height=3, width = 4)
 ggplot(data=analysSwitchList$isoformFeatures, aes(x=gene_log2_fold_change, y=dIF)) +
     geom_point(
         aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
@@ -2499,6 +2389,34 @@ ggplot(data=analysSwitchList$isoformFeatures, aes(x=gene_log2_fold_change, y=dIF
     theme_bw()
 dev.off()
 
+
+
+
+
+## Generate plot for a gene - All panels
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/switchPlot-NormHypo-EPHB3.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(analysSwitchList, gene= "EPHB3", condition1= "Norm", condition2= "Hypo", reverseMinus = FALSE)
+dev.off()
+
+
+## Only gene and isoform expression
+pdf("output/IsoformSwitchAnalyzeR_kallisto/PSC/switchPlotGeneExp-NormHypo-EPHA2.pdf", width=3, height=5)
+switchPlotGeneExp(
+  switchAnalyzeRlist = analysSwitchList,
+  gene = "EPHA2",
+  condition1 = "Norm",
+  condition2 = "Hypo"
+)  +
+  scale_fill_manual(values = c("Norm" = "blue", "Hypo" = "red")) +
+  scale_color_manual(values = c("Norm" = "blue", "Hypo" = "red"))
+dev.off()
+
+
+
+## SAVE IMAGE R SESSION
+# save.image("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_PSC.RData")
+# load("output/IsoformSwitchAnalyzeR_kallisto/IsoformSwitchAnalyzeR_kallisto_PSC.RData")
+##
 
 
 
