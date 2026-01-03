@@ -12698,9 +12698,6 @@ dev.off()
 cluster_6= read_tsv("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol.tsv") %>%
   filter(cluster == 6) %>%
   dplyr::select(gene_symbol)
-
-
-
 ego <- enrichGO(gene = as.character(cluster_6$gene_symbol), 
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
                 OrgDb = org.Hs.eg.db, 
@@ -12708,20 +12705,72 @@ ego <- enrichGO(gene = as.character(cluster_6$gene_symbol),
                 pAdjustMethod = "BH",   
                 pvalueCutoff = 0.05, 
                 readable = TRUE)
-
-
 pdf("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol-cluster6.pdf", width = 6, height = 3)
 dotplot(ego, showCategory = 5)
 dev.off()
 
 
 
+cluster_1= read_tsv("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol.tsv") %>%
+  filter(cluster == 1) %>%
+  dplyr::select(gene_symbol)
+ego <- enrichGO(gene = as.character(cluster_1$gene_symbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+pdf("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol-cluster1.pdf", width = 6, height = 3)
+dotplot(ego, showCategory = 5)
+dev.off()
+
+cluster_2= read_tsv("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol.tsv") %>%
+  filter(cluster == 2) %>%
+  dplyr::select(gene_symbol)
+ego <- enrichGO(gene = as.character(cluster_2$gene_symbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+pdf("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol-cluster2.pdf", width = 6, height = 3)
+dotplot(ego, showCategory = 5)
+dev.off()
+
+
+
+cluster_4= read_tsv("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol.tsv") %>%
+  filter(cluster == 4) %>%
+  dplyr::select(gene_symbol)
+ego <- enrichGO(gene = as.character(cluster_4$gene_symbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+pdf("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol-cluster4.pdf", width = 6, height = 3)
+dotplot(ego, showCategory = 5)
+dev.off()
 
 
 
 
-
-
+cluster_5= read_tsv("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol.tsv") %>%
+  filter(cluster == 5) %>%
+  dplyr::select(gene_symbol)
+ego <- enrichGO(gene = as.character(cluster_5$gene_symbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+pdf("output/deseq2_hg38/cluster_gene_rlog-cl6_pretty_noSmooth-ESCNPC2dN8wN_WTKO_geneSymbol-cluster5.pdf", width = 6, height = 3)
+dotplot(ego, showCategory = 5)
+dev.off()
 
 
 
@@ -21380,6 +21429,7 @@ Install granulator on R\4.3.1 like in the [tuto](https://bioconductor.org/packag
 --> Lot of fail installing it with Bioconda, even when using the R4.3.1 version from the tutorial, I ended up installing it through conda with `conda create -n granulator r-base=4.3.1 bioconductor-granulator -c conda-forge -c bioconda`
 
 
+### Granulator deconvolution - 8wN
 
 
 ```bash
@@ -21468,8 +21518,177 @@ load("output/deconv/granulator_WT.RData")
 
 
 
+### Granulator deconvolution - NPC
 
-## decvonvolution data vizualization
+
+```bash
+conda activate granulator
+```
+
+
+
+```R
+# packages
+library("granulator")
+library("tidyverse")
+
+
+
+# import files _ V1
+
+CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature <- read.delim("output/deconv/CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.txt",   header = TRUE,  row.names = 1)
+
+# import tpm _ V2
+all_TPM <- read.delim("output/tpm_hg38/tpm_all_sample_geneSymbol.txt",   header = TRUE,  row.names = 1)
+## WT
+WT_bulk_TPM <- all_TPM %>%
+  dplyr::select(external_gene_name, NPC_WT_R1, NPC_WT_R2, NPC_WT_R3) %>%
+  as.tibble()
+WT_bulk_matrix <- as.matrix(WT_bulk_TPM[,-1])  # Exclude the first column before converting
+rownames(WT_bulk_matrix) <- WT_bulk_TPM$external_gene_name
+## HET
+HET_bulk_TPM <- all_TPM %>%
+  dplyr::select(external_gene_name, NPC_HET_R1, NPC_HET_R2, NPC_HET_R3) %>%
+  as.tibble()
+HET_bulk_matrix <- as.matrix(HET_bulk_TPM[,-1])  # Exclude the first column before converting
+rownames(HET_bulk_matrix) <- HET_bulk_TPM$external_gene_name
+## KO
+KO_bulk_TPM <- all_TPM %>%
+  dplyr::select(external_gene_name, NPC_KO_R1, NPC_KO_R2, NPC_KO_R3) %>%
+  as.tibble()
+KO_bulk_matrix <- as.matrix(KO_bulk_TPM[,-1])  # Exclude the first column before converting
+rownames(KO_bulk_matrix) <- KO_bulk_TPM$external_gene_name
+
+
+
+# run granulator
+## WT
+decon <- deconvolute(m = as.matrix(WT_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature) )
+decon <- deconvolute(m = as.matrix(WT_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature) , methods = "dtangle")
+## HET
+decon <- deconvolute(m = as.matrix(HET_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature), methods = "dtangle")
+## KO
+decon <- deconvolute(m = as.matrix(KO_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature), methods = "dtangle")
+
+
+## Save output
+console_output <- capture.output(print(decon))
+writeLines(console_output, "output/deconv/granulator_NPC_WT_dtangle.txt")
+console_output <- capture.output(print(decon))
+writeLines(console_output, "output/deconv/granulator_NPC_HET_dtangle.txt")
+console_output <- capture.output(print(decon))
+writeLines(console_output, "output/deconv/granulator_NPC_KO_dtangle.txt")
+
+
+
+```
+
+--> Does not show more not-fully differentiated (progenitor / immature) in KO vs WT
+OPC – oligodendrocyte progenitor cells
+RG – radial glia (neural stem/progenitor cells)
+vRG – ventricular radial glia (very early neural progenitors)
+oRG – outer radial glia (progenitor population, especially in cortex)
+IP – intermeiate progenitors
+INP – intermediate neural progenitors
+
+
+
+
+
+
+
+
+
+
+
+
+### Granulator deconvolution - 2dN
+
+
+```bash
+conda activate granulator
+```
+
+
+
+```R
+# packages
+library("granulator")
+library("tidyverse")
+
+
+
+# import files _ V1
+
+CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature <- read.delim("output/deconv/CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.txt",   header = TRUE,  row.names = 1)
+
+# import tpm _ V2
+all_TPM <- read.delim("output/tpm_hg38/tpm_all_sample_geneSymbol.txt",   header = TRUE,  row.names = 1)
+## WT
+WT_bulk_TPM <- all_TPM %>%
+  dplyr::select(external_gene_name, X2dN_WT_R1, X2dN_WT_R2, X2dN_WT_R3) %>%
+  as.tibble()
+WT_bulk_matrix <- as.matrix(WT_bulk_TPM[,-1])  # Exclude the first column before converting
+rownames(WT_bulk_matrix) <- WT_bulk_TPM$external_gene_name
+## HET
+HET_bulk_TPM <- all_TPM %>%
+  dplyr::select(external_gene_name, X2dN_HET_R1, X2dN_HET_R2, X2dN_HET_R3) %>%
+  as.tibble()
+HET_bulk_matrix <- as.matrix(HET_bulk_TPM[,-1])  # Exclude the first column before converting
+rownames(HET_bulk_matrix) <- HET_bulk_TPM$external_gene_name
+## KO
+KO_bulk_TPM <- all_TPM %>%
+  dplyr::select(external_gene_name, X2dN_KO_R1, X2dN_KO_R2, X2dN_KO_R3) %>%
+  as.tibble()
+KO_bulk_matrix <- as.matrix(KO_bulk_TPM[,-1])  # Exclude the first column before converting
+rownames(KO_bulk_matrix) <- KO_bulk_TPM$external_gene_name
+
+
+
+# run granulator
+## WT
+decon <- deconvolute(m = as.matrix(WT_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature) )
+decon <- deconvolute(m = as.matrix(WT_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature) , methods = "dtangle")
+## HET
+decon <- deconvolute(m = as.matrix(HET_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature), methods = "dtangle")
+## KO
+decon <- deconvolute(m = as.matrix(KO_bulk_matrix), sigMatrix = as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature), methods = "dtangle")
+
+
+## Save output
+console_output <- capture.output(print(decon))
+writeLines(console_output, "output/deconv/granulator_2dN_WT_dtangle.txt")
+console_output <- capture.output(print(decon))
+writeLines(console_output, "output/deconv/granulator_2dN_HET_dtangle.txt")
+console_output <- capture.output(print(decon))
+writeLines(console_output, "output/deconv/granulator_2dN_KO_dtangle.txt")
+
+## granulator plot
+pdf("output/deconv/granulator-plot_similarity_CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature.pdf", width=14, height=20)  
+plot_similarity(sigMatrix=as.matrix(CHOOSE_full_dataset_srt.sceset.celltype_ctrl_transfer_signature))
+dev.off()
+pdf("output/deconv/granulator_WT-plot_deconvolute.pdf", width=14, height=20)  
+plot_deconvolute(deconvoluted = decon, scale = TRUE, labels = FALSE)
+dev.off()
+
+```
+
+--> Does not show more not-fully differentiated (progenitor / immature) in KO vs WT
+OPC – oligodendrocyte progenitor cells
+RG – radial glia (neural stem/progenitor cells)
+vRG – ventricular radial glia (very early neural progenitors)
+oRG – outer radial glia (progenitor population, especially in cortex)
+IP – intermeiate progenitors
+INP – intermediate neural progenitors
+
+
+
+
+
+
+
+
+## deconvolution data vizualization
 
 
 --> MuSiC1 (`output/deconv/MuSiC-Est.prop.weighted-*.txt`) and Bisque outputs transferred in local to generate tidy txt file via Xcell = and transferred back to the cluster as `output/deconv/deconv_Lietal2023.txt` (proporiton for all time points/all genotpes)
