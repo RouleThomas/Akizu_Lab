@@ -1646,7 +1646,8 @@ output/deseq2/downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt
 output/deseq2/upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt
 output/deseq2/downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt
 
-
+### Genes with significant splicing changes
+output/IsoformSwitchAnalyzeR_kallisto/PSC/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.txt
 
 
 ############ PSC - UP ############
@@ -1723,6 +1724,42 @@ dotplot(ekegg, showCategory=10)
 dev.off()
 
 
+
+
+############ PSC - SPLICING CHANGES ############
+
+PSC_splicing = read_csv("output/IsoformSwitchAnalyzeR_kallisto/PSC/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.txt", col_names = "gene_name")
+
+ego <- enrichGO(gene = as.character(PSC_splicing$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC-top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_splicing$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSCi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
 
 
 
@@ -1805,6 +1842,47 @@ dev.off()
 pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
 dotplot(ekegg, showCategory=10)
 dev.off()
+
+
+
+
+############ ReN - SPLICING CHANGES ############
+
+ReN_splicing = read_csv("output/IsoformSwitchAnalyzeR_kallisto/ReN/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-ReN.txt", col_names = "gene_name")
+
+ego <- enrichGO(gene = as.character(ReN_splicing$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+#--> Not signif           
+pdf("output/GO/dotplot_BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-ReN-top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-ReN-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(ReN_splicing$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-ReN-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-ReN-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+
+
 
 
 ```

@@ -2842,3 +2842,131 @@ python3 scripts/reformat_pfam_kallisto.py
 ```
 --> Works!
 
+
+
+
+
+
+
+
+
+# Functional analysis with enrichGO (single list of genes dotplot)
+
+
+We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
+
+Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the rlog counts. Our background list will be all genes tested for differential expression.
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
+
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v47.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+### GeneSymbol list of signif DEG qval 0.05 FC 0.58
+output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47.txt
+output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47.txt
+
+
+
+############ ESC - UP ############
+
+ESC_up = read_csv("output/deseq2/upregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47.txt", col_names = "gene_name")
+
+ego <- enrichGO(gene = as.character(ESC_up$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47-top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(ESC_up$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+
+
+
+
+############ ESC - DOWN ############
+
+ESC_down = read_csv("output/deseq2/downregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47.txt", col_names = "gene_name")
+
+ego <- enrichGO(gene = as.character(ESC_down$gene_name), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+                
+pdf("output/GO/dotplot_BP-downregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47-top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_BP-downregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(ESC_down$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_ESC_KO_vs_ESC_WT-STARgencodev47-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+```
+
+
+--> Nothing related to neuron
+
+
