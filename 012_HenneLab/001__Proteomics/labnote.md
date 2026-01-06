@@ -2082,6 +2082,8 @@ for (cl in sort(unique(plot_df$cluster))) {
 # Functional analysis 
 
 
+## Test
+
 
 We will use clusterProfile package. Tutorial [here](https://hbctraining.github.io/DGE_workshop_salmon/lessons/functional_analysis_2019.html).
 
@@ -2224,6 +2226,387 @@ dev.off()
 ```
 
 
+
+
+
+
+## LOGLIMMA
+
+
+
+
+Let's test functional analyses (GO BP; KEGG) on the `# LOGLIMMA` version
+
+
+
+
+
+
+**IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
+
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v47.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+### GeneSymbol list of signif LOGLIMMA signif
+
+output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv
+output/GENELIST-LOGLIMMA-SNX14filter-10Cluster.tsv
+
+
+
+
+############ SNX13filter-12Cluster ############
+SNX13filter_12Cluster <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv")
+
+
+## GO BP ################
+ego <- enrichGO(gene = as.character(scram_SNX13_10Cluster$GeneSymbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+## Loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%      
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_GOBP-LOGLIMMA-SNX13filter-12Cluster.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+  genes <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+  ego <- enrichGO(
+    gene          = genes,
+    keyType       = "SYMBOL",
+    OrgDb         = org.Hs.eg.db,
+    ont           = "BP",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05,
+    readable      = TRUE
+  )
+  if (is.null(ego) || nrow(as.data.frame(ego)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant GO BP terms (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ego, showCategory = 10) +
+      ggtitle(paste0("GO BP — Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+## KEGG ################
+
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_up$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+
+# loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_KEGG-LOGLIMMA-SNX13filter-12Cluster.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+
+  ## symbols for this cluster
+  genes_sym <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+
+  ## SYMBOL -> ENTREZID (KEGG uses Entrez IDs)
+  entrez <- mapIds(
+    x        = org.Hs.eg.db,
+    keys     = genes_sym,
+    keytype  = "SYMBOL",
+    column   = "ENTREZID",
+    multiVals = "first"
+  )
+
+  entrez_genes <- unique(na.omit(as.character(entrez)))
+
+  ## KEGG enrichment
+  ekegg <- enrichKEGG(
+    gene          = entrez_genes,
+    organism      = "hsa",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05
+  )
+  ## optional: convert Entrez IDs in result back to readable gene symbols
+  if (!is.null(ekegg) && nrow(as.data.frame(ekegg)) > 0) {
+    ekegg <- setReadable(ekegg, OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+  }
+  ## plot one page per cluster
+  if (length(entrez_genes) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl, " (n genes = ", length(genes_sym), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No Entrez IDs after SYMBOL->ENTREZ conversion", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else if (is.null(ekegg) || nrow(as.data.frame(ekegg)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant KEGG pathways (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ekegg, showCategory = 20) +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+############ SNX14filter-12Cluster ############
+SNX14filter_10Cluster <- read_tsv("output/GENELIST-LOGLIMMA-SNX14filter-10Cluster.tsv")
+
+
+## GO BP ################
+ego <- enrichGO(gene = as.character(SNX14filter_10Cluster$GeneSymbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+## Loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-SNX14filter-10Cluster.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%      
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_GOBP-LOGLIMMA-SNX14filter-10Cluster.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+  genes <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+  ego <- enrichGO(
+    gene          = genes,
+    keyType       = "SYMBOL",
+    OrgDb         = org.Hs.eg.db,
+    ont           = "BP",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05,
+    readable      = TRUE
+  )
+  if (is.null(ego) || nrow(as.data.frame(ego)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant GO BP terms (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ego, showCategory = 10) +
+      ggtitle(paste0("GO BP — Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+## KEGG ################
+
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_up$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+
+# loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-SNX14filter-10Cluster.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_KEGG-LOGLIMMA-SNX14filter-10Cluster.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+
+  ## symbols for this cluster
+  genes_sym <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+  ## SYMBOL -> ENTREZID (KEGG uses Entrez IDs)
+  entrez <- mapIds(
+    x        = org.Hs.eg.db,
+    keys     = genes_sym,
+    keytype  = "SYMBOL",
+    column   = "ENTREZID",
+    multiVals = "first"
+  )
+  entrez_genes <- unique(na.omit(as.character(entrez)))
+  ## KEGG enrichment
+  ekegg <- enrichKEGG(
+    gene          = entrez_genes,
+    organism      = "hsa",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05
+  )
+  ## optional: convert Entrez IDs in result back to readable gene symbols
+  if (!is.null(ekegg) && nrow(as.data.frame(ekegg)) > 0) {
+    ekegg <- setReadable(ekegg, OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+  }
+  ## plot one page per cluster
+  if (length(entrez_genes) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl, " (n genes = ", length(genes_sym), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No Entrez IDs after SYMBOL->ENTREZ conversion", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else if (is.null(ekegg) || nrow(as.data.frame(ekegg)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant KEGG pathways (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ekegg, showCategory = 20) +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+```
 
 
 
