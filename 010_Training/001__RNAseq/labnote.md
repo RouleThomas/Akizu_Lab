@@ -200,6 +200,11 @@ Create a **deseq2; conda environment**
 
 ```bash
 conda create -n deseq2 -c conda-forge r-base=4.2.2
+
+# activate conda env
+conda activate deseq2
+
+# install extra packages within conda env
 conda install -c conda-forge r-ragg 
 conda install -c conda-forge r-xml
 ```
