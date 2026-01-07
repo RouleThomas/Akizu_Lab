@@ -217,15 +217,16 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install("DESeq2")
-install.packges("pheatmap")
+install.packages("pheatmap")
 BiocManager::install("apeglm")
-install.packges("factoextra")
+install.packages("factoextra")
 BiocManager::install("rtracklayer")
 BiocManager::install("clusterProfiler")
 BiocManager::install("pathview")
 BiocManager::install("org.Hs.eg.db")
 ```
 
+- *NOTE: After installing a package in R; **R ask whether you want to update old packages; with choice all/some/none --> Always select none(ie. type n)**  to avoid any issue of package compatibilities*
 
 
 ## DESeq2 WT vs KO
