@@ -116,28 +116,24 @@ lip_tidy_norm <- lip_tidy %>%
 
 
 
-XXXY HERE!!
-
-
 
 
 
 ########################################
-## Scram vs siSNX13 ####################
+## Scram vs siSNX13 - Cells ####################
 ########################################
 
-df <- prot_tidy %>%
-  filter(`Protein_FDR` == "High",
-         type == "Norm",
+df <- lip_tidy_norm %>%
+  filter(fraction == "Cells",
          genotype %in% c("Scram", "siSNX13")) %>%
-  dplyr::select(Accession, GeneSymbol, sample, condition, genotype, replicate, abundance)
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
 
 
 ## 2) Expression matrix: proteins (rows) x samples (cols)
 expr_mat <- df %>%
-  select(Accession, sample, abundance) %>%
-  pivot_wider(names_from = sample, values_from = abundance) %>%
-  column_to_rownames("Accession") %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
   as.matrix()
 
 
@@ -156,14 +152,12 @@ coldata$condition <- factor(coldata$condition, levels = c("DMSO","LLOME","RECOVE
 coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13"))
 coldata$replicate <- factor(coldata$replicate)
 
-## 5) Strict filter: remove any protein with ≥1 NA
-keep <- complete.cases(log2_expr)
-log2_expr_f <- log2_expr[keep, , drop = FALSE]
+
 
 ## 6) Model: full model = genotype + condition + genotype:condition
 design_full <- model.matrix(~ genotype * condition, data = coldata)
 
-fit <- lmFit(log2_expr_f, design_full)
+fit <- lmFit(log2_expr, design_full)
 fit <- eBayes(fit)
 
 ## 7) "LRT-like" global test: are interaction terms jointly != 0?
@@ -176,10 +170,10 @@ interaction_global <- topTableF(
   number = Inf
 ) 
 head(interaction_global)
-#--> Signficant Accession = different between genotype during the time-course condition
+#--> Signficant Component = different between genotype during the time-course condition
 
 interaction_tbl <- interaction_global %>%
-  rownames_to_column(var = "Accession") %>%
+  rownames_to_column(var = "Component") %>%
   as_tibble() 
   
 
@@ -193,13 +187,13 @@ interaction_tbl_filt <- interaction_tbl %>%
       na.rm = TRUE
     )
   ) %>%
-  filter(adj.P.Val < 0.05, max_abs_interaction >= 1)   # <-- threshold here
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 0)   # <-- threshold here
 
 
-sig_acc <- interaction_tbl_filt$Accession
+sig_acc <- interaction_tbl_filt$Component
 
 log2_expr_sig <- log2_expr[rownames(log2_expr) %in% sig_acc, , drop = FALSE]
-nrow(log2_expr_sig)   # should be 1055
+nrow(log2_expr_sig)   # should be 257
 
 
 
@@ -226,29 +220,437 @@ row_hclust <- hclust(row_dist, method = "complete")
 
 
 
-k <- 6
+k <- 9
 row_clusters <- cutree(row_hclust, k = k)
 
 
 cluster_tbl <- tibble(
-  Accession = rownames(expr_scaled),
+  Component = rownames(expr_scaled),
   cluster   = row_clusters
 )
 
 # add gene symbols
-gene_map <- df %>% distinct(Accession, GeneSymbol)
-cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Accession")
+gene_map <- df %>% distinct(Component)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Component")
 
-pdf("output/pheatmap-LOGLIMMA-SNX13-6Cluster.pdf", width = 4, height = 4)
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+
+
+block_sizes <- sample_order %>%
+  count(genotype, condition, .drop = FALSE) %>%   # add fraction here too if needed
+  pull(n)
+
+gaps_col <- cumsum(block_sizes)[-length(block_sizes)] 
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-SNX13_Cells-9Cluster.pdf", width = 4, height = 4)
 pheatmap(expr_scaled,
          cluster_rows = row_hclust,
          cluster_cols = FALSE,
          cutree_rows = k,
          show_rownames = FALSE,
-         gaps_col = cumsum(table(sample_order$genotype, sample_order$condition)[1,]),
-         main = "Interaction proteins – replicate-aware clustering")
+         gaps_col = gaps_col,
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
 dev.off()
-#--> Some replicate seems outliers...
+#--> Clean, no outliers
+
+
+
+out_tbl <- cluster_tbl %>%
+  left_join(df %>% dplyr::select(Component, Class, Size, Saturation) %>% unique) %>%
+  arrange(cluster, Component)
+
+write_tsv(out_tbl, "output/GENELIST-LOGLIMMA-SNX13_Cells-9Cluster.tsv")
+
+
+
+pca <- prcomp(t(log2_expr_sig), scale. = TRUE)
+
+pca_df <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  coldata
+)
+pdf("output/pca-LOGLIMMA-SNX13_Cells.pdf", width = 4, height = 4)
+ggplot(pca_df, aes(PC1, PC2, color = genotype, shape = condition)) +
+  geom_point(size = 4) +
+  geom_text(aes(label = replicate), vjust = -1) +
+  theme_bw()
+dev.off()
+#--> PCA is not too bad...
+
+
+
+
+# Show top 10 Component per cluster
+## Make a tidy table with cluster + log2(norm+1) values (replicate-level)
+prot_tidy_for_plot <- df %>%
+  left_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  filter(!is.na(cluster)) %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO", "LLOME", "RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram", "siSNX13")),
+    log2_abund = log2(abundance_Class + 1)
+  )
+top10_per_cluster <- prot_tidy_for_plot %>%
+  group_by(cluster, Component) %>%
+  summarise(mean_abund = mean(abundance_Class, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_abund, n = 10, with_ties = FALSE) %>%
+  ungroup()
+## Summarise mean ± SEM for plotting (keeps bio reps)
+plot_df <- prot_tidy_for_plot %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Component")) %>%
+  group_by(cluster, Component, genotype, condition) %>%
+  summarise(
+    mean_log2 = mean(log2_abund, na.rm = TRUE),
+    sem_log2  = sd(log2_abund, na.rm = TRUE) / sqrt(sum(!is.na(log2_abund))),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    ymin = mean_log2 - sem_log2,
+    ymax = mean_log2 + sem_log2,
+    panel_label = paste0(" (", Component, ")")
+  )
+## Plot: one PDF per cluster (top 10 panels)
+for (cl in sort(unique(plot_df$cluster))) {
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = condition, y = mean_log2, color = genotype, group = genotype)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2) +
+    geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.15, linewidth = 0.6) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram" = "black", "siSNX13" = "red")) +
+    labs(
+      title = paste0("Top 10 lipids — Cluster ", cl, " (Scram vs siSNX13)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1)",
+      color = "genotype"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "top",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5)
+    )
+  ggsave(
+    filename = sprintf("output/top10_cluster_%02d-LOGLIMMA-SNX13_Cells-9Cluster.pdf", cl),
+    plot = p,
+    width = 5, height = 6
+  )
+}
+
+
+
+
+
+
+# Global lipid characteristics
+comp_annot_all <- df %>%
+  distinct(Component, Class, Size, Saturation)
+
+prop_class_all <- comp_annot_all %>%
+  count(Class, name = "n") %>%
+  mutate(prop = n / sum(n))
+prop_size_all <- comp_annot_all %>%
+  count(Size, name = "n") %>%
+  mutate(prop = n / sum(n))
+prop_sat_all <- comp_annot_all %>%
+  count(Saturation, name = "n") %>%
+  mutate(prop = n / sum(n))
+
+pdf("output/global_composition-Cells.pdf", width = 3, height = 4)
+ggplot(prop_class_all, aes(x = "All components", y = prop, fill = Class)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global lipid class composition") +
+  theme_classic()
+ggplot(prop_size_all, aes(x = "All components", y = prop, fill = Size)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global size composition") +
+  theme_classic()
+ggplot(prop_sat_all, aes(x = "All components", y = prop, fill = Saturation)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global saturation composition") +
+  theme_classic()
+dev.off()
+
+
+# Investigate lipid characteristics of each clusters
+comp_annot_clust <- df %>%
+  inner_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  mutate(cluster = factor(cluster, levels = sort(unique(cluster))))
+
+
+prop_class <- comp_annot_clust %>%
+  count(cluster, Class, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+prop_size <- comp_annot_clust %>%
+  count(cluster, Size, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+prop_sat <- comp_annot_clust %>%
+  count(cluster, Saturation, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+
+pdf("output/cluster_composition-LOGLIMMA-SNX13_Cells-9Cluster.pdf", width = 6, height = 4)
+ggplot(prop_class, aes(x = cluster, y = prop, fill = Class)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Lipid Class composition per cluster") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
+ggplot(prop_size, aes(x = cluster, y = prop, fill = Size)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Size composition per cluster") +
+  theme_classic()
+ggplot(prop_sat, aes(x = cluster, y = prop, fill = Saturation)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Saturation composition per cluster") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+
+comp_annot_clust_all <- comp_annot_clust %>%
+  select(Component, Class, Size, Saturation, cluster) %>%
+  bind_rows(comp_annot_all)
+
+cluster_levels <- c("Global", sort(unique(cluster_tbl$cluster)))
+
+comp_annot_clust_all <- comp_annot_clust_all %>%
+  mutate(cluster = factor(cluster, levels = cluster_levels)) %>%
+  mutate(
+    cluster = ifelse(is.na(cluster), "Global", as.character(cluster)),
+    cluster = factor(cluster, levels = c("Global", sort(unique(cluster[cluster != "Global"]))))
+  )
+
+
+prop_class <- comp_annot_clust_all %>%
+  count(cluster, Class, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+prop_size <- comp_annot_clust_all %>%
+  count(cluster, Size, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+prop_sat <- comp_annot_clust_all %>%
+  count(cluster, Saturation, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+pdf("output/cluster_composition_andGlobal-LOGLIMMA-SNX13_Cells-9Cluster.pdf", width = 6, height = 4)
+ggplot(prop_class, aes(x = cluster, y = prop, fill = Class)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Lipid Class composition (clusters vs global)") +
+  theme_classic()
+ggplot(prop_size, aes(x = cluster, y = prop, fill = Size)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Size composition (clusters vs global)") +
+  theme_classic()
+ggplot(prop_sat, aes(x = cluster, y = prop, fill = Saturation)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Saturation composition (clusters vs global)") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+
+########################################
+## Scram vs siSNX13 - Lysosomes ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Lysosomes",
+         genotype %in% c("Scram", "siSNX13")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO","LLOME","RECOVERY"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype * condition, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+## 7) "LRT-like" global test: are interaction terms jointly != 0?
+## This is the analogue of testing full vs reduced (~ genotype + condition)
+int_cols <- grep("^genotypesiSNX13:condition", colnames(design_full))
+
+interaction_global <- topTableF(
+  fit,
+  int_cols,
+  number = Inf
+) 
+head(interaction_global)
+#--> Signficant Component = different between genotype during the time-course condition
+
+interaction_tbl <- interaction_global %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble() 
+  
+
+
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX13.conditionLLOME),
+      abs(genotypesiSNX13.conditionRECOVERY),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 0)   # <-- threshold here
+
+
+sig_acc <- interaction_tbl_filt$Component
+
+log2_expr_sig <- log2_expr[rownames(log2_expr) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_sig)   # should be 257
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX13"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_sig_ord <- log2_expr_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 8
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Component = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Component)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Component")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+
+
+block_sizes <- sample_order %>%
+  count(genotype, condition, .drop = FALSE) %>%   # add fraction here too if needed
+  pull(n)
+
+gaps_col <- cumsum(block_sizes)[-length(block_sizes)] 
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-SNX13_Lysosomes-8Cluster.pdf", width = 4, height = 4)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = gaps_col,
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+#--> Clean, no outliers
+
+
+
+out_tbl <- cluster_tbl %>%
+  left_join(df %>% dplyr::select(Component, Class, Size, Saturation) %>% unique) %>%
+  arrange(cluster, Component)
+
+write_tsv(out_tbl, "output/GENELIST-LOGLIMMA-SNX13_Lysosomes-8Cluster.tsv")
+
 
 
 
@@ -260,13 +662,958 @@ pca_df <- data.frame(
   PC2 = pca$x[,2],
   coldata
 )
-pdf("output/pca-LOGLIMMA-SNX13.pdf", width = 4, height = 4)
+pdf("output/pca-LOGLIMMA-SNX13_Lysosomes.pdf", width = 4, height = 4)
 ggplot(pca_df, aes(PC1, PC2, color = genotype, shape = condition)) +
   geom_point(size = 4) +
   geom_text(aes(label = replicate), vjust = -1) +
   theme_bw()
 dev.off()
 #--> PCA is not too bad...
+
+
+
+# Show top 10 Component per cluster
+## Make a tidy table with cluster + log2(norm+1) values (replicate-level)
+prot_tidy_for_plot <- df %>%
+  left_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  filter(!is.na(cluster)) %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO", "LLOME", "RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram", "siSNX13")),
+    log2_abund = log2(abundance_Class + 1)
+  )
+top10_per_cluster <- prot_tidy_for_plot %>%
+  group_by(cluster, Component) %>%
+  summarise(mean_abund = mean(abundance_Class, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_abund, n = 10, with_ties = FALSE) %>%
+  ungroup()
+## Summarise mean ± SEM for plotting (keeps bio reps)
+plot_df <- prot_tidy_for_plot %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Component")) %>%
+  group_by(cluster, Component, genotype, condition) %>%
+  summarise(
+    mean_log2 = mean(log2_abund, na.rm = TRUE),
+    sem_log2  = sd(log2_abund, na.rm = TRUE) / sqrt(sum(!is.na(log2_abund))),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    ymin = mean_log2 - sem_log2,
+    ymax = mean_log2 + sem_log2,
+    panel_label = paste0(" (", Component, ")")
+  )
+## Plot: one PDF per cluster (top 10 panels)
+for (cl in sort(unique(plot_df$cluster))) {
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = condition, y = mean_log2, color = genotype, group = genotype)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2) +
+    geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.15, linewidth = 0.6) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram" = "black", "siSNX13" = "red")) +
+    labs(
+      title = paste0("Top 10 lipids — Cluster ", cl, " (Scram vs siSNX13)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1)",
+      color = "genotype"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "top",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5)
+    )
+  ggsave(
+    filename = sprintf("output/top10_cluster_%02d-LOGLIMMA-SNX13_Lysosomes-8Cluster.pdf", cl),
+    plot = p,
+    width = 5, height = 6
+  )
+}
+
+
+
+
+# Global lipid characteristics
+comp_annot_all <- df %>%
+  distinct(Component, Class, Size, Saturation)
+
+prop_class_all <- comp_annot_all %>%
+  count(Class, name = "n") %>%
+  mutate(prop = n / sum(n))
+prop_size_all <- comp_annot_all %>%
+  count(Size, name = "n") %>%
+  mutate(prop = n / sum(n))
+prop_sat_all <- comp_annot_all %>%
+  count(Saturation, name = "n") %>%
+  mutate(prop = n / sum(n))
+
+pdf("output/global_composition-Lysosomes.pdf", width = 3, height = 4)
+ggplot(prop_class_all, aes(x = "All components", y = prop, fill = Class)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global lipid class composition") +
+  theme_classic()
+ggplot(prop_size_all, aes(x = "All components", y = prop, fill = Size)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global size composition") +
+  theme_classic()
+ggplot(prop_sat_all, aes(x = "All components", y = prop, fill = Saturation)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global saturation composition") +
+  theme_classic()
+dev.off()
+
+
+# Investigate lipid characteristics of each clusters
+comp_annot_clust <- df %>%
+  inner_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  mutate(cluster = factor(cluster, levels = sort(unique(cluster))))
+
+
+prop_class <- comp_annot_clust %>%
+  count(cluster, Class, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+prop_size <- comp_annot_clust %>%
+  count(cluster, Size, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+prop_sat <- comp_annot_clust %>%
+  count(cluster, Saturation, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+
+pdf("output/cluster_composition-LOGLIMMA-SNX13_Lysosomes-8Cluster.pdf", width = 6, height = 4)
+ggplot(prop_class, aes(x = cluster, y = prop, fill = Class)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Lipid Class composition per cluster") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
+ggplot(prop_size, aes(x = cluster, y = prop, fill = Size)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Size composition per cluster") +
+  theme_classic()
+ggplot(prop_sat, aes(x = cluster, y = prop, fill = Saturation)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Saturation composition per cluster") +
+  theme_classic()
+dev.off()
+
+
+
+
+comp_annot_clust_all <- comp_annot_clust %>%
+  select(Component, Class, Size, Saturation, cluster) %>%
+  bind_rows(comp_annot_all)
+
+cluster_levels <- c("Global", sort(unique(cluster_tbl$cluster)))
+
+comp_annot_clust_all <- comp_annot_clust_all %>%
+  mutate(cluster = factor(cluster, levels = cluster_levels)) %>%
+  mutate(
+    cluster = ifelse(is.na(cluster), "Global", as.character(cluster)),
+    cluster = factor(cluster, levels = c("Global", sort(unique(cluster[cluster != "Global"]))))
+  )
+
+
+prop_class <- comp_annot_clust_all %>%
+  count(cluster, Class, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+prop_size <- comp_annot_clust_all %>%
+  count(cluster, Size, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+prop_sat <- comp_annot_clust_all %>%
+  count(cluster, Saturation, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+pdf("output/cluster_composition_andGlobal-LOGLIMMA-SNX13_Lysosomes-8Cluster.pdf", width = 6, height = 4)
+ggplot(prop_class, aes(x = cluster, y = prop, fill = Class)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Lipid Class composition (clusters vs global)") +
+  theme_classic()
+ggplot(prop_size, aes(x = cluster, y = prop, fill = Size)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Size composition (clusters vs global)") +
+  theme_classic()
+ggplot(prop_sat, aes(x = cluster, y = prop, fill = Saturation)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Saturation composition (clusters vs global)") +
+  theme_classic()
+dev.off()
+
+
+
+########################################
+## Scram vs siSNX14 - Cells ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Cells",
+         genotype %in% c("Scram", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO","LLOME","RECOVERY"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype * condition, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+## 7) "LRT-like" global test: are interaction terms jointly != 0?
+## This is the analogue of testing full vs reduced (~ genotype + condition)
+int_cols <- grep("^genotypesiSNX14:condition", colnames(design_full))
+
+interaction_global <- topTableF(
+  fit,
+  int_cols,
+  number = Inf
+) 
+head(interaction_global)
+#--> Signficant Component = different between genotype during the time-course condition
+
+interaction_tbl <- interaction_global %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble() 
+  
+
+
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX14.conditionLLOME),
+      abs(genotypesiSNX14.conditionRECOVERY),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 0)   # <-- threshold here
+
+
+sig_acc <- interaction_tbl_filt$Component
+
+log2_expr_sig <- log2_expr[rownames(log2_expr) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_sig)   # should be 258
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX14"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_sig_ord <- log2_expr_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 8
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Component = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Component)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Component")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+
+
+block_sizes <- sample_order %>%
+  count(genotype, condition, .drop = FALSE) %>%   # add fraction here too if needed
+  pull(n)
+
+gaps_col <- cumsum(block_sizes)[-length(block_sizes)] 
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-SNX14_Cells-8Cluster.pdf", width = 4, height = 4)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = gaps_col,
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+#--> Clean, no outliers
+
+out_tbl <- cluster_tbl %>%
+  left_join(df %>% dplyr::select(Component, Class, Size, Saturation) %>% unique) %>%
+  arrange(cluster, Component)
+
+write_tsv(out_tbl, "output/GENELIST-LOGLIMMA-SNX14_Cells-8Cluster.tsv")
+
+
+pca <- prcomp(t(log2_expr_sig), scale. = TRUE)
+
+pca_df <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  coldata
+)
+pdf("output/pca-LOGLIMMA-SNX14_Cells.pdf", width = 4, height = 4)
+ggplot(pca_df, aes(PC1, PC2, color = genotype, shape = condition)) +
+  geom_point(size = 4) +
+  geom_text(aes(label = replicate), vjust = -1) +
+  theme_bw()
+dev.off()
+#--> PCA is not too bad...
+
+
+
+# Show top 10 Component per cluster
+## Make a tidy table with cluster + log2(norm+1) values (replicate-level)
+prot_tidy_for_plot <- df %>%
+  left_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  filter(!is.na(cluster)) %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO", "LLOME", "RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram", "siSNX14")),
+    log2_abund = log2(abundance_Class + 1)
+  )
+top10_per_cluster <- prot_tidy_for_plot %>%
+  group_by(cluster, Component) %>%
+  summarise(mean_abund = mean(abundance_Class, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_abund, n = 10, with_ties = FALSE) %>%
+  ungroup()
+## Summarise mean ± SEM for plotting (keeps bio reps)
+plot_df <- prot_tidy_for_plot %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Component")) %>%
+  group_by(cluster, Component, genotype, condition) %>%
+  summarise(
+    mean_log2 = mean(log2_abund, na.rm = TRUE),
+    sem_log2  = sd(log2_abund, na.rm = TRUE) / sqrt(sum(!is.na(log2_abund))),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    ymin = mean_log2 - sem_log2,
+    ymax = mean_log2 + sem_log2,
+    panel_label = paste0(" (", Component, ")")
+  )
+## Plot: one PDF per cluster (top 10 panels)
+for (cl in sort(unique(plot_df$cluster))) {
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = condition, y = mean_log2, color = genotype, group = genotype)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2) +
+    geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.15, linewidth = 0.6) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram" = "black", "siSNX14" = "red")) +
+    labs(
+      title = paste0("Top 10 lipids — Cluster ", cl, " (Scram vs siSNX14)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1)",
+      color = "genotype"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "top",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5)
+    )
+  ggsave(
+    filename = sprintf("output/top10_cluster_%02d-LOGLIMMA-SNX14_Cells-8Cluster.pdf", cl),
+    plot = p,
+    width = 5, height = 6
+  )
+}
+
+
+
+
+
+
+# Global lipid characteristics
+comp_annot_all <- df %>%
+  distinct(Component, Class, Size, Saturation)
+
+prop_class_all <- comp_annot_all %>%
+  count(Class, name = "n") %>%
+  mutate(prop = n / sum(n))
+prop_size_all <- comp_annot_all %>%
+  count(Size, name = "n") %>%
+  mutate(prop = n / sum(n))
+prop_sat_all <- comp_annot_all %>%
+  count(Saturation, name = "n") %>%
+  mutate(prop = n / sum(n))
+
+pdf("output/global_composition-Cells.pdf", width = 3, height = 4)
+ggplot(prop_class_all, aes(x = "All components", y = prop, fill = Class)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global lipid class composition") +
+  theme_classic()
+ggplot(prop_size_all, aes(x = "All components", y = prop, fill = Size)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global size composition") +
+  theme_classic()
+ggplot(prop_sat_all, aes(x = "All components", y = prop, fill = Saturation)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global saturation composition") +
+  theme_classic()
+dev.off()
+
+
+# Investigate lipid characteristics of each clusters
+comp_annot_clust <- df %>%
+  inner_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  mutate(cluster = factor(cluster, levels = sort(unique(cluster))))
+
+
+prop_class <- comp_annot_clust %>%
+  count(cluster, Class, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+prop_size <- comp_annot_clust %>%
+  count(cluster, Size, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+prop_sat <- comp_annot_clust %>%
+  count(cluster, Saturation, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+
+pdf("output/cluster_composition-LOGLIMMA-SNX14_Cells-8Cluster.pdf", width = 6, height = 4)
+ggplot(prop_class, aes(x = cluster, y = prop, fill = Class)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Lipid Class composition per cluster") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
+ggplot(prop_size, aes(x = cluster, y = prop, fill = Size)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Size composition per cluster") +
+  theme_classic()
+ggplot(prop_sat, aes(x = cluster, y = prop, fill = Saturation)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Saturation composition per cluster") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+comp_annot_clust_all <- comp_annot_clust %>%
+  select(Component, Class, Size, Saturation, cluster) %>%
+  bind_rows(comp_annot_all)
+
+cluster_levels <- c("Global", sort(unique(cluster_tbl$cluster)))
+
+comp_annot_clust_all <- comp_annot_clust_all %>%
+  mutate(cluster = factor(cluster, levels = cluster_levels)) %>%
+  mutate(
+    cluster = ifelse(is.na(cluster), "Global", as.character(cluster)),
+    cluster = factor(cluster, levels = c("Global", sort(unique(cluster[cluster != "Global"]))))
+  )
+
+
+prop_class <- comp_annot_clust_all %>%
+  count(cluster, Class, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+prop_size <- comp_annot_clust_all %>%
+  count(cluster, Size, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+prop_sat <- comp_annot_clust_all %>%
+  count(cluster, Saturation, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+pdf("output/cluster_composition_andGlobal-LOGLIMMA-SNX14_Cells-8Cluster.pdf", width = 6, height = 4)
+ggplot(prop_class, aes(x = cluster, y = prop, fill = Class)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Lipid Class composition (clusters vs global)") +
+  theme_classic()
+ggplot(prop_size, aes(x = cluster, y = prop, fill = Size)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Size composition (clusters vs global)") +
+  theme_classic()
+ggplot(prop_sat, aes(x = cluster, y = prop, fill = Saturation)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Saturation composition (clusters vs global)") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+########################################
+## Scram vs siSNX14 - Lysosomes ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Lysosomes",
+         genotype %in% c("Scram", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO","LLOME","RECOVERY"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype * condition, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+## 7) "LRT-like" global test: are interaction terms jointly != 0?
+## This is the analogue of testing full vs reduced (~ genotype + condition)
+int_cols <- grep("^genotypesiSNX14:condition", colnames(design_full))
+
+interaction_global <- topTableF(
+  fit,
+  int_cols,
+  number = Inf
+) 
+head(interaction_global)
+#--> Signficant Component = different between genotype during the time-course condition
+
+interaction_tbl <- interaction_global %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble() 
+  
+
+
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX14.conditionLLOME),
+      abs(genotypesiSNX14.conditionRECOVERY),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 0)   # <-- threshold here
+
+
+sig_acc <- interaction_tbl_filt$Component
+
+log2_expr_sig <- log2_expr[rownames(log2_expr) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_sig)   # should be 261
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX14"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_sig_ord <- log2_expr_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 8
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Component = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Component)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Component")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+
+
+block_sizes <- sample_order %>%
+  count(genotype, condition, .drop = FALSE) %>%   # add fraction here too if needed
+  pull(n)
+
+gaps_col <- cumsum(block_sizes)[-length(block_sizes)] 
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-SNX14_Lysosomes-8Cluster.pdf", width = 4, height = 4)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = gaps_col,
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+#--> Clean, no outliers
+
+
+
+out_tbl <- cluster_tbl %>%
+  left_join(df %>% dplyr::select(Component, Class, Size, Saturation) %>% unique) %>%
+  arrange(cluster, Component)
+
+write_tsv(out_tbl, "output/GENELIST-LOGLIMMA-SNX14_Lysosomes-8Cluster.tsv")
+
+
+
+pca <- prcomp(t(log2_expr_sig), scale. = TRUE)
+
+pca_df <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  coldata
+)
+pdf("output/pca-LOGLIMMA-SNX14_Lysosomes.pdf", width = 4, height = 4)
+ggplot(pca_df, aes(PC1, PC2, color = genotype, shape = condition)) +
+  geom_point(size = 4) +
+  geom_text(aes(label = replicate), vjust = -1) +
+  theme_bw()
+dev.off()
+#--> PCA is not too bad...
+
+
+
+# Show top 10 Component per cluster
+## Make a tidy table with cluster + log2(norm+1) values (replicate-level)
+prot_tidy_for_plot <- df %>%
+  left_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  filter(!is.na(cluster)) %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO", "LLOME", "RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram", "siSNX14")),
+    log2_abund = log2(abundance_Class + 1)
+  )
+top10_per_cluster <- prot_tidy_for_plot %>%
+  group_by(cluster, Component) %>%
+  summarise(mean_abund = mean(abundance_Class, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_abund, n = 10, with_ties = FALSE) %>%
+  ungroup()
+## Summarise mean ± SEM for plotting (keeps bio reps)
+plot_df <- prot_tidy_for_plot %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Component")) %>%
+  group_by(cluster, Component, genotype, condition) %>%
+  summarise(
+    mean_log2 = mean(log2_abund, na.rm = TRUE),
+    sem_log2  = sd(log2_abund, na.rm = TRUE) / sqrt(sum(!is.na(log2_abund))),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    ymin = mean_log2 - sem_log2,
+    ymax = mean_log2 + sem_log2,
+    panel_label = paste0(" (", Component, ")")
+  )
+## Plot: one PDF per cluster (top 10 panels)
+for (cl in sort(unique(plot_df$cluster))) {
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = condition, y = mean_log2, color = genotype, group = genotype)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2) +
+    geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.15, linewidth = 0.6) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram" = "black", "siSNX14" = "red")) +
+    labs(
+      title = paste0("Top 10 lipids — Cluster ", cl, " (Scram vs siSNX14)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1)",
+      color = "genotype"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "top",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5)
+    )
+  ggsave(
+    filename = sprintf("output/top10_cluster_%02d-LOGLIMMA-SNX14_Lysosomes-8Cluster.pdf", cl),
+    plot = p,
+    width = 5, height = 6
+  )
+}
+
+
+
+
+
+
+
+# Global lipid characteristics
+comp_annot_all <- df %>%
+  distinct(Component, Class, Size, Saturation)
+
+prop_class_all <- comp_annot_all %>%
+  count(Class, name = "n") %>%
+  mutate(prop = n / sum(n))
+prop_size_all <- comp_annot_all %>%
+  count(Size, name = "n") %>%
+  mutate(prop = n / sum(n))
+prop_sat_all <- comp_annot_all %>%
+  count(Saturation, name = "n") %>%
+  mutate(prop = n / sum(n))
+
+pdf("output/global_composition-Lysosomes.pdf", width = 3, height = 4)
+ggplot(prop_class_all, aes(x = "All components", y = prop, fill = Class)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global lipid class composition") +
+  theme_classic()
+ggplot(prop_size_all, aes(x = "All components", y = prop, fill = Size)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global size composition") +
+  theme_classic()
+ggplot(prop_sat_all, aes(x = "All components", y = prop, fill = Saturation)) +
+  geom_col(width = 0.8) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Proportion of components", title = "Global saturation composition") +
+  theme_classic()
+dev.off()
+
+
+
+
+# Investigate lipid characteristics of each clusters
+comp_annot_clust <- df %>%
+  inner_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  mutate(cluster = factor(cluster, levels = sort(unique(cluster))))
+
+
+prop_class <- comp_annot_clust %>%
+  count(cluster, Class, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+prop_size <- comp_annot_clust %>%
+  count(cluster, Size, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+prop_sat <- comp_annot_clust %>%
+  count(cluster, Saturation, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+
+pdf("output/cluster_composition-LOGLIMMA-SNX14_Lysosomes-8Cluster.pdf", width = 6, height = 4)
+ggplot(prop_class, aes(x = cluster, y = prop, fill = Class)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Lipid Class composition per cluster") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
+ggplot(prop_size, aes(x = cluster, y = prop, fill = Size)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Size composition per cluster") +
+  theme_classic()
+ggplot(prop_sat, aes(x = cluster, y = prop, fill = Saturation)) +
+  geom_col(position = "fill", width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components", title = "Saturation composition per cluster") +
+  theme_classic()
+dev.off()
+
+
+
+
+
+
+comp_annot_clust_all <- comp_annot_clust %>%
+  select(Component, Class, Size, Saturation, cluster) %>%
+  bind_rows(comp_annot_all)
+
+cluster_levels <- c("Global", sort(unique(cluster_tbl$cluster)))
+
+comp_annot_clust_all <- comp_annot_clust_all %>%
+  mutate(cluster = factor(cluster, levels = cluster_levels)) %>%
+  mutate(
+    cluster = ifelse(is.na(cluster), "Global", as.character(cluster)),
+    cluster = factor(cluster, levels = c("Global", sort(unique(cluster[cluster != "Global"]))))
+  )
+
+
+prop_class <- comp_annot_clust_all %>%
+  count(cluster, Class, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+prop_size <- comp_annot_clust_all %>%
+  count(cluster, Size, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+prop_sat <- comp_annot_clust_all %>%
+  count(cluster, Saturation, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(prop = n / sum(n)) %>%
+  ungroup()
+
+pdf("output/cluster_composition_andGlobal-LOGLIMMA-SNX14_Lysosomes-8Cluster.pdf", width = 6, height = 4)
+ggplot(prop_class, aes(x = cluster, y = prop, fill = Class)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Lipid Class composition (clusters vs global)") +
+  theme_classic()
+ggplot(prop_size, aes(x = cluster, y = prop, fill = Size)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Size composition (clusters vs global)") +
+  theme_classic()
+ggplot(prop_sat, aes(x = cluster, y = prop, fill = Saturation)) +
+  geom_col(width = 0.85) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Cluster", y = "Proportion of components",
+       title = "Saturation composition (clusters vs global)") +
+  theme_classic()
+dev.off()
+
+
+
 
 
 ```

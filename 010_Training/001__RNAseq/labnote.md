@@ -207,6 +207,9 @@ conda activate deseq2
 # install extra packages within conda env
 conda install -c conda-forge r-ragg 
 conda install -c conda-forge r-xml
+
+# Load modules to avoid tidyverse installation zlib issue
+module load zlib
 ```
 
 Open R and install deseq2:
