@@ -34635,11 +34635,11 @@ Part_Granule_subset_seurat <- ScaleData(Part_Granule_subset_seurat, features = a
 DefaultAssay(Part_Granule_subset_seurat) <- "RNA"
 
 
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-granuleOnly-version5dim40kparam15res015-Dcx.pdf", width=10, height=6)
-FeaturePlot(Part_Granule_subset_seurat, features = c("Dcx"), max.cutoff = 0.75, cols = c("grey", "red"), split.by = "condition", pt.size = 0.75)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-granuleOnly-version5dim40kparam15res015-Sox11.pdf", width=10, height=6)
+FeaturePlot(Part_Granule_subset_seurat, features = c("Sox11"), max.cutoff = 0.75, cols = c("grey", "red"), split.by = "condition", pt.size = 0.75)
 dev.off()
-pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-granuleOnly-version5dim40kparam15res015-Grin2c.pdf", width=10, height=6)
-FeaturePlot(Part_Granule_subset_seurat, features = c("Grin2c"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition", pt.size = 0.75)
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-granuleOnly-version5dim40kparam15res015-Pax6.pdf", width=10, height=6)
+FeaturePlot(Part_Granule_subset_seurat, features = c("Pax6"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition", pt.size = 0.75)
 dev.off()
 
 
@@ -38642,6 +38642,106 @@ sig_data <- sig_data %>%
   left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
 
 pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-geneUpGlu-filterNeurons-STAT.pdf", width=5, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+
+
+# RELATED to Kelly CB reglated genes ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule"))
+
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",  "Granule")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Ctnnb1", "Pax6", "Lrp8", "Cbln1", "Sox11") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-overlapKellyCBgenes-filterNeurons-STAT.pdf", width=3, height=3)
 
 ###### Generate separate plots per gene
 for (gene in genes_of_interest) {
@@ -38664,6 +38764,109 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+# All Kelly CB-related genes ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule", "UBC", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi", "CerebellarNuclei", "BergmanGlia", "Astrocyte", "Oligodendrocyte"))
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",  "Granule", "UBC", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi", "CerebellarNuclei", "BergmanGlia", "Astrocyte", "Oligodendrocyte")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Atoh1","Lrp8","Bdnf","Ctnnb1","Cbln1","Chd4","Chd7","En1","En2","Fgf22","Gli1","Gli2","Gli3","Stk11","Mxd3","Magea6","Neurod1","Nlgn1","Notch2","Mycn","Nrxn1","Ntf3","Pax6","Ptf1a","Reln","Shh","Sox2","Sox3","Sox11","Cntn2","Wnt7a","Zic1","Zic4") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-CBrelatedKelly-filterNeurons-STAT.pdf", width=5, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
 
 
 
@@ -76625,7 +76828,7 @@ dev.off()
 
 ## show only one gene ##################
 ## gene expr over time with SE
-target_gene <- "Eomes"   # <<< change here Mki67, Pcna, Top2a, Rrm1, Rrm2, Ube2c, Tyms
+target_gene <- "Cbln1"   # <<< change here Mki67, Pcna, Top2a, Rrm1, Rrm2, Ube2c, Tyms
 yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
 stopifnot(length(yhat_cell) == ncol(traj1))
 
@@ -88588,4 +88791,61 @@ write.table(
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Kelly follow-up - Dec 2025
+
+From email `Kcnc1-R320H RNAseq follow-up experiments`.
+
+Kelly send me genes with important roles in cerebellar development; lets check whether:
+- They are deregulated in pseudotime DEGs; done manually; 5 genes overlap: 
+  - Ctnnb1/beta-catenin (cl.3) – ↑ Kcnc1
+  - Pax6 (cl.5) – ↓ Kcnc1 
+  - Lrp8/ApoER2 (cl.7) – ↓ Kcnc1 
+  - Cbln1 (cl.6) – ↓ Kcnc1 
+  - Sox11 (cl.5) – ↓ Kcnc1 
+- DEGs in general
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
