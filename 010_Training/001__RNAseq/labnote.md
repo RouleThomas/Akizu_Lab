@@ -190,7 +190,9 @@ mv output/featurecounts_hg38/*rpkm* output/rpkm/
 
 # DEGs with DESeq2 
 
-Let's do a WT vs KO comparison and identify DEGs
+Let's do a WT vs KO comparison and identify DEGs using DESEQ2 in R.
+
+--> Prior starting, I would recommend following this **tutorial for learning [R language](https://r4ds.hadley.nz/intro.html)**
 
 
 ## Prerequisite - installation
@@ -217,12 +219,13 @@ srun --mem=50g --pty bash -l
 
 Open R and install deseq2 (**To open R press `R` and to leave it press `CTRL+D`; NEVER save your workspace**) **--> Install each package one by one! Check error if any; PACKAGE INSTALLATION NEEDS TO BE DONE ONLY ONCE (then, just load your packages)!**:
 ```R
-install.packages("tidyverse")
-
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install("DESeq2")
+
+
+install.packages("tidyverse")
 install.packages("pheatmap")
 BiocManager::install("apeglm")
 install.packages("factoextra")
