@@ -209,10 +209,13 @@ conda install -c conda-forge r-ragg
 conda install -c conda-forge r-xml
 
 # Load modules to avoid tidyverse installation zlib issue
-module load zlib
+#module load zlib
+
+# Load ressources/"computation power"
+srun --mem=50g --pty bash -l
 ```
 
-Open R and install deseq2:
+Open R and install deseq2 (**To open R press `R` and to leave it press `CTRL+D`; NEVER save your workspace**) **--> Install each package one by one! Check error if any; PACKAGE INSTALLATION NEEDS TO BE DONE ONLY ONCE (then, just load your packages)!**:
 ```R
 install.packages("tidyverse")
 
@@ -230,6 +233,53 @@ BiocManager::install("org.Hs.eg.db")
 ```
 
 - *NOTE: After installing a package in R; **R ask whether you want to update old packages; with choice all/some/none --> Always select none(ie. type n)**  to avoid any issue of package compatibilities*
+
+
+
+## If installation failed
+
+### OPTION1 - Install DESEQ2 using conda
+
+```bash
+# Activate conda env
+conda activate deseq2
+
+# Install DESEQ2 using conda
+conda install bioconda::bioconductor-deseq2
+```
+
+Open R and try loading DESEQ2
+
+```R
+library("DESeq2")
+
+
+```
+
+
+
+
+### OPTION2 - install from scratch DESEQ2 with new R version
+If you encounter error installing DESEQ2 try installing the more recent R version from [DESEQ2 from Bioconductor](https://bioconductor.org/packages/release/bioc/html/DESeq2.html):
+```bash
+# Create conda env
+conda create -n deseq2_v1 -c conda-forge r-base=4.5 # HERE type the last version of R as indicated in Bioconductor
+
+# Activate environment
+conda activate deseq2_v1
+```
+
+Then go to R and try installing DESeq2:
+```R
+# Install DESEQ2
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("DESeq2")
+```
+
+
+--> Good luck :) !
 
 
 ## DESeq2 WT vs KO
@@ -253,7 +303,14 @@ conda activate deseq2
 mkdir output/deseq2
 ```
 
-Open R:
+Before working in R, load computational ressources:
+```bash
+# Load ressources/"computation power"
+srun --mem=50g --pty bash -l
+```
+
+
+Then open R by typing `R`:
 
 ```R
 # Load packages
