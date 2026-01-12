@@ -88836,7 +88836,7 @@ Marker genes per Purkinje cell sub-clusters:
 - *Aldoc_2*: Aldoc, Kcng4 , Drd3
 - *Aldoc_3*: Aldoc, Ephb2
 - *Aldoc_4*: Aldoc, Tshz2
-- *Aldoc_5*: Aldoc, Fam19a2
+- *Aldoc_5*: Aldoc, Fam19a2 (=Tafa2)
 - *Aldoc_6*: Aldoc, Alcam
 - *Aldoc_7*: Aldoc, Tox2
 - *A-Aldoc_1*: Kctd16, 2900055J20Rik
@@ -88844,7 +88844,81 @@ Marker genes per Purkinje cell sub-clusters:
 
 
 
-XXXY 
+--> Filter UMAP to only keep Purkinje cells
+
+
+
+```bash
+conda activate scRNAseqV2
+
+```
+
+```R
+# packages
+library("SoupX")
+library("Seurat")
+library("tidyverse")
+library("dplyr")
+library("Seurat")
+library("patchwork")
+library("sctransform")
+library("glmGamPoi")
+library("celldex")
+library("SingleR")
+library("gprofiler2") # for human mouse gene conversion for cell cycle genes
+library("SingleCellExperiment") # for reducedDims
+
+set.seed(42)
+
+
+##################################
+# p14 Purkinje  ##################
+##################################
+
+# import rds
+WT_Kcnc1_p14_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_label.rds") # 
+set.seed(42)
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p14_CB_1step.sct, assay = "RNA")
+
+# Filter Purkinje cells only
+Part_Purkinje <- WT_Kcnc1_CB[, WT_Kcnc1_CB$cluster.annot %in% c("Purkinje")]
+table(Part_Purkinje$cluster.annot) # to double check
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Purkinje)$UMAP),
+  as.data.frame(colData(Part_Purkinje)[, -3])
+  ) %>%
+  sample_frac(1)
+# PLOT
+pdf("output/seurat/UMAP_WT_Kcnc1_p14_CB-version5dim40kparam15res015-Part_Purkinje.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = 1.5) +
+  labs(col = "Genotype") +
+  theme_classic() +
+  scale_color_manual(
+    values = c(
+      "WT"     = "black",
+      "Kcnc1"  = "red"
+    ) )
+dev.off()
+
+
+# Subset Purkinje cells from my seurat
+## cells kept in your SCE subset
+cells_keep <- colnames(Part_Purkinje)
+## (optional safety) only keep cells that exist in the original Seurat
+cells_keep <- intersect(cells_keep, colnames(WT_Kcnc1_p14_CB_1step.sct))
+## subset Seurat while keeping SCT/RNA/integrated + reductions
+Part_Purkinje_sct <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = cells_keep)
+
+# Check Purkinke sub pop marker genes
+DefaultAssay(Part_Purkinje_sct) <- "SCT"
+pdf("output/seurat/FeaturePlot-SCT-Part_Purkinje_p14-version5dim40kparam15res015-PurkinjeMarkers.pdf", width=7, height=25)
+FeaturePlot(Part_Purkinje_sct, features = c("Aldoc", "Kcng4", "Gpr176", "Drd3", "Ephb2", "Tshz2", "Tafa2", "Alcam", "Tox2", "Kctd16", "Vmn2r30"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 
 
@@ -88853,11 +88927,174 @@ XXXY
 
 
 
+##################################
+# p35 Purkinje  ##################
+##################################
+
+# import rds
+WT_Kcnc1_p35_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245.sct_V1_label.rds") # 
+set.seed(42)
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p35_CB_1step.sct, assay = "RNA")
+
+# Filter Pukrinje cells only
+Part_Purkinje <- WT_Kcnc1_CB[, WT_Kcnc1_CB$cluster.annot %in% c("Purkinje")]
+table(Part_Purkinje$cluster.annot) # to double check
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Purkinje)$UMAP),
+  as.data.frame(colData(Part_Purkinje)[, -3])
+  ) %>%
+  sample_frac(1)
+# PLOT
+pdf("output/seurat/UMAP_WT_Kcnc1_p35_CB-version5dim40kparam15res0245-Part_Purkinje.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = 1.5) +
+  labs(col = "Genotype") +
+  theme_classic() +
+  scale_color_manual(
+    values = c(
+      "WT"     = "black",
+      "Kcnc1"  = "red"
+    ) )
+dev.off()
+
+
+# Subset Purkinje cells from my seurat
+## cells kept in your SCE subset
+cells_keep <- colnames(Part_Purkinje)
+## (optional safety) only keep cells that exist in the original Seurat
+cells_keep <- intersect(cells_keep, colnames(WT_Kcnc1_p35_CB_1step.sct))
+## subset Seurat while keeping SCT/RNA/integrated + reductions
+Part_Purkinje_sct <- subset(WT_Kcnc1_p35_CB_1step.sct, cells = cells_keep)
+
+# Check Purkinke sub pop marker genes
+DefaultAssay(Part_Purkinje_sct) <- "SCT"
+pdf("output/seurat/FeaturePlot-SCT-Part_Purkinje_p35-version5dim40kparam15res0245-PurkinjeMarkers.pdf", width=7, height=25)
+FeaturePlot(Part_Purkinje_sct, features = c("Aldoc", "Kcng4", "Gpr176", "Drd3", "Ephb2", "Tshz2", "Tafa2", "Alcam", "Tox2", "Kctd16", "Vmn2r30"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
 
 
 
 
 
+
+
+
+##################################
+# p180 Purkinje  ##################
+##################################
+
+# import rds
+WT_Kcnc1_p180_CB_1step.sct <- readRDS(file = "output/seurat/WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115.sct_V1_label.rds")
+set.seed(42)
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_p180_CB_1step.sct, assay = "RNA")
+
+# Filter Purkinje cells only
+Part_Purkinje <- WT_Kcnc1_CB[, WT_Kcnc1_CB$cluster.annot %in% c("Purkinje")]
+table(Part_Purkinje$cluster.annot) # to double check
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Purkinje)$UMAP),
+  as.data.frame(colData(Part_Purkinje)[, -3])
+  ) %>%
+  sample_frac(1)
+# PLOT
+pdf("output/seurat/UMAP_WT_Kcnc1_p180_CB-version5dim20kparam10res0115-Part_Purkinje.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = 1.5) +
+  labs(col = "Genotype") +
+  theme_classic() +
+  scale_color_manual(
+    values = c(
+      "WT"     = "black",
+      "Kcnc1"  = "red"
+    ) )
+dev.off()
+
+
+# Subset Purkinje cells from my seurat
+## cells kept in your SCE subset
+cells_keep <- colnames(Part_Purkinje)
+## (optional safety) only keep cells that exist in the original Seurat
+cells_keep <- intersect(cells_keep, colnames(WT_Kcnc1_p180_CB_1step.sct))
+## subset Seurat while keeping SCT/RNA/integrated + reductions
+Part_Purkinje_sct <- subset(WT_Kcnc1_p180_CB_1step.sct, cells = cells_keep)
+
+# Check Purkinke sub pop marker genes
+DefaultAssay(Part_Purkinje_sct) <- "SCT"
+pdf("output/seurat/FeaturePlot-SCT-Part_Purkinje_p180-version5dim20kparam10res0115-PurkinjeMarkers.pdf", width=7, height=25)
+FeaturePlot(Part_Purkinje_sct, features = c("Aldoc", "Kcng4", "Gpr176", "Drd3", "Ephb2", "Tshz2", "Tafa2", "Alcam", "Tox2", "Kctd16", "Vmn2r30"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
+##################################
+# p14 p35 p180 Purkinje  #########
+##################################
+
+WT_Kcnc1_CB_integrateMerge.sct <- readRDS(file = "output/seurat/WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-V1_numeric.rds")
+
+
+DefaultAssay(WT_Kcnc1_CB_integrateMerge.sct) <- "SCT"
+pdf("output/seurat/FeaturePlot-SCT-WT_Kcnc1_CB_integrateMerge-version3QCversion4dim50kparam30res05-PurkinjeKnwonMarkers.pdf", width=7, height=10)
+FeaturePlot(WT_Kcnc1_CB_integrateMerge.sct, features = c("Calb1", "Slc1a6", "Car8"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_integrateMerge_version3QCversion4dim50kparam30res05_noSplit_label.pdf", width=9, height=6)
+DimPlot(WT_Kcnc1_CB_integrateMerge.sct, reduction = "umap",  label = TRUE, repel = TRUE, pt.size = 0.3, label.size = 5)
+dev.off()
+#--> Cluster22 = Purkinje
+
+
+# convert to SingleCellExperiment
+WT_Kcnc1_CB <- as.SingleCellExperiment(WT_Kcnc1_CB_integrateMerge.sct, assay = "RNA")
+
+# Filter Purkinje cells only
+Part_Purkinje <- WT_Kcnc1_CB[, WT_Kcnc1_CB$seurat_clusters %in% c("22")]
+table(Part_Purkinje$seurat_clusters) # to double check
+# tidy
+df <- bind_cols(
+  as.data.frame(reducedDims(Part_Purkinje)$UMAP),
+  as.data.frame(colData(Part_Purkinje)[, -3])
+  ) %>%
+  sample_frac(1)
+# PLOT
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_integrateMerge_CB-version3QCversion4dim50kparam30res05-Part_Purkinje.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = condition)) +
+  geom_point(size = 1.5) +
+  labs(col = "Genotype") +
+  theme_classic() +
+  scale_color_manual(
+    values = c(
+      "WT"     = "black",
+      "Kcnc1"  = "red"
+    ) )
+dev.off()
+pdf("output/seurat/UMAP_WT_Kcnc1_CB_integrateMerge_CB-version3QCversion4dim50kparam30res05-Part_Purkinje-time.pdf", width=6, height=5)
+ggplot(df, aes(x = UMAP_1, y = UMAP_2, col = time)) +
+  geom_point(size = 1.5) +
+  labs(col = "Time") +
+  theme_classic() 
+dev.off()
+#--> Cells separated based on time, cannot conclude...
+
+
+```
+
+
+
+
+- **p14**: Aldoc is signif up in Kcnc1 (no changes for the other genes). No clear sub-population of Purkinje.
+- **p35**: No signif changes of gene expr. No clear sub-population of Purkinje.
+- **p180**: No signif changes of gene expr. No clear sub-population of Purkinje.
+- **p14p35p180**: Cells are separated based on time.. No clear sub-population of Purkinje.
 
 
 
