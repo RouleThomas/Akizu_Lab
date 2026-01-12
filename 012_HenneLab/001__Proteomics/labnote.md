@@ -942,6 +942,110 @@ prot_tidy <- prot %>%
     remove = FALSE
   ) 
 
+
+########################################
+## All samples PCA ####################
+########################################
+
+
+df <- prot_tidy %>%
+  filter(`Protein_FDR` == "High",
+         type == "Norm",
+         genotype %in% c("Scram", "siSNX13", "siSNX14")) %>%
+  dplyr::select(Accession, GeneSymbol, sample, condition, genotype, replicate, abundance)
+
+
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Accession, sample, abundance) %>%
+  pivot_wider(names_from = sample, values_from = abundance) %>%
+  column_to_rownames("Accession") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+## 5) Strict filter: remove any protein with ≥1 NA
+keep <- complete.cases(log2_expr)
+log2_expr_f <- log2_expr[keep, , drop = FALSE]
+
+pca <- prcomp(t(log2_expr_f), scale. = TRUE)
+
+pca_df <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  coldata
+)
+pdf("output/pca-LOGLIMMA-allSamples.pdf", width = 4, height = 4)
+ggplot(pca_df, aes(PC1, PC2, color = genotype, shape = condition)) +
+  geom_point(size = 4) +
+  geom_text(aes(label = replicate), vjust = -1) +
+  theme_bw()
+dev.off()
+#
+
+
+
+########################################
+## Mutants DMSO PCA ####################
+########################################
+
+
+df <- prot_tidy %>%
+  filter(`Protein_FDR` == "High",
+         type == "Norm",
+         genotype %in% c("siSNX13", "siSNX14"),
+         condition %in% c("DMSO")) %>%
+  dplyr::select(Accession, GeneSymbol, sample, condition, genotype, replicate, abundance)
+
+
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Accession, sample, abundance) %>%
+  pivot_wider(names_from = sample, values_from = abundance) %>%
+  column_to_rownames("Accession") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+## 5) Strict filter: remove any protein with ≥1 NA
+keep <- complete.cases(log2_expr)
+log2_expr_f <- log2_expr[keep, , drop = FALSE]
+
+pca <- prcomp(t(log2_expr_f), scale. = TRUE)
+
+pca_df <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  coldata
+)
+pdf("output/pca-LOGLIMMA-MutatntsDMSO.pdf", width = 4, height = 4)
+ggplot(pca_df, aes(PC1, PC2, color = genotype, shape = condition)) +
+  geom_point(size = 4) +
+  geom_text(aes(label = replicate), vjust = -1) +
+  theme_bw()
+dev.off()
+#--> PCA is not too bad...
+
+
+
+
+
+
+
+
+
 ########################################
 ## Scram vs siSNX13 ####################
 ########################################

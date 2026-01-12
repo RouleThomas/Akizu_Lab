@@ -88822,14 +88822,29 @@ Kelly send me genes with important roles in cerebellar development; lets check w
 
 
 
+# Naiara follow-up - Jan 2026
+
+Check whether we can detect the 9 Purkinje cell sub-clusters identified in [PMID:34616064](https://pmc.ncbi.nlm.nih.gov/articles/PMC8494635/):
+- Check for each time point separately
+- Combine all time points into a single UMAP (if not enough cells by checking per time point)
+
+--> Check if diff. in sub pop. cell abundance; and DEGs in these sub clusters (ie. any relevant NDD-genes?)
+
+
+Marker genes per Purkinje cell sub-clusters:
+- *Aldoc_1*: Aldoc, Kcng4 , Gpr176 
+- *Aldoc_2*: Aldoc, Kcng4 , Drd3
+- *Aldoc_3*: Aldoc, Ephb2
+- *Aldoc_4*: Aldoc, Tshz2
+- *Aldoc_5*: Aldoc, Fam19a2
+- *Aldoc_6*: Aldoc, Alcam
+- *Aldoc_7*: Aldoc, Tox2
+- *A-Aldoc_1*: Kctd16, 2900055J20Rik
+- *A-Aldoc_2*: Kctd16, Vmn2r30
 
 
 
-
-
-
-
-
+XXXY 
 
 
 
