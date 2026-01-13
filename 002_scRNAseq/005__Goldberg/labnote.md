@@ -34588,6 +34588,21 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15re
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Cntn5"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Nrxn1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Nrxn1"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Pax6.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Pax6"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Gria2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gria2"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-CBrelatedKellyDEGs.pdf", width=10, height=70)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Lrp8","Bdnf","Ctnnb1","Cbln1","Chd7","Neurod1","Nlgn1","Nrxn1","Pax6","Reln","Shh","Sox2","Cntn2","Zic1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
 
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-HomeostaticMicrogliaMarkers.pdf", width=15, height=12)
@@ -38671,7 +38686,7 @@ dev.off()
 
 
 
-# RELATED to Kelly CB reglated genes ################################################################
+# RELATED to xxx ################################################################
 ## Subset seurat object to keep cell tye of interest
 
 WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
@@ -38816,7 +38831,11 @@ combined_deg <- combined_deg %>%
     TRUE               ~ ""
   ))
 
-
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.05   & abs(avg_log2FC) >= 0.1 ~ "*",
+    TRUE                                           ~ ""
+  ))
 
 # Generate the violin plot
 ###### Define genes of interest
@@ -41072,6 +41091,22 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Slc32a1.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Slc32a1"), max.cutoff = 0.5, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Sox2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Sox2"), max.cutoff = 0.5, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-CBrelatedKellyDEGs.pdf", width=10, height=70)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Lrp8","Bdnf","Ctnnb1","Cbln1","Chd7","Neurod1","Nlgn1","Nrxn1","Pax6","Reln","Shh","Sox2","Cntn2","Zic1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
+
+
+
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-HomeostaticMicrogliaMarkers.pdf", width=15, height=20)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("P2ry12","P2ry13","Cx3cr1","Tmem119" ), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
@@ -44617,6 +44652,100 @@ dev.off()
 
 
 
+
+
+
+
+
+
+# All Kelly CB-related genes ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p35_CB_1step_subset <- subset(WT_Kcnc1_p35_CB_1step.sct, 
+                                       subset = cluster.annot %in% c("Granule", "UBC", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi", "CerebellarNuclei", "BergmanGlia", "Astrocyte", "Oligodendrocyte"))
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p35_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Granule", "UBC", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi", "CerebellarNuclei", "BergmanGlia", "Astrocyte", "Oligodendrocyte")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.05   & abs(avg_log2FC) >= 0.1 ~ "*",
+    TRUE                                           ~ ""
+  ))
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Atoh1","Lrp8","Bdnf","Ctnnb1","Cbln1","Chd4","Chd7","En1","En2","Fgf22","Gli1","Gli2","Gli3","Stk11","Mxd3","Magea6","Neurod1","Nlgn1","Notch2","Mycn","Nrxn1","Ntf3","Pax6","Ptf1a","Reln","Shh","Sox2","Sox3","Sox11","Cntn2","Wnt7a","Zic1","Zic4") # 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p35_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p35_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p35_CB_1step_subset-version5dim40kparam15res0245-CBrelatedKelly-filterNeurons-STAT.pdf", width=5, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p35_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
 ```
 
 
@@ -45465,6 +45594,15 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-Apoe.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Apoe"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-Bdnf.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Bdnf"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-CBrelatedKellyDEGs.pdf", width=10, height=70)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Lrp8","Bdnf","Ctnnb1","Cbln1","Chd7","Neurod1","Nlgn1","Nrxn1","Pax6","Reln","Shh","Sox2","Cntn2","Zic1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
 
 
 
@@ -48730,6 +48868,95 @@ for (gene in genes_of_interest) {
 }
 dev.off()
 
+
+
+
+
+
+# All Kelly CB-related genes ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p180_CB_1step_subset <- subset(WT_Kcnc1_p180_CB_1step.sct, 
+                                       subset = cluster.annot %in% c("Granule", "UBC", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi", "CerebellarNuclei", "BergmanGlia", "Astrocyte", "Oligodendrocyte"))
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p180_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Granule", "UBC", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi", "CerebellarNuclei", "BergmanGlia", "Astrocyte", "Oligodendrocyte")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.05   & abs(avg_log2FC) >= 0.1 ~ "*",
+    TRUE                                           ~ ""
+  ))
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Atoh1","Lrp8","Bdnf","Ctnnb1","Cbln1","Chd4","Chd7","En1","En2","Fgf22","Gli1","Gli2","Gli3","Stk11","Mxd3","Magea6","Neurod1","Nlgn1","Notch2","Mycn","Nrxn1","Ntf3","Pax6","Ptf1a","Reln","Shh","Sox2","Sox3","Sox11","Cntn2","Wnt7a","Zic1","Zic4") # 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p180_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p180_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p180_CB_1step_subset-version5dim20kparam10res0115-CBrelatedKelly-filterNeurons-STAT.pdf", width=5, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p180_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
 
 
 
@@ -88822,7 +89049,7 @@ Kelly send me genes with important roles in cerebellar development; lets check w
 
 
 
-# Naiara follow-up - Jan 2026
+# Naiara follow-up Purkinje cells subpop - Jan 2026
 
 Check whether we can detect the 9 Purkinje cell sub-clusters identified in [PMID:34616064](https://pmc.ncbi.nlm.nih.gov/articles/PMC8494635/):
 - Check for each time point separately
@@ -88923,7 +89150,16 @@ dev.off()
 
 
 
-
+DefaultAssay(Part_Purkinje_sct) <- "SCT"
+pdf("output/seurat/FeaturePlot-SCT-Part_Purkinje_p14-version5dim40kparam15res015-AldocKcng4.pdf", width=12, height=5)
+FeaturePlot(
+  Part_Purkinje_sct,
+  features = c("Aldoc", "Kcng4"),
+  max.cutoff = 1,
+  blend = TRUE,
+  cols = c("grey90", "green3", "red3"), split.by = "condition", pt.size = .5
+)
+dev.off()
 
 
 
@@ -88980,6 +89216,18 @@ dev.off()
 
 
 
+DefaultAssay(Part_Purkinje_sct) <- "SCT"
+pdf("output/seurat/FeaturePlot-SCT-Part_Purkinje_p35-version5dim40kparam15res0245-AldocKcng4.pdf", width=12, height=5)
+FeaturePlot(
+  Part_Purkinje_sct,
+  features = c("Aldoc", "Kcng4"),
+  max.cutoff = 1,
+  blend = TRUE,
+  cols = c("grey90", "green3", "red3"), split.by = "condition", pt.size = .5
+)
+dev.off()
+
+
 
 
 
@@ -89032,6 +89280,19 @@ pdf("output/seurat/FeaturePlot-SCT-Part_Purkinje_p180-version5dim20kparam10res01
 FeaturePlot(Part_Purkinje_sct, features = c("Aldoc", "Kcng4", "Gpr176", "Drd3", "Ephb2", "Tshz2", "Tafa2", "Alcam", "Tox2", "Kctd16", "Vmn2r30"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+
+
+
+DefaultAssay(Part_Purkinje_sct) <- "SCT"
+pdf("output/seurat/FeaturePlot-SCT-Part_Purkinje_p180-version5dim20kparam10res0115-AldocKcng4.pdf", width=12, height=5)
+FeaturePlot(
+  Part_Purkinje_sct,
+  features = c("Aldoc" ), 
+  max.cutoff = 1,
+  blend = TRUE,
+  cols = c("grey90", "green3", "red3"), split.by = "condition", pt.size = .5
+)
+dev.off()
 
 
 
