@@ -34598,6 +34598,16 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15re
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Gria2"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Grik2.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Grik2"), max.cutoff = 3, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Ctnnb1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Ctnnb1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-CBrelatedKellyDEGs.pdf", width=10, height=70)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Lrp8","Bdnf","Ctnnb1","Cbln1","Chd7","Neurod1","Nlgn1","Nrxn1","Pax6","Reln","Shh","Sox2","Cntn2","Zic1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
@@ -34650,6 +34660,7 @@ Part_Granule_subset_seurat <- ScaleData(Part_Granule_subset_seurat, features = a
 DefaultAssay(Part_Granule_subset_seurat) <- "RNA"
 
 
+
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-granuleOnly-version5dim40kparam15res015-Sox11.pdf", width=10, height=6)
 FeaturePlot(Part_Granule_subset_seurat, features = c("Sox11"), max.cutoff = 0.75, cols = c("grey", "red"), split.by = "condition", pt.size = 0.75)
 dev.off()
@@ -34657,7 +34668,9 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-granuleOnly-version5dim
 FeaturePlot(Part_Granule_subset_seurat, features = c("Pax6"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition", pt.size = 0.75)
 dev.off()
 
-
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-granuleOnly-version5dim40kparam15res015-Grik2.pdf", width=10, height=6)
+FeaturePlot(Part_Granule_subset_seurat, features = c("Grik2"), cols = c("grey", "red"), split.by = "condition", pt.size = 0.75)
+dev.off()
 
 
 
@@ -34694,6 +34707,11 @@ dev.off()
 pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Apoe-split.pdf", width=8, height=4)
 VlnPlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Apoe"),split.by = "condition", group.by = "cluster.annot", cols = c("black", "red"), pt.size=0)
 dev.off()
+
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Ctnnb1-split.pdf", width=8, height=4)
+VlnPlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Ctnnb1"),split.by = "condition", group.by = "cluster.annot", cols = c("black", "red"), pt.size=0)
+dev.off()
+
 
 
 
@@ -35020,6 +35038,35 @@ dev.off()
 
 
 
+## REACTOME_SIGNALING_BY_WNT
+p14_correct_List17_REACTOME_SIGNALING_BY_WNT <- read.table("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List17gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_SIGNALING_BY_WNT")
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES <- p14_correct_List17_REACTOME_SIGNALING_BY_WNT$NES[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p14_correct_List17_REACTOME_SIGNALING_BY_WNT$cluster)]
+WT_Kcnc1_p14_CB_1step.sct@meta.data$pval <- p14_correct_List17_REACTOME_SIGNALING_BY_WNT$pval[match(WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p14_correct_List17_REACTOME_SIGNALING_BY_WNT$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p14_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p14_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p14_CB_1step.sct@meta.data$NES)                                                       
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p14_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p14_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p14_correct_List17_REACTOME_SIGNALING_BY_WNT, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p14_CB_1step_MAST_REACTOME_SIGNALING_BY_WNT_version5dim40kparam15res015.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
 
 XXXY BELOW SCPA NOT DONE!! NEED TO RUN SLURM JOB
 
@@ -35339,10 +35386,77 @@ fgsea_sets <- list(
 
 
 
+### List13 - Granule maturation markers Tan et al 2023
+fgsea_sets <- list(
+  TanEtAl2023_GranuleT1 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT1.txt")$Gene,
+  TanEtAl2023_GranuleT2 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT2.txt")$Gene,
+  TanEtAl2023_GranuleT3 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT3.txt")$Gene,
+  TanEtAl2023_GranuleT4 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT4.txt")$Gene,
+  TanEtAl2023_GranuleT5 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT5.txt")$Gene
+)
+
+
+### List14 - SHH and Notch pathway - part1
+fgsea_sets <- list(
+  BIOCARTA_SHH_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_SHH_PATHWAY.txt")$Gene,
+  GOBP_REGULATION_OF_NOTCH_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_NOTCH_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_NOTCH_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_NOTCH_SIGNALING_PATHWAY.txt")$Gene
+)
+
+### List15 - SHH and Notch pathway - part2
+fgsea_sets <- list(
+  GOMF_NOTCH_BINDING = read_table(file = "output/Pathway/geneList_GOMF_NOTCH_BINDING.txt")$Gene,
+  REACTOME_SIGNALING_BY_NOTCH = read_table(file = "output/Pathway/geneList_REACTOME_SIGNALING_BY_NOTCH.txt")$Gene,
+  BIOCARTA_NOTCH_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_NOTCH_PATHWAY.txt")$Gene,
+  WP_NOTCH_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_WP_NOTCH_SIGNALING_PATHWAY.txt")$Gene
+)
+
+
+
+### List16 - WNT and beta catenin
+fgsea_sets <- list(
+  GOCC_BETA_CATENIN_TCF_COMPLEX = read_table(file = "output/Pathway/geneList_GOCC_BETA_CATENIN_TCF_COMPLEX.txt")$Gene,
+  GOCC_BETA_CATENIN_DESTRUCTION_COMPLEX = read_table(file = "output/Pathway/geneList_GOCC_BETA_CATENIN_DESTRUCTION_COMPLEX.txt")$Gene,
+  GOCC_CATENIN_COMPLEX = read_table(file = "output/Pathway/geneList_GOCC_CATENIN_COMPLEX.txt")$Gene,
+  WP_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_WP_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  WP_WNT_SIGNALING = read_table(file = "output/Pathway/geneList_WP_WNT_SIGNALING.txt")$Gene
+)
+
+
+### List17 - WNT  - part1
+fgsea_sets <- list(
+  REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING = read_table(file = "output/Pathway/geneList_REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING.txt")$Gene,
+  REACTOME_SIGNALING_BY_WNT = read_table(file = "output/Pathway/geneList_REACTOME_SIGNALING_BY_WNT.txt")$Gene,
+  BIOCARTA_WNT_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_WNT_PATHWAY.txt")$Gene,
+  GOMF_WNT_RECEPTOR_ACTIVITY = read_table(file = "output/Pathway/geneList_GOMF_WNT_RECEPTOR_ACTIVITY.txt")$Gene,
+  GOBP_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_WNT_SIGNALING_PATHWAY.txt")$Gene
+)
+
+
+
+
+
+### List18 - WNT  - part2
+fgsea_sets <- list(
+  GOBP_WNT_PROTEIN_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_WNT_PROTEIN_SECRETION.txt")$Gene,
+  GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_REGULATION_OF_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_CANONICAL_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_CANONICAL_WNT_SIGNALING_PATHWAY.txt")$Gene
+)
+
+
+
+
+
+
+
+
+
 
 
 ## Rank genes based on FC
-genes <- Microglia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- ImmatureGranule %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -35362,14 +35476,14 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-DAM_microglia_v3_top390FCOver1-BergmanGlia.pdf", width=3, height=2)
-plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
-               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-BergmanGlia") +
+pdf("output/Pathway/GSEA_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-REACTOME_SIGNALING_BY_WNT-ImmatureGranule.pdf", width=3, height=2)
+plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_WNT"]],
+               ranks) + labs(title="REACTOME_SIGNALING_BY_WNT-ImmatureGranule") +
                theme_bw()
 dev.off()
 ## command to show leading edge genes
 fgseaResTidy %>%
-  filter(pathway == "DAM_microglia_v3_top390FCOver1") %>%
+  filter(pathway == "REACTOME_SIGNALING_BY_WNT") %>%
   pull(leadingEdge) %>%
   .[[1]]  
 
@@ -35425,10 +35539,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List12gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List18gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List12.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List18.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
   "ImmatureGranule",
   "Granule",
@@ -38889,6 +39003,105 @@ dev.off()
 
 
 
+
+
+
+# Some Kelly CB-related genes - granule################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule"))
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",  "Granule")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.05   & abs(avg_log2FC) >= 0.25 ~ "*",
+    TRUE                                           ~ ""
+  ))
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Pax6", "Cntn2", "Chd7", "Cbln1", "Reln", "Nrxn1", "Nlgn1", "Kcnd2", "Grik2") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-CBrelatedKellyGranule-filterNeurons-STAT.pdf", width=3, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
 ```
 
 
@@ -41097,6 +41310,13 @@ FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Sox2"), max.cutoff = 0.5, c
 dev.off()
 
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Ctnnb1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Ctnnb1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
+
+
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-CBrelatedKellyDEGs.pdf", width=10, height=70)
 FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Lrp8","Bdnf","Ctnnb1","Cbln1","Chd7","Neurod1","Nlgn1","Nrxn1","Pax6","Reln","Shh","Sox2","Cntn2","Zic1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
@@ -41151,6 +41371,14 @@ pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res024
 VlnPlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot", cols = c("black","red"))
 dev.off()
 
+
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Ctnnb1-split.pdf", width=8, height=4)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Ctnnb1"),split.by = "condition", group.by = "cluster.annot", cols = c("black","red"), pt.size=0)
+dev.off()
+
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245-Srsf7-split.pdf", width=8, height=4)
+VlnPlot(WT_Kcnc1_p35_CB_1step.sct, features = c("Srsf7"),split.by = "condition", group.by = "cluster.annot", cols = c("black","red"), pt.size=0)
+dev.off()
 
 
 
@@ -41526,6 +41754,37 @@ dev.off()
 
 
 
+
+
+## REACTOME_SIGNALING_BY_WNT
+p35_correct_List17_REACTOME_SIGNALING_BY_WNT <- read.table("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List17gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_SIGNALING_BY_WNT")
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p35_CB_1step.sct@meta.data$NES <- p35_correct_List17_REACTOME_SIGNALING_BY_WNT$NES[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p35_correct_List17_REACTOME_SIGNALING_BY_WNT$cluster)]
+WT_Kcnc1_p35_CB_1step.sct@meta.data$pval <- p35_correct_List17_REACTOME_SIGNALING_BY_WNT$pval[match(WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p35_correct_List17_REACTOME_SIGNALING_BY_WNT$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p35_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p35_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p35_CB_1step.sct@meta.data$NES)                                                       
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p35_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p35_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p35_correct_List17_REACTOME_SIGNALING_BY_WNT, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p35_CB_1step_MAST_REACTOME_SIGNALING_BY_WNT_version5dim40kparam15res0245.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p35_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
 XXXXX BELOW NOT MOD
 
 # SCPA
@@ -41843,9 +42102,74 @@ fgsea_sets <- list(
 
 
 
+### List13 - Granule maturation markers Tan et al 2023
+fgsea_sets <- list(
+  TanEtAl2023_GranuleT1 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT1.txt")$Gene,
+  TanEtAl2023_GranuleT2 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT2.txt")$Gene,
+  TanEtAl2023_GranuleT3 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT3.txt")$Gene,
+  TanEtAl2023_GranuleT4 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT4.txt")$Gene,
+  TanEtAl2023_GranuleT5 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT5.txt")$Gene
+)
+
+
+### List14 - SHH and Notch pathway - part1
+fgsea_sets <- list(
+  BIOCARTA_SHH_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_SHH_PATHWAY.txt")$Gene,
+  GOBP_REGULATION_OF_NOTCH_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_NOTCH_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_NOTCH_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_NOTCH_SIGNALING_PATHWAY.txt")$Gene
+)
+
+### List15 - SHH and Notch pathway - part2
+fgsea_sets <- list(
+  GOMF_NOTCH_BINDING = read_table(file = "output/Pathway/geneList_GOMF_NOTCH_BINDING.txt")$Gene,
+  REACTOME_SIGNALING_BY_NOTCH = read_table(file = "output/Pathway/geneList_REACTOME_SIGNALING_BY_NOTCH.txt")$Gene,
+  BIOCARTA_NOTCH_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_NOTCH_PATHWAY.txt")$Gene,
+  WP_NOTCH_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_WP_NOTCH_SIGNALING_PATHWAY.txt")$Gene
+)
+
+
+
+### List16 - WNT and beta catenin
+fgsea_sets <- list(
+  GOCC_BETA_CATENIN_TCF_COMPLEX = read_table(file = "output/Pathway/geneList_GOCC_BETA_CATENIN_TCF_COMPLEX.txt")$Gene,
+  GOCC_BETA_CATENIN_DESTRUCTION_COMPLEX = read_table(file = "output/Pathway/geneList_GOCC_BETA_CATENIN_DESTRUCTION_COMPLEX.txt")$Gene,
+  GOCC_CATENIN_COMPLEX = read_table(file = "output/Pathway/geneList_GOCC_CATENIN_COMPLEX.txt")$Gene,
+  WP_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_WP_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  WP_WNT_SIGNALING = read_table(file = "output/Pathway/geneList_WP_WNT_SIGNALING.txt")$Gene
+)
+
+
+### List17 - WNT  - part1
+fgsea_sets <- list(
+  REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING = read_table(file = "output/Pathway/geneList_REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING.txt")$Gene,
+  REACTOME_SIGNALING_BY_WNT = read_table(file = "output/Pathway/geneList_REACTOME_SIGNALING_BY_WNT.txt")$Gene,
+  BIOCARTA_WNT_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_WNT_PATHWAY.txt")$Gene,
+  GOMF_WNT_RECEPTOR_ACTIVITY = read_table(file = "output/Pathway/geneList_GOMF_WNT_RECEPTOR_ACTIVITY.txt")$Gene,
+  GOBP_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_WNT_SIGNALING_PATHWAY.txt")$Gene
+)
+
+
+
+
+
+### List18 - WNT  - part2
+fgsea_sets <- list(
+  GOBP_WNT_PROTEIN_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_WNT_PROTEIN_SECRETION.txt")$Gene,
+  GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_REGULATION_OF_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_CANONICAL_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_CANONICAL_WNT_SIGNALING_PATHWAY.txt")$Gene
+)
+
+
+
+
+
+
+
 
 ## Rank genes based on FC
-genes <- BergmanGlia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Granule %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -41865,14 +42189,14 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-pdf("output/Pathway/GSEA_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-DAM_microglia_v3_top390FCOver1-BergmanGlia.pdf", width=3, height=2)
-plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
-               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-BergmanGlia") +
+pdf("output/Pathway/GSEA_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-REACTOME_SIGNALING_BY_WNT-Granule.pdf", width=3, height=2)
+plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_WNT"]],
+               ranks) + labs(title="REACTOME_SIGNALING_BY_WNT-Granule") +
                theme_bw()
 dev.off()
 ## command to show leading edge genes
 fgseaResTidy %>%
-  filter(pathway == "DAM_microglia_v3_top390FCOver1") %>%
+  filter(pathway == "REACTOME_SIGNALING_BY_WNT") %>%
   pull(leadingEdge) %>%
   .[[1]]  
 
@@ -41929,10 +42253,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List12gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List18gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List12.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p35_CB_version5dim40kparam15res0245_allGenes_MAST-List18.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
 "Granule",
   "UBC",
@@ -45599,6 +45923,11 @@ pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10r
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Bdnf"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
 
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-Ctnnb1.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Ctnnb1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-CBrelatedKellyDEGs.pdf", width=10, height=70)
 FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Lrp8","Bdnf","Ctnnb1","Cbln1","Chd7","Neurod1","Nlgn1","Nrxn1","Pax6","Reln","Shh","Sox2","Cntn2","Zic1"), max.cutoff = 1, cols = c("grey", "red"), split.by = "condition")
 dev.off()
@@ -45649,6 +45978,10 @@ pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res01
 VlnPlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Kcnc1"),split.by = "condition", group.by = "cluster.annot", cols= c("black", "red"))
 dev.off()
 
+
+pdf("output/seurat/VlnPlot_SCT_WT_Kcnc1_p180_CB_1step-version5dim20kparam10res0115-Ctnnb1-split.pdf", width=8, height=4)
+VlnPlot(WT_Kcnc1_p180_CB_1step.sct, features = c("Ctnnb1"),split.by = "condition", group.by = "cluster.annot", cols= c("black", "red"), pt.size=0)
+dev.off()
 
 
 
@@ -46013,6 +46346,38 @@ dev.off()
 
 
 
+
+
+## REACTOME_SIGNALING_BY_WNT
+p180_correct_List17_REACTOME_SIGNALING_BY_WNT <- read.table("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List17gene.txt", sep = "\t", header = TRUE, quote = "") %>% filter(pathway == "REACTOME_SIGNALING_BY_WNT")
+## Add NES and pval information to the Seurat object metadata
+WT_Kcnc1_p180_CB_1step.sct@meta.data$NES <- p180_correct_List17_REACTOME_SIGNALING_BY_WNT$NES[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
+                                                                       p180_correct_List17_REACTOME_SIGNALING_BY_WNT$cluster)]
+WT_Kcnc1_p180_CB_1step.sct@meta.data$pval <- p180_correct_List17_REACTOME_SIGNALING_BY_WNT$pval[match(WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot, 
+                                                                         p180_correct_List17_REACTOME_SIGNALING_BY_WNT$cluster)]
+## Prepare the NES values for visualization
+## Color clusters with pval < 0.05 as grey
+WT_Kcnc1_p180_CB_1step.sct@meta.data$NES_colored <- ifelse(WT_Kcnc1_p180_CB_1step.sct@meta.data$pval > 0.05, NA, 
+                                                          WT_Kcnc1_p180_CB_1step.sct@meta.data$NES)                                                       
+## Extract UMAP coordinates and cluster centers
+umap_coordinates <- as.data.frame(WT_Kcnc1_p180_CB_1step.sct@reductions$umap@cell.embeddings)
+umap_coordinates$cluster <- WT_Kcnc1_p180_CB_1step.sct@meta.data$cluster.annot
+cluster_centers <- aggregate(cbind(UMAP_1, UMAP_2) ~ cluster, data = umap_coordinates, FUN = mean) %>%
+  left_join(p180_correct_List17_REACTOME_SIGNALING_BY_WNT, by = c("cluster" = "cluster"))
+## Format NES values to two decimal places
+cluster_centers$NES <- sprintf("%.2f", cluster_centers$NES)
+## Generate the UMAP plot with FeaturePlot
+pdf("output/seurat/FeaturePlot_WT_Kcnc1_p180_CB_1step_MAST_REACTOME_SIGNALING_BY_WNT_version5dim20kparam10res0115.pdf", width = 6, height = 6)
+FeaturePlot(WT_Kcnc1_p180_CB_1step.sct, features = "NES_colored", pt.size = 0.5, reduction = "umap") +
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", na.value = "gray", midpoint = 0) +
+  geom_text(data = cluster_centers %>% filter(pval<0.05), aes(x = UMAP_1, y = UMAP_2, label = NES), 
+            size = 4, color = "black", fontface = "bold")
+dev.off()
+
+
+
+
+
 XXXXXXXXXXXXXXXXXXXXXXX NOT DONE DOWN
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -46192,11 +46557,6 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ############################################################
 ##################### GSEA plot - FC only ####################
 ############################################################
-library("fgsea")
-
-
-
-
 # GSEA plot
 library("fgsea")
 
@@ -46330,9 +46690,77 @@ fgsea_sets <- list(
 
 
 
+### List13 - Granule maturation markers Tan et al 2023
+fgsea_sets <- list(
+  TanEtAl2023_GranuleT1 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT1.txt")$Gene,
+  TanEtAl2023_GranuleT2 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT2.txt")$Gene,
+  TanEtAl2023_GranuleT3 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT3.txt")$Gene,
+  TanEtAl2023_GranuleT4 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT4.txt")$Gene,
+  TanEtAl2023_GranuleT5 = read_table(file = "output/Pathway/geneList_TanEtAl2023_GranuleT5.txt")$Gene
+)
+
+
+### List14 - SHH and Notch pathway - part1
+fgsea_sets <- list(
+  BIOCARTA_SHH_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_SHH_PATHWAY.txt")$Gene,
+  GOBP_REGULATION_OF_NOTCH_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_NOTCH_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_NOTCH_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_NOTCH_SIGNALING_PATHWAY.txt")$Gene
+)
+
+### List15 - SHH and Notch pathway - part2
+fgsea_sets <- list(
+  GOMF_NOTCH_BINDING = read_table(file = "output/Pathway/geneList_GOMF_NOTCH_BINDING.txt")$Gene,
+  REACTOME_SIGNALING_BY_NOTCH = read_table(file = "output/Pathway/geneList_REACTOME_SIGNALING_BY_NOTCH.txt")$Gene,
+  BIOCARTA_NOTCH_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_NOTCH_PATHWAY.txt")$Gene,
+  WP_NOTCH_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_WP_NOTCH_SIGNALING_PATHWAY.txt")$Gene
+)
+
+
+
+### List16 - WNT and beta catenin
+fgsea_sets <- list(
+  GOCC_BETA_CATENIN_TCF_COMPLEX = read_table(file = "output/Pathway/geneList_GOCC_BETA_CATENIN_TCF_COMPLEX.txt")$Gene,
+  GOCC_BETA_CATENIN_DESTRUCTION_COMPLEX = read_table(file = "output/Pathway/geneList_GOCC_BETA_CATENIN_DESTRUCTION_COMPLEX.txt")$Gene,
+  GOCC_CATENIN_COMPLEX = read_table(file = "output/Pathway/geneList_GOCC_CATENIN_COMPLEX.txt")$Gene,
+  WP_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_WP_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  WP_WNT_SIGNALING = read_table(file = "output/Pathway/geneList_WP_WNT_SIGNALING.txt")$Gene
+)
+
+
+### List17 - WNT  - part1
+fgsea_sets <- list(
+  REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING = read_table(file = "output/Pathway/geneList_REACTOME_WNT_LIGAND_BIOGENESIS_AND_TRAFFICKING.txt")$Gene,
+  REACTOME_SIGNALING_BY_WNT = read_table(file = "output/Pathway/geneList_REACTOME_SIGNALING_BY_WNT.txt")$Gene,
+  BIOCARTA_WNT_PATHWAY = read_table(file = "output/Pathway/geneList_BIOCARTA_WNT_PATHWAY.txt")$Gene,
+  GOMF_WNT_RECEPTOR_ACTIVITY = read_table(file = "output/Pathway/geneList_GOMF_WNT_RECEPTOR_ACTIVITY.txt")$Gene,
+  GOBP_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_WNT_SIGNALING_PATHWAY.txt")$Gene
+)
+
+
+
+
+
+### List18 - WNT  - part2
+fgsea_sets <- list(
+  GOBP_WNT_PROTEIN_SECRETION = read_table(file = "output/Pathway/geneList_GOBP_WNT_PROTEIN_SECRETION.txt")$Gene,
+  GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_REGULATION_OF_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_REGULATION_OF_CANONICAL_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_NON_CANONICAL_WNT_SIGNALING_PATHWAY.txt")$Gene,
+  GOBP_CANONICAL_WNT_SIGNALING_PATHWAY = read_table(file = "output/Pathway/geneList_GOBP_CANONICAL_WNT_SIGNALING_PATHWAY.txt")$Gene
+)
+
+
+
+
+
+
+
+
+
+
 
 ## Rank genes based on FC
-genes <- BergmanGlia %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
+genes <- Granule %>%  ## CHANGE HERE GENE LIST !!!!!!!!!!!!!!!! ##
   rownames_to_column(var = "gene") %>%
   arrange(desc(avg_log2FC)) %>% 
   dplyr::select(gene, avg_log2FC)
@@ -46352,14 +46780,14 @@ fgseaResTidy %>%
 
 
 ## plot GSEA
-pdf("output/Pathway/GSEA_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-DAM_microglia_v3_top390FCOver1-BergmanGlia.pdf", width=3, height=2)
-plotEnrichment(fgsea_sets[["DAM_microglia_v3_top390FCOver1"]],
-               ranks) + labs(title="DAM_microglia_v3_top390FCOver1-BergmanGlia") +
+pdf("output/Pathway/GSEA_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-REACTOME_SIGNALING_BY_WNT-Granule.pdf", width=3, height=2)
+plotEnrichment(fgsea_sets[["REACTOME_SIGNALING_BY_WNT"]],
+               ranks) + labs(title="REACTOME_SIGNALING_BY_WNT-Granule") +
                theme_bw()
 dev.off()
 ## command to show leading edge genes
 fgseaResTidy %>%
-  filter(pathway == "DAM_microglia_v3_top390FCOver1") %>%
+  filter(pathway == "REACTOME_SIGNALING_BY_WNT") %>%
   pull(leadingEdge) %>%
   .[[1]]  
 
@@ -46416,10 +46844,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List12gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List18gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List12.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p180_CB_version5dim20kparam10res0115_allGenes_MAST-List18.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
   "Granule",
   "UBC",
@@ -77053,9 +77481,13 @@ ggplot(df_long, aes(x = as.numeric(Updated_Pseudotime), y = Expression, group = 
        y = "Expression Level")
 dev.off()
 
+
+
+
+
 ## show only one gene ##################
 ## gene expr over time with SE
-target_gene <- "Cbln1"   # <<< change here Mki67, Pcna, Top2a, Rrm1, Rrm2, Ube2c, Tyms
+target_gene <- "Sox11"   # <<< change here Ctnnb1, Pax6, Lrp8, Cbln1, Sox11
 yhat_cell <- predictCells(models = traj1, gene = target_gene)  # vector per cell
 stopifnot(length(yhat_cell) == ncol(traj1))
 
@@ -77098,6 +77530,19 @@ ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill 
   labs(title = paste(target_gene),
        x = "Pseudotime", y = "Fitted expression (mean ± SE)")
 dev.off()
+pdf(paste0("output/condiments/linePlot_traj1_Granule-version4dim40kparam15res03-", target_gene, "_withRibbonScale013.pdf"), width=5, height=3.5)
+ggplot(df_cells, aes(x = Pseudotime_mid, y = mean_expr, color = Condition, fill = Condition)) +
+  geom_ribbon(aes(ymin = mean_expr - sd_expr, ymax = mean_expr + sd_expr), alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c(WT="black", Kcnc1="red")) +
+  scale_fill_manual(values  = c(WT="black", Kcnc1="red")) +
+  theme_bw() +
+  labs(title = paste(target_gene),
+       x = "Pseudotime", y = "Fitted expression (mean ± SE)") +
+  ylim(0,1.3)
+dev.off()
+
+
 
 
 ##########################################

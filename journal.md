@@ -7,6 +7,18 @@ Server name:
 ## Usefull commands
 
 - If a window is buggy, stuck; run: `killall -3 gnome-shell`
+- If encounter error `Fatal error: cannot create 'R_TempDir'`; do:
+
+```bash
+mkdir -p ~/tmp
+chmod 700 ~/tmp
+
+export TMPDIR=~/tmp
+R -q -e "tempdir()"
+```
+--> Work
+
+
 
 ## File transfer
 Only on the CHOP cluster or on a CHOP machine...
