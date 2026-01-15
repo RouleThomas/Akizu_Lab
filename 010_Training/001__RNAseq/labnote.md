@@ -282,6 +282,20 @@ BiocManager::install("DESeq2")
 ```
 
 
+### OPTION3 - Use CHOP pre-make environment
+
+Simply load module with R and DESeq2 installed:
+
+```bash
+module load R-bundle-Bioconductor/3.15-foss-2022a-R-4.2.1
+```
+
+```R
+library("DESeq2")
+library("tidyverse")
+```
+
+
 --> Good luck :) !
 
 
@@ -317,8 +331,11 @@ Then open R by typing `R`:
 
 ```R
 # Load packages
+library("rtracklayer")
 library("DESeq2")
 library("tidyverse")
+
+
 library("EnhancedVolcano")
 library("apeglm")
 library("org.Hs.eg.db")
@@ -327,7 +344,7 @@ library("biomaRt")
 library("RColorBrewer")
 library("pheatmap")
 library("AnnotationDbi")
-library("rtracklayer")
+
 
 # --> Make sure all these packages are installed; install as needed using instal.packages() or bioconductor()
 
