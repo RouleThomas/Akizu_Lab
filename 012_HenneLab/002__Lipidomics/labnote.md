@@ -1619,3 +1619,172 @@ dev.off()
 ```
 
 
+--> This version works but it is confusing to have both Lysosomes and Cell fraction separated.. Let's try integrate both values into a single one next.
+
+
+
+
+
+
+
+
+
+# Testing - v2 - ratio lysosome / cell fractions
+
+Let's try to integrate Lysosomes and Cells fraction by dividing lysosome/cell numbers for each sample. As positive control, we should see the most enriched in lysosome being 40:5 (ie. PA(40:5) or DAG(40:5))
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+
+```R
+
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("limma")
+library("readxl")
+
+
+
+
+# Import file
+lip <- read_excel(
+  path  = "input/For_Thomas_Lipidomics_tidy.xlsx",
+  sheet = "tidy clean"
+)
+
+# Tidy files
+sample_cols <- names(lip)[str_detect(names(lip), "^(Lysosomes|Cells)-")]
+
+lip_tidy <- lip %>%
+  pivot_longer(
+    cols = all_of(sample_cols),
+    names_to = "sample",
+    values_to = "abundance",
+    values_transform = list(abundance = as.numeric)
+  ) %>%
+  extract(
+    col = sample,
+    into = c("fraction", "condition", "genotype", "replicate"),
+    regex = "^(Lysosomes|Cells)-([A-Za-z0-9]+)_([^&]+)&(\\d+)$",
+    remove = FALSE
+  ) 
+
+
+############################################################
+## 1) Normalize within Class (your current approach)
+############################################################
+
+lip_tidy_norm <- lip_tidy %>%
+  group_by(sample, fraction, condition, genotype, replicate, Class) %>%
+  mutate(
+    Class_total     = sum(abundance, na.rm = TRUE),
+    abundance_Class = ifelse(Class_total > 0, abundance / Class_total, NA_real_)
+  ) %>%
+  ungroup()
+
+
+############################################################
+## 2) Compute replicate-level log2 ratio (Lys/Cells), then mean ± SEM
+############################################################
+
+lip_ratio_rep <- lip_tidy_norm %>%
+  # safety: collapse any duplicates within replicate/fraction
+  group_by(Component, Class, Size, Saturation, condition, genotype, replicate, fraction) %>%
+  summarise(abundance_Class = mean(abundance_Class, na.rm = TRUE), .groups = "drop") %>%
+  filter(fraction %in% c("Lysosomes", "Cells")) %>%
+  pivot_wider(names_from = fraction, values_from = abundance_Class) %>%
+  mutate(
+    ratio_Lys_over_Cells = log2((Lysosomes + 1) / (Cells + 1))
+  )
+
+lip_tidy_norm_ratio <- lip_ratio_rep %>%
+  group_by(Component, Class, Size, Saturation, condition, genotype) %>%
+  summarise(
+    mean_ratio = mean(ratio_Lys_over_Cells, na.rm = TRUE),
+    sd_ratio   = sd(ratio_Lys_over_Cells, na.rm = TRUE),
+    n_rep      = sum(!is.na(ratio_Lys_over_Cells)),
+    sem_ratio  = sd_ratio / sqrt(n_rep),
+    ymin = mean_ratio - sem_ratio,
+    ymax = mean_ratio + sem_ratio,
+    .groups = "drop"
+  )
+
+# Quick view
+lip_tidy_norm_ratio %>%
+  select(Component, condition, genotype, mean_ratio, sem_ratio, n_rep) %>%
+  arrange(desc(mean_ratio))
+
+
+#####################################################################
+## QC plot: Scram DMSO — TOP 20 and BOTTOM 20 with error bars
+#####################################################################
+
+ratio_ranked <- lip_tidy_norm_ratio %>%
+  filter(genotype == "Scram", condition == "DMSO") %>%
+  filter(is.finite(mean_ratio), is.finite(ymin), is.finite(ymax)) %>%
+  arrange(desc(mean_ratio))
+
+
+# Top 10 per lipid Class
+top10_per_class <- ratio_ranked %>%
+  group_by(Class) %>%
+  slice_max(order_by = mean_ratio, n = 10, with_ties = FALSE) %>%
+  ungroup() %>%
+  # Create a unique per-class label so ordering works independently in each facet
+  mutate(Component_class = paste0(Component, "___", Class))
+
+# Build factor levels that are ordered high -> low within each Class
+level_tbl <- top10_per_class %>%
+  arrange(Class, desc(mean_ratio)) %>%
+  distinct(Class, Component_class)
+
+top10_per_class <- top10_per_class %>%
+  mutate(
+    Component_class = factor(Component_class, levels = level_tbl$Component_class)
+  )
+
+p_top10_class <- ggplot(top10_per_class, aes(x = Component_class, y = mean_ratio)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.25, linewidth = 0.6) +
+  coord_flip() +
+  facet_wrap(~ Class, scales = "free_y") +
+  scale_x_discrete(labels = function(x) sub("___.*$", "", x)) +  # show only Component name
+  labs(
+    title = "Top 10 Components per Lipid Class\nLysosomes / Cells ratio (Scram, DMSO)",
+    x = NULL,
+    y = "log2((Lysosomes + 1) / (Cells + 1)) ± SEM"
+  ) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 10, face = "bold"),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+pdf("output/ratio_Lysosomes_over_Cells_top10_perClass_withSEM.pdf",
+    width = 10, height = 6)
+print(p_top10_class)
+dev.off()
+
+
+
+
+
+
+```
+
+
+Lysosome and whole-cell fractions prepared and measured in separate experiments → raw intensities are not directly comparable:
+- Ratio lysosome vs cell cannot be computed from raw values (we need a spike-in / common quantitative anchor).
+- Available normalization is within lipid class, which informs redistribution within a class, not absolute lysosomal enrichment: Ratios based on class-normalized values reflect within-class composition changes only and must be interpreted as such.
+
+--> Easier to focus on Lysosome fraction only; identify interesting lipid changes and check whehter they also occur in Cell fraction; if not, these are likely speficic of lysosome: even easier: forget the cell fraction!
+
+
