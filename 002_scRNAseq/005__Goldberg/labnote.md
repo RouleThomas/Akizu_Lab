@@ -89522,7 +89522,6 @@ Marker genes per Purkinje cell sub-clusters:
 
 ```bash
 conda activate scRNAseqV2
-
 ```
 
 ```R
@@ -89607,6 +89606,59 @@ FeaturePlot(
 dev.off()
 
 
+# Proportion of cells Aldoc + #############
+## Make sure RNA is the active assay
+DefaultAssay(Part_Purkinje_sct) <- "RNA"
+## Extract Aldoc expression and condition
+df <- FetchData(
+  Part_Purkinje_sct,
+  vars = c("Aldoc", "condition")
+)
+## Count Aldoc+ cells per condition
+aldoc_summary <- df %>%
+  dplyr::mutate(Aldoc_pos = Aldoc > 0) %>%
+  dplyr::group_by(condition) %>%
+  dplyr::summarise(
+    total_cells = n(),
+    Aldoc_pos_cells = sum(Aldoc_pos),
+    Aldoc_neg_cells = total_cells - Aldoc_pos_cells,
+    prop_Aldoc_pos = Aldoc_pos_cells / total_cells,
+    prop_Aldoc_neg = Aldoc_neg_cells / total_cells
+  )
+
+aldoc_summary
+
+
+Part_Purkinje_sct_p14 = Part_Purkinje_sct
+
+
+
+# Create new seurat object annotating Aldoc + cells
+
+obj <- WT_Kcnc1_p14_CB_1step.sct
+# 1) copy + force character (prevents factor->NA issue)
+obj$cluster.annot2 <- as.character(obj$cluster.annot)
+# 2) get Purkinje cells
+purk_cells <- colnames(obj)[obj$cluster.annot == "Purkinje"]
+# 3) define Aldoc+ using RAW RNA counts (best for "expressing" = >0)
+aldoc_counts <- GetAssayData(obj, assay = "RNA", slot = "counts")["Aldoc", purk_cells]
+aldoc_pos_cells <- purk_cells[aldoc_counts > 0]
+aldoc_neg_cells <- setdiff(purk_cells, aldoc_pos_cells)
+# 4) relabel
+obj$cluster.annot2[aldoc_pos_cells] <- "Purkinje_AldocPos"
+obj$cluster.annot2[aldoc_neg_cells] <- "Purkinje_AldocNeg"
+# (optional) refactor for nice ordering
+obj$cluster.annot2 <- factor(obj$cluster.annot2)
+# 5) sanity checks
+table(obj$cluster.annot2, obj$condition)
+table(obj$cluster.annot2, useNA = "ifany")  # confirm no unexpected NAs
+WT_Kcnc1_p14_CB_1step.sct <- obj
+
+#saveRDS(WT_Kcnc1_p14_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_labelclusterannot2.rds")
+WT_Kcnc1_p14_CB_1step.sct <- readRDS("output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_labelclusterannot2.rds")
+
+
+
 
 ##################################
 # p35 Purkinje  ##################
@@ -89671,6 +89723,63 @@ FeaturePlot(
   cols = c("grey90", "green3", "red3"), split.by = "condition", pt.size = .5
 )
 dev.off()
+
+
+# Proportion of cells Aldoc + #############
+## Make sure RNA is the active assay
+DefaultAssay(Part_Purkinje_sct) <- "RNA"
+## Extract Aldoc expression and condition
+df <- FetchData(
+  Part_Purkinje_sct,
+  vars = c("Aldoc", "condition")
+)
+## Count Aldoc+ cells per condition
+aldoc_summary <- df %>%
+  dplyr::mutate(Aldoc_pos = Aldoc > 0) %>%
+  dplyr::group_by(condition) %>%
+  dplyr::summarise(
+    total_cells = n(),
+    Aldoc_pos_cells = sum(Aldoc_pos),
+    Aldoc_neg_cells = total_cells - Aldoc_pos_cells,
+    prop_Aldoc_pos = Aldoc_pos_cells / total_cells,
+    prop_Aldoc_neg = Aldoc_neg_cells / total_cells
+  )
+
+aldoc_summary
+
+
+Part_Purkinje_sct_p35 = Part_Purkinje_sct
+
+
+
+
+
+
+
+# Create new seurat object annotating Aldoc + cells
+
+obj <- WT_Kcnc1_p35_CB_1step.sct
+# 1) copy + force character (prevents factor->NA issue)
+obj$cluster.annot2 <- as.character(obj$cluster.annot)
+# 2) get Purkinje cells
+purk_cells <- colnames(obj)[obj$cluster.annot == "Purkinje"]
+# 3) define Aldoc+ using RAW RNA counts (best for "expressing" = >0)
+aldoc_counts <- GetAssayData(obj, assay = "RNA", slot = "counts")["Aldoc", purk_cells]
+aldoc_pos_cells <- purk_cells[aldoc_counts > 0]
+aldoc_neg_cells <- setdiff(purk_cells, aldoc_pos_cells)
+# 4) relabel
+obj$cluster.annot2[aldoc_pos_cells] <- "Purkinje_AldocPos"
+obj$cluster.annot2[aldoc_neg_cells] <- "Purkinje_AldocNeg"
+# (optional) refactor for nice ordering
+obj$cluster.annot2 <- factor(obj$cluster.annot2)
+# 5) sanity checks
+table(obj$cluster.annot2, obj$condition)
+table(obj$cluster.annot2, useNA = "ifany")  # confirm no unexpected NAs
+WT_Kcnc1_p35_CB_1step.sct <- obj
+
+#saveRDS(WT_Kcnc1_p35_CB_1step.sct, file = "output/seurat/WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245.sct_V1_labelclusterannot2.rds")
+WT_Kcnc1_p35_CB_1step.sct <- readRDS("output/seurat/WT_Kcnc1_p35_CB_1step-version5dim40kparam15res0245.sct_V1_labelclusterannot2.rds")
+
 
 
 
@@ -89798,11 +89907,11 @@ dev.off()
 
 
 - **p14**: Aldoc is signif up in Kcnc1 (no changes for the other genes). No clear sub-population of Purkinje.
+  (327 total cells;  33/138 WT cells (23.9%) 129/189 Kcnc1 cells (68.3%))
 - **p35**: No signif changes of gene expr. No clear sub-population of Purkinje.
+  (268 total cells; 83/148 WT cells (56.1%) 63/120 Kcnc1 cells (52.5%))
 - **p180**: No signif changes of gene expr. No clear sub-population of Purkinje.
 - **p14p35p180**: Cells are separated based on time.. No clear sub-population of Purkinje.
-
-
 
 
 
