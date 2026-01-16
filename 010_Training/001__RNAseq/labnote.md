@@ -299,6 +299,26 @@ library("tidyverse")
 --> Good luck :) !
 
 
+### OPTION4 - Work on Respublica with Rstudio
+
+```bash
+conda create -n deseq2_v7 -c conda-forge -c bioconda r-base=4.4 r-ragg r-xml bioconductor-deseq2
+conda activate deseq2_v7
+conda install -c conda-forge r-tidyverse
+conda install -c conda-forge -c bioconda bioconductor-rtracklayer
+```
+
+
+### OPTION5 - Work on Respublica with Rstudio
+
+R4.4.0 work with DESEQ2 and tidyverse
+
+
+
+
+
+
+
 ## DESeq2 WT vs KO
 
 
@@ -324,33 +344,30 @@ Before working in R, load computational ressources:
 ```bash
 # Load ressources/"computation power"
 srun --mem=50g --pty bash -l
+
+# make sure you are located in your working directory
+cd 001*/001*
 ```
 
 
 Then open R by typing `R`:
 
 ```R
-# Load packages
+# Load packages (each time you open a new session)
 library("rtracklayer")
 library("DESeq2")
 library("tidyverse")
-
-
 library("EnhancedVolcano")
 library("apeglm")
-library("org.Hs.eg.db")
-library("biomaRt")
 
-library("RColorBrewer")
-library("pheatmap")
-library("AnnotationDbi")
+# --> Make sure all these packages are installed; install as needed using instal.packages() or bioconductor(): you only need to install them once.
 
 
-# --> Make sure all these packages are installed; install as needed using instal.packages() or bioconductor()
+# Make sure you are in your working directory
+getwd()
 
-
-# import annotation GTF file to recover gene name
-gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+# import annotation GTF file to recover gene name, as featurecounts show gene ID ENSG....
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf") # change name accordingly
 ## Extract geneId and geneSymbol
 gene_table <- mcols(gtf) %>%
   as.data.frame() %>%
@@ -360,6 +377,30 @@ gene_table <- mcols(gtf) %>%
 ## Rename columns
 colnames(gene_table) <- c("geneId", "geneSymbol")
 
+########################################################################
+### If import() function is not working; use this workaround: #########
+gtf <- read_tsv(
+  "../../Master/meta/gencode.v47.annotation.gtf",
+  col_names = c(
+    "seqname", "source", "feature",
+    "start", "end", "score",
+    "strand", "frame", "attribute"
+  ),
+  comment = "#",
+  show_col_types = FALSE
+)
+gene_table <- gtf %>%
+  filter(feature == "gene") %>%   # keep only gene entries
+  transmute(
+    geneId = str_extract(attribute, 'gene_id "[^"]+"') %>%
+      str_replace_all('gene_id "|"', ""),
+    geneSymbol = str_extract(attribute, 'gene_name "[^"]+"') %>%
+      str_replace_all('gene_name "|"', "")
+  ) %>%
+  distinct() %>%
+  drop_na() %>%
+  as_tibble()
+########################################################################
 
 
 # import featurecounts output and keep only gene ID and counts
@@ -378,7 +419,7 @@ for (sample in samples) {
 # Merge all dataframe into a single one
 counts_all <- reduce(sample_data, full_join, by = "Geneid")
 
-# OPTIONAL - Remove X and Y chromosome genes
+########## OPTIONAL - Remove X and Y chromosome genes #########
 ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 genes_X_Y <- getBM(attributes = c("ensembl_gene_id"),
                    filters = "chromosome_name",
@@ -388,7 +429,7 @@ counts_all$stripped_geneid <- sub("\\..*", "", counts_all$Geneid)
 counts_all_filtered <- counts_all %>%
   filter(!stripped_geneid %in% genes_X_Y$ensembl_gene_id)
 counts_all_filtered$stripped_geneid <- NULL
-
+#################################################################
 
 
 # Pre-requisetes for the DESeqDataSet
@@ -403,8 +444,7 @@ make_matrix <- function(df,rownames = NULL){
 ### execute function
 counts_all_matrix = make_matrix(dplyr::select(counts_all_filtered, -Geneid), pull(counts_all_filtered, Geneid)) 
 
-## Create colData file that describe all our samples
-### Including replicate
+# Create colData meta file that describe all our samples
 coldata_raw <- data.frame(samples) %>%
   separate(samples, into = c("time", "genotype", "replicate"), sep = "_") %>%
   bind_cols(data.frame(samples))
@@ -430,19 +470,25 @@ dds$genotype <- relevel(dds$genotype, ref = "WT")
 
 ## Differential expression analyses
 dds <- DESeq(dds)
-# res <- results(dds) # This is the classic version, but shrunk log FC is preferable
-resultsNames(dds) # Here print value into coef below
-res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm")
-
+# res <- results(dds) # This is the classic version, but shrunk log FC is preferable to avoid extreme FC values
+resultsNames(dds) # Here print the output you obtain in the below "coef= ..."
+res <- lfcShrink(dds, coef="genotype_KO_vs_WT", type="apeglm") # install apeglm if needed with `BiocManager::install("apeglm")`
 
 # Add geneSymbol
 res_tibble = as_tibble(rownames_to_column(as.data.frame(res), var = "geneId")) %>%
   left_join(gene_table)
 
+# Save the output of the DGEs anlaysis (include gene names, log2FC, pvalue...)
+write_tsv(
+  res_tibble,
+  "output/deseq2/res_with_geneSymbol.txt" # update folder accordingly
+)
+
+
 
 # Identify DEGs and count them
 
-## padj 0.05 FC 0.58 ##################################
+## padj 0.05 log2FC 0.58 ##################################
 res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
 n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
 n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
@@ -460,6 +506,7 @@ keyvals[is.na(keyvals)] <- 'black'
 names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
 names(keyvals)[keyvals == 'grey'] <- 'Not significant'
 names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
 
 pdf("output/deseq2/plotVolcano_res_q05fc058_ESC_KO_vs_ESC_WT_STAR.pdf", width=7, height=8)    
 EnhancedVolcano(res,
@@ -503,7 +550,7 @@ write.table(downregulated$geneSymbol, file = "output/deseq2/downregulated_q05fc0
 
 --> Script will output plots and gene list to `output/deseq2`
 
-
+Once you finish working, you can exit the job and leave ressource by typing `exit`
 
 
 
