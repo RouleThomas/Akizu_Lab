@@ -34564,6 +34564,14 @@ dev.off()
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Slc1a2-split.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc1a2"), max.cutoff = 1,  cols = c("grey", "red"), split.by = "condition")
 dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Slc1a1-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc1a1"), max.cutoff = 1,  cols = c("grey", "red"), split.by = "condition")
+dev.off()
+pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-Slc1a6-split.pdf", width=10, height=5)
+FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("Slc1a6"), max.cutoff = 1,  cols = c("grey", "red"), split.by = "condition")
+dev.off()
+
+
 
 pdf("output/seurat/FeaturePlot_SCT_WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015-mt-Nd4.pdf", width=10, height=5)
 FeaturePlot(WT_Kcnc1_p14_CB_1step.sct, features = c("mt-Nd4"), cols = c("grey", "red"), split.by = "condition")
@@ -39103,6 +39111,2181 @@ dev.off()
 
 
 ```
+
+
+
+
+
+
+
+
+##### CellChat Cell type verification - only neurons - Purkinje cell Aldoc separated
+
+Let's repeat same analyses but with the Aldoc+/- Purkinje cells annotated `sct_V1_labelclusterannot2`: Let's see if Kcnc1 Granule fire/excite more Aldoc+ (as we find more Aldoc+ in Kcnc1 mutant)
+
+
+```bash
+conda activate CellChat
+```
+
+
+
+Follow [Full tutorial for CellChat analysis of a single dataset with detailed explanation of each function](https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html)
+
+
+**WT cells from p14**
+
+
+```R
+# packages
+library("Seurat")
+library("CellChat")
+library("patchwork")
+library("presto")
+library("NMF")
+library("ggalluvial")
+options(stringsAsFactors = FALSE)
+set.seed(42)
+
+
+# import seurat object
+WT_Kcnc1_p14_CB_1step.sct <- readRDS("output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_labelclusterannot2.rds")
+
+Idents(WT_Kcnc1_p14_CB_1step.sct) <- "cluster.annot2"
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+# Subset to keep WT cells only 
+WT_p14 <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = WhichCells(WT_Kcnc1_p14_CB_1step.sct, expression = condition == "WT"))
+# Subset to keep only cell type of interest
+cells_to_keep <- WhichCells(WT_p14, expression = cluster.annot2 %in% c(
+  "ImmatureGranule",
+  "Granule" ,
+  "UBC" ,
+  "CerebellarNuclei",
+  "Purkinje_AldocPos",
+  "Purkinje_AldocNeg",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi"
+#  "Astrocyte",
+#  "BergmanGlia",
+#  "Oligodendrocyte",
+#  "Endothelial",
+#  "Meningeal",
+#  "ChoroidPlexus" 
+))
+WT_p14 <- subset(WT_p14, cells = cells_to_keep)
+WT_p14$cluster.annot2 <- droplevels(WT_p14$cluster.annot2)
+table(WT_p14$cluster.annot2)  # Should no longer show empty clusters
+
+# change order
+WT_p14$cluster.annot <- factor(x = WT_p14$cluster.annot, levels = c(  "ImmatureGranule",
+  "Granule" ,
+  "UBC" ,
+  "CerebellarNuclei",
+  "Purkinje_AldocPos",
+  "Purkinje_AldocNeg",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi"))
+
+
+
+# Create CellChat object
+data.input <- WT_p14[["RNA"]]@data # normalized data matrix
+# For Seurat version >= “5.0.0”, get the normalized data via `seurat_object[["RNA"]]$data`
+labels <- Idents(WT_p14)
+meta <- data.frame(labels = labels, row.names = names(labels)) # create a dataframe of the cell labels
+cellchat <- createCellChat(object = WT_p14, group.by = "cluster.annot2", assay = "RNA")
+
+# import ligand receptor information
+CellChatDB <- CellChatDB.mouse
+dplyr::glimpse(CellChatDB$interaction) # Show the structure of the database
+
+#--> HERE WE CAN TRY DIFFERENT DATABASE! I pick the ChatGPT recommended on. But could try other!
+# use a subset of CellChatDB for cell-cell communication analysis
+#CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling", key = "annotation") 
+#CellChatDB.use <- CellChatDB # use all CellChatDB for cell-cell communication analysis
+CellChatDB.use <- subsetDB(CellChatDB, search = "Non-protein Signaling", key = "annotation") # for neuron-neuron comm
+
+cellchat@DB <- CellChatDB.use # set the used database in the object
+
+# Preprocessing the expression data for cell-cell communication analysis
+## subset the expression data of signaling genes for saving computation cost
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+#future::plan("multisession", workers = 4) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+#--> The number of highly variable ligand-receptor pairs used for signaling inference is 948
+
+
+# Part II: Inference of cell-cell communication network
+# --> IMPORTANT: We can reduce threshold with type = "truncatedMean" and trim = 0.1 = 10% = average gene expression is zero if the percent of expressed cells in one group is less than 10% (Default is 25%)
+
+cellchat <- computeCommunProb(cellchat, type = "triMean") # By default type = "triMean", producing fewer but stronger interactions
+#cellchat <- computeCommunProb(cellchat, type = "truncatedMean", trim = 0.1) # By default type = "triMean", producing fewer but stronger interactions
+
+cellchat <- filterCommunication(cellchat, min.cells = 10) # filter out the cell-cell communication if there are only few cells in certain cell groups. By default, the minimum number of cells required in each cell group for cell-cell communication is 10.
+# Extract the inferred cellular communication network as a data frame
+df.net <- subsetCommunication(cellchat)
+
+# Infer the cell-cell communication at a signaling pathway level
+cellchat <- computeCommunProbPathway(cellchat) # The inferred intercellular communication network of each ligand-receptor pair and each signaling pathway is stored in the slot ‘net’ and ‘netP’, respectively.
+
+# Calculate the aggregated cell-cell communication network
+cellchat <- aggregateNet(cellchat)
+
+pdf("output/CellChat/netVisual_circle-p14_CB_WT-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=20, height=20)
+groupSize <- as.numeric(table(cellchat@idents))
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
+dev.off()
+
+
+pdf("output/CellChat/netVisual_circle-p14_CB_WT-version5dim40kparam15res015-cellType-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=15, height=15)
+mat <- cellchat@net$weight
+par(mfrow = c(3,4), xpd=TRUE)
+for (i in 1:nrow(mat)) {
+  mat2 <- matrix(0, nrow = nrow(mat), ncol = ncol(mat), dimnames = dimnames(mat))
+  mat2[i, ] <- mat[i, ]
+  netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat), title.name = rownames(mat)[i])
+}
+dev.off()
+
+
+# Specify group of interest 
+# Define the groups based on the cell type categorization
+# Define the groups based on the revised cell type categorization
+group.cellType <- rep(NA, length(levels(cellchat@idents)))
+names(group.cellType) <- levels(cellchat@idents)
+# Assign each cell type to a category
+group.cellType[c("ImmatureGranule",  "Granule" ,  "UBC" ,  "CerebellarNuclei",  "Purkinje_AldocPos",  "Purkinje_AldocNeg")] <- "Glutamatergic"
+group.cellType[c("MLI1",  "MLI2",  "PLI",  "Golgi")] <- "GABAergic"
+# Check if all assignments are done correctly
+print(group.cellType)
+names(group.cellType) <- levels(cellchat@idents)
+
+
+# Change order of cell type:
+# Reorder the levels of cellchat@idents according to the specified order
+cellchat@idents <- factor(cellchat@idents, levels = c(
+"ImmatureGranule",  "Granule" ,  "UBC" ,  "CerebellarNuclei",   "Purkinje_AldocPos",  "Purkinje_AldocNeg","MLI1",  "MLI2",  "PLI",  "Golgi"
+)) # "ChoroidPlexus", "Ependymal", "Meningeal", "Endothelial"
+# Check if the levels are correctly ordered now
+print(levels(cellchat@idents))
+
+
+
+
+
+
+# Visualize each signaling pathway using Hierarchy plot, Circle plot or Chord diagram
+cellchat@netP$pathways # show pathway with signif interactions
+#--> FROM THIS PICK PATHWAY OF INTEREST
+
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pdf("output/CellChat/netVisual_aggregate-p14_CB_WT-version5dim40kparam15res015-GABAB-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+# Here we define `vertex.receive` so that the left portion of the hierarchy plot shows signaling to fibroblast and the right portion shows signaling to immune cells 
+vertex.receiver = seq(1,4) # a numeric vector. 
+netVisual_aggregate(cellchat, signaling = pathways.show,  vertex.receiver = vertex.receiver)
+# Circle plot
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle")
+# Chord diagram
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "chord")
+par(mfrow=c(1,1))
+netVisual_heatmap(cellchat, signaling = pathways.show, color.heatmap = "Reds")
+dev.off()
+
+
+
+# Chord diagram
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pathways.show <- c("2-AG") 
+pdf("output/CellChat/netVisual_chord_cell-p14_CB_WT-version5dim40kparam15res015-2AG-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=10, height=10)
+# The cellchat function to visualize the chord diagram based on your defined groups
+netVisual_chord_cell(cellchat, signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network"))
+#> Plot the aggregated cell-cell communication network at the signaling pathway level
+dev.off()
+
+
+# Automatically save the plots of the all inferred network for quick exploration
+# Access all the signaling pathways showing significant communications
+pathways.show.all <- cellchat@netP$pathways
+# check the order of cell identity to set suitable vertex.receiver
+levels(cellchat@idents)
+vertex.receiver = seq(1,4)
+for (i in 1:length(pathways.show.all)) {
+  # Visualize communication network associated with both signaling pathway and individual L-R pairs
+  netVisual(cellchat, signaling = pathways.show.all[i], vertex.receiver = vertex.receiver, layout = "hierarchy")
+  # Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway
+  gg <- netAnalysis_contribution(cellchat, signaling = pathways.show.all[i])
+  ggsave(filename=paste0("output/CellChat/",pathways.show.all[i], "_L-R_contribution.pdf"), plot=gg, width = 3, height = 2, units = 'in', dpi = 300)
+}
+# --> Not sure that was usefull...
+
+
+
+# Part IV: Systems analysis of cell-cell communication network
+## Compute and visualize the network centrality scores
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pathways.show <- c("2-AG") 
+
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
+# Visualize the computed centrality scores using heatmap, allowing ready identification of major signaling roles of cell groups
+pdf("output/CellChat/netAnalysis_signalingRole_network-p14_CB_WT-version5dim40kparam15res015-2AG-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=10, height=10)
+netAnalysis_signalingRole_network(cellchat, signaling = pathways.show, width = 8, height = 2.5, font.size = 10) # , cluster.cols = TRUE
+dev.off()
+
+
+
+pdf("output/CellChat/netAnalysis_signalingRole_heatmap-p14_CB_WT-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=10, height=6)
+# Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+ht1 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "outgoing", height = 4,)
+ht2 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "incoming", height = 4)
+ht1 + ht2
+dev.off()
+
+
+# Identify global communication patterns to explore how multiple cell types and signaling pathways coordinate together
+##### outgoing #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CB_WT-version5dim40kparam15res015-default-outgoing-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "outgoing")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 3
+pdf("output/CellChat/netAnalysis_river-p14_CB_WT-version5dim40kparam15res015-default-outgoing-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "outgoing")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CB_WT-version5dim40kparam15res015-default-outgoing-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "outgoing")
+dev.off()
+
+
+
+##### incoming #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CB_WT-version5dim40kparam15res015-default-incoming-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "incoming")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 4
+pdf("output/CellChat/netAnalysis_river-p14_CB_WT-version5dim40kparam15res015-default-incoming-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "incoming")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CB_WT-version5dim40kparam15res015-default-incoming-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "incoming")
+dev.off()
+
+
+
+
+# Identify signaling groups based on their functional similarity
+cellchat <- computeNetSimilarity(cellchat, type = "functional")
+cellchat <- netEmbedding(cellchat, type = "functional")
+cellchat <- netClustering(cellchat, type = "functional")
+# Visualization in 2D-space
+pdf("output/CellChat/netVisual_embedding-p14_CB_WT-version5dim40kparam15res015-default-functional-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+netVisual_embedding(cellchat, type = "functional", label.size = 3.5)
+dev.off()
+#--> High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles
+
+# Part V: Save the CellChat object
+saveRDS(cellchat, file = "output/CellChat/p14_CB_WT-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.rds")
+cellchat <- readRDS("output/CellChat/p14_CB_WT-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.rds")
+
+
+
+
+```
+
+
+
+
+
+
+
+
+**Kcnc1 cells from p14**
+
+
+```R
+# packages
+library("Seurat")
+library("CellChat")
+library("patchwork")
+library("presto")
+library("NMF")
+library("ggalluvial")
+options(stringsAsFactors = FALSE)
+set.seed(42)
+
+
+# import seurat object
+WT_Kcnc1_p14_CB_1step.sct <- readRDS("output/seurat/WT_Kcnc1_p14_CB_1step-version5dim40kparam15res015.sct_V1_labelclusterannot2.rds")
+
+Idents(WT_Kcnc1_p14_CB_1step.sct) <- "cluster.annot2"
+
+
+
+DefaultAssay(WT_Kcnc1_p14_CB_1step.sct) <- "RNA"
+WT_Kcnc1_p14_CB_1step.sct <- NormalizeData(WT_Kcnc1_p14_CB_1step.sct, normalization.method = "LogNormalize", scale.factor = 10000) # accounts for the depth of sequencing
+all.genes <- rownames(WT_Kcnc1_p14_CB_1step.sct)
+WT_Kcnc1_p14_CB_1step.sct <- ScaleData(WT_Kcnc1_p14_CB_1step.sct, features = all.genes) # zero-centres and scales it
+
+# Subset to keep Kcnc1 cells only 
+Kcnc1_p14 <- subset(WT_Kcnc1_p14_CB_1step.sct, cells = WhichCells(WT_Kcnc1_p14_CB_1step.sct, expression = condition == "Kcnc1"))
+# Subset to keep only cell type of interest
+cells_to_keep <- WhichCells(Kcnc1_p14, expression = cluster.annot2 %in% c(
+  "ImmatureGranule",
+  "Granule" ,
+  "UBC" ,
+  "CerebellarNuclei",
+  "Purkinje_AldocPos",
+  "Purkinje_AldocNeg",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi"
+#  "Astrocyte",
+#  "BergmanGlia",
+#  "Oligodendrocyte",
+#  "Endothelial",
+#  "Meningeal",
+#  "ChoroidPlexus" 
+))
+Kcnc1_p14 <- subset(Kcnc1_p14, cells = cells_to_keep)
+Kcnc1_p14$cluster.annot2 <- droplevels(Kcnc1_p14$cluster.annot2)
+table(Kcnc1_p14$cluster.annot2)  # Should no longer show empty clusters
+
+# change order
+Kcnc1_p14$cluster.annot2 <- factor(x = Kcnc1_p14$cluster.annot2, levels = c(   "ImmatureGranule",
+  "Granule" ,
+  "UBC" ,
+  "CerebellarNuclei",
+  "Purkinje_AldocPos",
+  "Purkinje_AldocNeg",
+  "MLI1",
+  "MLI2",
+  "PLI",
+  "Golgi"))
+
+
+
+# Create CellChat object
+data.input <- Kcnc1_p14[["RNA"]]@data # normalized data matrix
+# For Seurat version >= “5.0.0”, get the normalized data via `seurat_object[["RNA"]]$data`
+labels <- Idents(Kcnc1_p14)
+meta <- data.frame(labels = labels, row.names = names(labels)) # create a dataframe of the cell labels
+cellchat <- createCellChat(object = Kcnc1_p14, group.by = "cluster.annot2", assay = "RNA")
+
+# import ligand receptor information
+CellChatDB <- CellChatDB.mouse
+dplyr::glimpse(CellChatDB$interaction) # Show the structure of the database
+
+#--> HERE WE CAN TRY DIFFERENT DATABASE! I pick the ChatGPT recommended on. But could try other!
+# use a subset of CellChatDB for cell-cell communication analysis
+#CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling", key = "annotation") 
+#CellChatDB.use <- CellChatDB # use all CellChatDB for cell-cell communication analysis
+CellChatDB.use <- subsetDB(CellChatDB, search = "Non-protein Signaling", key = "annotation") # for neuron-neuron comm
+
+cellchat@DB <- CellChatDB.use # set the used database in the object
+
+# Preprocessing the expression data for cell-cell communication analysis
+## subset the expression data of signaling genes for saving computation cost
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+#future::plan("multisession", workers = 4) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+#--> The number of highly variable ligand-receptor pairs used for signaling inference is 948
+
+
+# Part II: Inference of cell-cell communication network
+# --> IMPORTANT: We can reduce threshold with type = "truncatedMean" and trim = 0.1 = 10% = average gene expression is zero if the percent of expressed cells in one group is less than 10% (Default is 25%)
+
+cellchat <- computeCommunProb(cellchat, type = "triMean") # By default type = "triMean", producing fewer but stronger interactions
+#cellchat <- computeCommunProb(cellchat, type = "truncatedMean", trim = 0.1) # By default type = "triMean", producing fewer but stronger interactions
+
+cellchat <- filterCommunication(cellchat, min.cells = 10) # filter out the cell-cell communication if there are only few cells in certain cell groups. By default, the minimum number of cells required in each cell group for cell-cell communication is 10.
+# Extract the inferred cellular communication network as a data frame
+df.net <- subsetCommunication(cellchat)
+
+# Infer the cell-cell communication at a signaling pathway level
+cellchat <- computeCommunProbPathway(cellchat) # The inferred intercellular communication network of each ligand-receptor pair and each signaling pathway is stored in the slot ‘net’ and ‘netP’, respectively.
+
+# Calculate the aggregated cell-cell communication network
+cellchat <- aggregateNet(cellchat)
+
+pdf("output/CellChat/netVisual_circle-p14_CB_Kcnc1-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=20, height=20)
+groupSize <- as.numeric(table(cellchat@idents))
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
+dev.off()
+
+
+pdf("output/CellChat/netVisual_circle-p14_CB_Kcnc1-version5dim40kparam15res015-cellType-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=15, height=15)
+mat <- cellchat@net$weight
+par(mfrow = c(3,4), xpd=TRUE)
+for (i in 1:nrow(mat)) {
+  mat2 <- matrix(0, nrow = nrow(mat), ncol = ncol(mat), dimnames = dimnames(mat))
+  mat2[i, ] <- mat[i, ]
+  netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat), title.name = rownames(mat)[i])
+}
+dev.off()
+
+
+
+
+# Specify group of interest 
+# Define the groups based on the cell type categorization
+# Define the groups based on the revised cell type categorization
+group.cellType <- rep(NA, length(levels(cellchat@idents)))
+names(group.cellType) <- levels(cellchat@idents)
+# Assign each cell type to a category
+group.cellType[c("ImmatureGranule",  "Granule" ,  "UBC" ,  "CerebellarNuclei" )] <- "Glutamatergic"
+group.cellType[c("Purkinje_AldocPos", "Purkinje_AldocNeg",  "MLI1",  "MLI2",  "PLI",  "Golgi")] <- "GABAergic"
+# Check if all assignments are done correctly
+print(group.cellType)
+names(group.cellType) <- levels(cellchat@idents)
+
+  
+
+
+
+# Change order of cell type:
+# Reorder the levels of cellchat@idents according to the specified order
+cellchat@idents <- factor(cellchat@idents, levels = c(
+ "ImmatureGranule",  "Granule" ,  "UBC" ,  "CerebellarNuclei","Purkinje_AldocPos", "Purkinje_AldocNeg",  "MLI1",  "MLI2",  "PLI",  "Golgi"
+)) # "ChoroidPlexus", "Ependymal", "Meningeal", "Endothelial"
+# Check if the levels are correctly ordered now
+print(levels(cellchat@idents))
+
+
+
+
+
+
+# Visualize each signaling pathway using Hierarchy plot, Circle plot or Chord diagram
+cellchat@netP$pathways # show pathway with signif interactions
+#--> FROM THIS PICK PATHWAY OF INTEREST
+
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pathways.show <- c("2-AG") 
+
+pdf("output/CellChat/netVisual_aggregate-p14_CB_Kcnc1-version5dim40kparam15res015-2AG-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+# Here we define `vertex.receive` so that the left portion of the hierarchy plot shows signaling to fibroblast and the right portion shows signaling to immune cells 
+vertex.receiver = seq(1,4) # a numeric vector. 
+netVisual_aggregate(cellchat, signaling = pathways.show,  vertex.receiver = vertex.receiver)
+# Circle plot
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle")
+# Chord diagram
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "chord")
+par(mfrow=c(1,1))
+netVisual_heatmap(cellchat, signaling = pathways.show, color.heatmap = "Reds")
+dev.off()
+
+
+
+# Chord diagram
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pathways.show <- c("2-AG") 
+pdf("output/CellChat/netVisual_chord_cell-p14_CB_Kcnc1-version5dim40kparam15res015-2AG-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=10, height=10)
+# The cellchat function to visualize the chord diagram based on your defined groups
+netVisual_chord_cell(cellchat, signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network"))
+#> Plot the aggregated cell-cell communication network at the signaling pathway level
+dev.off()
+
+
+# Automatically save the plots of the all inferred network for quick exploration
+# Access all the signaling pathways showing significant communications
+pathways.show.all <- cellchat@netP$pathways
+# check the order of cell identity to set suitable vertex.receiver
+levels(cellchat@idents)
+vertex.receiver = seq(1,4)
+for (i in 1:length(pathways.show.all)) {
+  # Visualize communication network associated with both signaling pathway and individual L-R pairs
+  netVisual(cellchat, signaling = pathways.show.all[i], vertex.receiver = vertex.receiver, layout = "hierarchy")
+  # Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway
+  gg <- netAnalysis_contribution(cellchat, signaling = pathways.show.all[i])
+  ggsave(filename=paste0("output/CellChat/",pathways.show.all[i], "_L-R_contribution.pdf"), plot=gg, width = 3, height = 2, units = 'in', dpi = 300)
+}
+# --> Not sure that was usefull...
+
+
+
+# Part IV: Systems analysis of cell-cell communication network
+## Compute and visualize the network centrality scores
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pathways.show <- c("2-AG") 
+
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
+# Visualize the computed centrality scores using heatmap, allowing ready identification of major signaling roles of cell groups
+pdf("output/CellChat/netAnalysis_signalingRole_network-p14_CB_Kcnc1-version5dim40kparam15res015-2AG-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=10, height=10)
+netAnalysis_signalingRole_network(cellchat, signaling = pathways.show, width = 8, height = 2.5, font.size = 10) # , cluster.cols = TRUE
+dev.off()
+
+
+
+pdf("output/CellChat/netAnalysis_signalingRole_heatmap-p14_CB_Kcnc1-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=10, height=6)
+# Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+ht1 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "outgoing", height = 4,)
+ht2 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "incoming", height = 4)
+ht1 + ht2
+dev.off()
+
+
+# Identify global communication patterns to explore how multiple cell types and signaling pathways coordinate together
+##### outgoing #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CB_Kcnc1-version5dim40kparam15res015-default-outgoing-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "outgoing")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 5
+pdf("output/CellChat/netAnalysis_river-p14_CB_Kcnc1-version5dim40kparam15res015-default-outgoing-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "outgoing")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CB_Kcnc1-version5dim40kparam15res015-default-outgoing-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "outgoing")
+dev.off()
+
+
+
+##### incoming #######
+## Here we run selectK to infer the number of patterns.
+pdf("output/CellChat/selectK-p14_CB_Kcnc1-version5dim40kparam15res015-default-incoming-NonproteinSignaling.pdf", width=10, height=10)
+selectK(cellchat, pattern = "incoming")
+dev.off()
+#--> Identify at which value the line drop down = 5 for `Secreted Signaling`; 5/7 for all DB=CellChatDB; 5 for NonproteinSignaling
+nPatterns = 5
+pdf("output/CellChat/netAnalysis_river-p14_CB_Kcnc1-version5dim40kparam15res015-default-incoming-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = nPatterns)
+netAnalysis_river(cellchat, pattern = "incoming")
+dev.off()
+pdf("output/CellChat/netAnalysis_dot-p14_CB_Kcnc1-version5dim40kparam15res015-default-incoming-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+netAnalysis_dot(cellchat, pattern = "incoming")
+dev.off()
+
+
+
+
+# Identify signaling groups based on their functional similarity
+cellchat <- computeNetSimilarity(cellchat, type = "functional")
+cellchat <- netEmbedding(cellchat, type = "functional")
+cellchat <- netClustering(cellchat, type = "functional")
+# Visualization in 2D-space
+pdf("output/CellChat/netVisual_embedding-p14_CB_Kcnc1-version5dim40kparam15res015-default-functional-NonproteinSignaling-filterNeuronsclusterannot2.pdf", width=6, height=6)
+netVisual_embedding(cellchat, type = "functional", label.size = 3.5)
+dev.off()
+#--> High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles
+
+# Part V: Save the CellChat object
+saveRDS(cellchat, file = "output/CellChat/p14_CB_Kcnc1-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.rds")
+cellchat <- readRDS("output/CellChat/p14_CB_Kcnc1-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.rds")
+
+
+```
+
+
+##### CellChat genotype comparison - only neurons - Purkinje cell Aldoc separated
+
+
+
+Let's follow [this](https://rdrr.io/github/sqjin/CellChat/f/tutorial/Comparison_analysis_of_multiple_datasets.Rmd) tutorial for comparing condition.
+--> Required comparable cell type composition (which is our case)
+
+--> Need to already have done interactions; so let;s just load our WT and Kcnc1 object
+
+
+```bash
+conda activate CellChat
+```
+
+
+
+
+
+```R
+# packages
+library("Seurat")
+library("CellChat")
+library("patchwork")
+library("presto")
+library("NMF")
+library("ggalluvial")
+library("ComplexHeatmap")
+
+options(stringsAsFactors = FALSE)
+set.seed(42)
+
+
+# import cellChat object
+cellchat_WT_p14 <- readRDS("output/CellChat/p14_CB_WT-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.rds")
+cellchat_Kcnc1_p14 <- readRDS("output/CellChat/p14_CB_Kcnc1-version5dim40kparam15res015-default-NonproteinSignaling-filterNeuronsclusterannot2.rds")
+
+
+# Combine cellChat object from WT and Kcnc1
+object.list <- list(WT_p14 = cellchat_WT_p14, Kcnc1_p14 = cellchat_Kcnc1_p14)
+cellchat <- mergeCellChat(object.list, add.names = names(object.list))
+cellchat
+
+
+# Compare the total number of interactions and interaction strength
+pdf("output/CellChat/compareInteractions-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 4, height = 3)
+gg1 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), color.use = c("black", "red"))
+gg2 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), measure = "weight", color.use = c("black", "red"))
+gg1 + gg2
+dev.off()
+
+
+# Compare the number of interactions and interaction strength among different cell populations
+## Differential number of interactions or interaction strength among different cell populations
+
+
+pdf("output/CellChat/netVisual_diffInteraction-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 10)
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_diffInteraction(cellchat, weight.scale = T)
+netVisual_diffInteraction(cellchat, weight.scale = T, measure = "weight")
+gg1 <- netVisual_heatmap(cellchat)
+gg2 <- netVisual_heatmap(cellchat, measure = "weight")
+gg1 + gg2
+weight.max <- getMaxWeight(object.list, attribute = c("idents","count"))
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_circle(object.list[[i]]@net$count, weight.scale = T, label.edge= F, edge.weight.max = weight.max[2], edge.width.max = 12, title.name = paste0("Number of interactions - ", names(object.list)[i]))
+}
+dev.off()
+
+
+
+## Compare the major sources and targets in 2D space
+
+pdf("output/CellChat/netAnalysis_signalingRole_scatter-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 5)
+num.link <- sapply(object.list, function(x) {rowSums(x@net$count) + colSums(x@net$count)-diag(x@net$count)})
+weight.MinMax <- c(min(num.link), max(num.link)) # control the dot size in the different datasets
+gg <- list()
+for (i in 1:length(object.list)) {
+  gg[[i]] <- netAnalysis_signalingRole_scatter(object.list[[i]], title = names(object.list)[i], weight.MinMax = weight.MinMax)
+}
+patchwork::wrap_plots(plots = gg)
+dev.off()
+
+
+## Identify signaling changes associated with one cell group
+#--> Could not make it work
+
+
+
+# Part II: Identify the conserved and context-specific signaling pathways
+
+## Identify signaling groups based on their functional similarity
+
+pdf("output/CellChat/netVisual_embeddingPairwise_functional-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 5)
+cellchat <- computeNetSimilarityPairwise(cellchat, type = "functional")
+cellchat <- netEmbedding(cellchat, type = "functional")
+cellchat <- netClustering(cellchat, type = "functional")
+# Visualization in 2D-space
+netVisual_embeddingPairwise(cellchat, type = "functional", label.size = 3.5)
+# netVisual_embeddingZoomIn(cellchat, type = "functional", nCol = 2)
+dev.off()
+
+
+## Identify signaling groups based on structure similarity
+
+pdf("output/CellChat/netVisual_embeddingPairwise_structural-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 5)
+cellchat <- computeNetSimilarityPairwise(cellchat, type = "structural")
+cellchat <- netEmbedding(cellchat, type = "structural")
+cellchat <- netClustering(cellchat, type = "structural")
+# Visualization in 2D-space
+netVisual_embeddingPairwise(cellchat, type = "structural", label.size = 3.5)
+netVisual_embeddingPairwiseZoomIn(cellchat, type = "structural", nCol = 2)
+dev.off()
+
+
+## Compute and visualize the pathway distance in the learned joint manifold
+pdf("output/CellChat/rankSimilarity-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 5)
+rankSimilarity(cellchat, type = "functional")
+dev.off()
+
+# Identify and visualize the conserved and context-specific signaling pathways
+## Compare the overall information flow of each signaling pathway
+
+pdf("output/CellChat/rankNet-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 3)
+gg1 <- rankNet(cellchat, mode = "comparison", stacked = T, do.stat = TRUE, color.use = c("gray9", "red"))
+gg2 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE, color.use = c("gray9", "red"), show.raw = TRUE, measure = "count" )
+gg3 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE, color.use = c("gray9", "red"), show.raw = TRUE, measure = "weight" )
+gg1 + gg2 + gg3
+dev.off()
+#!!! PLOT TO SHOW!!!
+
+
+
+# Compare outgoing (or incoming) signaling associated with each cell population
+pdf("output/CellChat/CompareOutgoingIncoming-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 5)
+i = 1
+# combining all the identified signaling pathways from different datasets 
+pathway.union <- union(object.list[[i]]@netP$pathways, object.list[[i+1]]@netP$pathways)
+ht1 = netAnalysis_signalingRole_heatmap(object.list[[i]], pattern = "outgoing", signaling = pathway.union, title = names(object.list)[i], width = 5, height = 3)
+ht2 = netAnalysis_signalingRole_heatmap(object.list[[i+1]], pattern = "outgoing", signaling = pathway.union, title = names(object.list)[i+1], width = 5, height = 3)
+draw(ht1 + ht2, ht_gap = unit(0.5, "cm"))
+
+ht1 = netAnalysis_signalingRole_heatmap(object.list[[i]], pattern = "incoming", signaling = pathway.union, title = names(object.list)[i], width = 5, height = 3, color.heatmap = "GnBu")
+ht2 = netAnalysis_signalingRole_heatmap(object.list[[i+1]], pattern = "incoming", signaling = pathway.union, title = names(object.list)[i+1], width = 5, height = 3, color.heatmap = "GnBu")
+draw(ht1 + ht2, ht_gap = unit(0.5, "cm"))
+
+ht1 = netAnalysis_signalingRole_heatmap(object.list[[i]], pattern = "all", signaling = pathway.union, title = names(object.list)[i], width = 5, height = 3, color.heatmap = "OrRd")
+ht2 = netAnalysis_signalingRole_heatmap(object.list[[i+1]], pattern = "all", signaling = pathway.union, title = names(object.list)[i+1], width = 5, height = 3, color.heatmap = "OrRd")
+draw(ht1 + ht2, ht_gap = unit(0.5, "cm"))
+dev.off()
+#!!! PLOT TO SHOW!!!
+
+
+
+
+
+# Part III: Identify the upgulated and down-regulated signaling ligand-receptor pairs
+
+object.list <- list(WT_p14 = cellchat_WT_p14, Kcnc1_p14 = cellchat_Kcnc1_p14)
+cellchat <- mergeCellChat(object.list, add.names = names(object.list))
+cellchat
+
+
+## Identify dysfunctional signaling by comparing the communication probabities
+#--> NOT RECOMMENDED< FUCK THAT! It give too much result and lets prefer showing DEGs
+
+
+## Identify dysfunctional signaling by using differential expression analysis
+
+
+# define a positive dataset, i.e., the dataset with positive fold change against the other dataset
+pos.dataset = "Kcnc1_p14"
+# define a char name used for storing the results of differential expression analysis
+features.name = pos.dataset
+# perform differential expression analysis
+cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos.dataset = pos.dataset, features.name = features.name, only.pos = FALSE, thresh.pc = 0.1, thresh.fc = 0.1, thresh.p = 1)
+# map the results of differential expression analysis onto the inferred cell-cell communications to easily manage/subset the ligand-receptor pairs of interest
+net <- netMappingDEG(cellchat, features.name = features.name)
+# extract the ligand-receptor pairs with upregulated ligands in Kcnc1
+#
+net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = 0.25, receptor.logFC = 0.25) # 21 genes
+#net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = 0.2, receptor.logFC = 0.2) # 28 genes
+
+# extract the ligand-receptor pairs with upregulated ligands and upregulated recetptors in NL, i.e.,downregulated in Kcnc1
+net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p14",ligand.logFC = -0.1, receptor.logFC = -0.1)
+
+gene.up <- extractGeneSubsetFromPair(net.up, cellchat)
+gene.down <- extractGeneSubsetFromPair(net.down, cellchat)
+
+
+##  upgulated and down-regulated signaling ligand-receptor pairs using bubble plot or chord diagram
+#!!! PLOT TO SHOW!!!
+
+### Granule  #########
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Granule-vs-All-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 6, height = 5)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = "Granule", targets.use = c("ImmatureGranule", "Granule", "UBC" ,  "CerebellarNuclei","Purkinje_AldocPos", "Purkinje_AldocNeg", "MLI1",  "MLI2",  "PLI",  "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-Granule-vs-MLI2MLI1PurkinjeGolgiCerebellarNucleiImmatureGranuleGranulePLI-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 6, height =4)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = c("Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg", "Golgi", "CerebellarNuclei","ImmatureGranule" ,"Granule", "PLI"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+#--> NO DOWN
+# Chord diagram
+pdf("output/CellChat/netVisual_chord_gene_upregulated-Granule-vs-All-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 20, height = 7)
+netVisual_chord_gene(object.list[[2]], sources.use = "Granule", targets.use = c("ImmatureGranule", "Granule", "UBC" ,  "CerebellarNuclei","Purkinje_AldocPos", "Purkinje_AldocNeg",  "MLI1",  "MLI2",  "PLI",  "Golgi"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Up-regulated signaling in Kcnc1"))
+dev.off()
+pdf("output/CellChat/netVisual_chord_gene_upregulated-Granule-vs-MLI2MLI1PurkinjeGolgiCerebellarNucleiImmatureGranuleGranulePLI-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 20, height = 7)
+netVisual_chord_gene(object.list[[2]], sources.use = c("Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg", "Golgi", "CerebellarNuclei","ImmatureGranule" ,"Granule", "PLI"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Up-regulated signaling in Kcnc1"))
+dev.off()
+#--> NO DOWN
+
+
+
+
+
+
+
+
+
+### ImmatureGranule  #########
+pdf("output/CellChat/netVisual_bubble_pairLR_upregulated-ImmatureGranule-vs-All-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 6, height = 4)
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = "ImmatureGranule", targets.use = c("ImmatureGranule", "Granule", "UBC" ,  "CerebellarNuclei","Purkinje_AldocPos", "Purkinje_AldocNeg",  "MLI1",  "MLI2",  "PLI",  "Golgi"), comparison = c(1, 2),  angle.x = 90, remove.isolate = F,title.name = "Up-regulated signaling in Kcnc1", color.text = c("gray9", "red"), color.heatmap = "viridis", line.on = TRUE, line.size = 0.2)
+dev.off()
+# Chord diagram
+pdf("output/CellChat/netVisual_chord_gene_upregulated-ImmatureGranule-vs-All-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 20, height = 7)
+netVisual_chord_gene(object.list[[2]], sources.use = "ImmatureGranule", targets.use = c("ImmatureGranule", "Granule", "UBC" ,  "CerebellarNuclei","Purkinje_AldocPos", "Purkinje_AldocNeg",  "MLI1",  "MLI2",  "PLI",  "Golgi"), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 2, title.name = paste0("Up-regulated signaling in Kcnc1"))
+dev.off()
+
+
+
+
+
+
+
+
+# Part III: CLEAN - Use FC 0.2 as treshold and generate plot
+object.list <- list(WT_p14 = cellchat_WT_p14, Kcnc1_p14 = cellchat_Kcnc1_p14)
+cellchat <- mergeCellChat(object.list, add.names = names(object.list))
+cellchat
+pos.dataset = "Kcnc1_p14"
+features.name = pos.dataset
+cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos.dataset = pos.dataset, features.name = features.name, only.pos = FALSE, thresh.pc = 0.1, thresh.fc = 0.1, thresh.p = 1)
+net <- netMappingDEG(cellchat, features.name = features.name)
+net.up <- subsetCommunication(cellchat, net = net, datasets = "Kcnc1_p14",ligand.logFC = 0.2, receptor.logFC = 0.2) # 28 genes
+gene.up <- extractGeneSubsetFromPair(net.up, cellchat)
+#net.down <- subsetCommunication(cellchat, net = net, datasets = "WT_p14",ligand.logFC = -0.2, receptor.logFC = -0.2) --> NOT SIGNIF; no down genes!
+#gene.down <- extractGeneSubsetFromPair(net.down, cellchat) --> NOT SIGNIF; no down genes!
+#--> ONLY UPREGULATED GENE PAIRS
+
+# check whether Glutamate or GABA
+net.up[, "interaction_name", drop = F]
+#--> Both Glutamate and GABA
+
+
+
+############### Glutamate signaling ###############
+## Granule to MLI1,MLI2,Purkinje,PLI,Golgi; UBC to granule
+# 1. Filter only Glutamate signaling
+pairLR.use.up <- net.up[, "interaction_name", drop = FALSE]
+pairLR.glutamate <- subset(pairLR.use.up, grepl("^Glutamate", interaction_name))
+# 2. Collect plot information
+bubble_data_list <- netVisual_bubble(
+  cellchat,
+  pairLR.use = pairLR.glutamate,
+  sources.use = c("ImmatureGranule", "Granule", "UBC"),
+  targets.use = c("MLI1", "MLI2", "Purkinje_AldocPos", "Purkinje_AldocNeg", "PLI", "Golgi", "ImmatureGranule", "Granule"),
+  comparison = c(1, 2),
+  angle.x = 90,
+  remove.isolate = FALSE,
+  title.name = "Up-regulated signaling in Kcnc1",
+  color.text = c("gray9", "red"),
+  color.heatmap = "viridis",
+  line.on = TRUE,
+  line.size = 0.2,
+  return.data = TRUE
+)
+bubble_data <- bubble_data_list$communication
+# 3. Define desired textbook interactions
+desired_pairs <- c(
+  "ImmatureGranule -> MLI1", "ImmatureGranule -> MLI2", "ImmatureGranule -> Purkinje_AldocPos", "ImmatureGranule -> Purkinje_AldocNeg",
+  "ImmatureGranule -> PLI", "ImmatureGranule -> Golgi", "ImmatureGranule -> ImmatureGranule",
+  "Granule -> MLI1", "Granule -> MLI2", "Granule -> Purkinje_AldocPos", "Granule -> Purkinje_AldocNeg",
+  "Granule -> PLI", "Granule -> Golgi", "Granule -> Granule",
+  "UBC -> Granule", "UBC -> ImmatureGranule"
+)
+# 4. Filter to desired pairs
+bubble_data <- bubble_data[!is.na(bubble_data$interaction_name), ]
+bubble_data <- subset(bubble_data, group.names %in% desired_pairs)
+# 5. Create x-axis combo keys
+complete_combos <- expand.grid(
+  group.names = desired_pairs,
+  dataset = c("WT_p14", "Kcnc1_p14"),
+  stringsAsFactors = FALSE
+)
+bubble_data$combo_key <- paste(bubble_data$group.names, bubble_data$dataset)
+complete_combos$combo_key <- paste(complete_combos$group.names, complete_combos$dataset)
+# 6. Fill in missing WT/Kcnc1 combinations
+missing_keys <- setdiff(complete_combos$combo_key, bubble_data$combo_key)
+missing_rows <- complete_combos[complete_combos$combo_key %in% missing_keys, ]
+if (nrow(missing_rows) > 0) {
+  template <- bubble_data[1, , drop = FALSE]
+  fake_rows <- do.call(rbind, lapply(1:nrow(missing_rows), function(i) {
+    row <- template
+    row$group.names <- missing_rows$group.names[i]
+    row$dataset <- missing_rows$dataset[i]
+    row$combo_key <- missing_rows$combo_key[i]
+    row$interaction_name <- NA
+    row$prob <- NA
+    row$pval <- NA
+    return(row)
+  }))
+  bubble_data <- rbind(bubble_data, fake_rows)
+}
+# 7. Build ordered x-axis (WT first)
+bubble_data$x_axis <- paste(bubble_data$group.names, bubble_data$dataset, sep = " | ")
+ordered_x <- as.vector(sapply(desired_pairs, function(pair) c(
+  paste(pair, "WT_p14", sep = " | "),
+  paste(pair, "Kcnc1_p14", sep = " | ")
+)))
+bubble_data$x_axis <- factor(bubble_data$x_axis, levels = ordered_x)
+# 8. Color the x-axis labels
+x_axis_colors <- ifelse(grepl("WT_p14", ordered_x), "black", "red")
+# 9. Plot
+pdf("output/CellChat/ggplot_netVisual_bubble_pairLR_upregulated-GlutamateSignaling-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2_FINAL.pdf", width = 10, height = 6)
+ggplot(bubble_data, aes(x = x_axis, y = interaction_name_2)) +
+  geom_point(aes(size= 1, color = prob), na.rm = TRUE) +
+  scale_color_viridis_c(option = "viridis", na.value = "white") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, color = x_axis_colors),
+    panel.grid.major.x = element_line(color = "gray85", linetype = "dotted"),
+    panel.grid.minor.x = element_blank()
+  ) +
+  labs(
+    title = "Glutamate Signaling (WT vs Kcnc1 p14)",
+    x = "",
+    y = ""
+  ) +
+  geom_vline(xintercept = seq(2.5, length(levels(bubble_data$x_axis)), by = 2), linetype = "dotted", color = "black", size = 0.7) 
+
+dev.off()
+
+
+## Purkinje to CerebellarNuclei
+# 1. Filter only Glutamate signaling
+pairLR.use.up <- net.up[, "interaction_name", drop = FALSE]
+pairLR.glutamate <- subset(pairLR.use.up, grepl("^Glutamate", interaction_name))
+# 2. Collect plot information
+bubble_data_list <- netVisual_bubble(
+  cellchat,
+  pairLR.use = pairLR.glutamate,
+  sources.use = c("Purkinje_AldocPos", "Purkinje_AldocNeg"),
+  targets.use = c("CerebellarNuclei", "Granule"),
+  comparison = c(1, 2),
+  angle.x = 90,
+  remove.isolate = FALSE,
+  title.name = "Up-regulated signaling in Kcnc1",
+  color.text = c("gray9", "red"),
+  color.heatmap = "viridis",
+  line.on = TRUE,
+  line.size = 0.2,
+  return.data = TRUE
+)
+bubble_data <- bubble_data_list$communication
+# 3. Define desired textbook interactions
+desired_pairs <- c(
+  "Purkinje_AldocPos -> CerebellarNuclei", "Purkinje_AldocNeg -> CerebellarNuclei"
+)
+# 4. Filter to desired pairs
+bubble_data <- bubble_data[!is.na(bubble_data$interaction_name), ]
+bubble_data <- subset(bubble_data, group.names %in% desired_pairs)
+# 5. Create x-axis combo keys
+complete_combos <- expand.grid(
+  group.names = desired_pairs,
+  dataset = c("WT_p14", "Kcnc1_p14"),
+  stringsAsFactors = FALSE
+)
+bubble_data$combo_key <- paste(bubble_data$group.names, bubble_data$dataset)
+complete_combos$combo_key <- paste(complete_combos$group.names, complete_combos$dataset)
+# 6. Fill in missing WT/Kcnc1 combinations
+missing_keys <- setdiff(complete_combos$combo_key, bubble_data$combo_key)
+missing_rows <- complete_combos[complete_combos$combo_key %in% missing_keys, ]
+if (nrow(missing_rows) > 0) {
+  template <- bubble_data[1, , drop = FALSE]
+  fake_rows <- do.call(rbind, lapply(1:nrow(missing_rows), function(i) {
+    row <- template
+    row$group.names <- missing_rows$group.names[i]
+    row$dataset <- missing_rows$dataset[i]
+    row$combo_key <- missing_rows$combo_key[i]
+    row$interaction_name <- NA
+    row$prob <- NA
+    row$pval <- NA
+    return(row)
+  }))
+  bubble_data <- rbind(bubble_data, fake_rows)
+}
+# 7. Build ordered x-axis (WT first)
+bubble_data$x_axis <- paste(bubble_data$group.names, bubble_data$dataset, sep = " | ")
+ordered_x <- as.vector(sapply(desired_pairs, function(pair) c(
+  paste(pair, "WT_p14", sep = " | "),
+  paste(pair, "Kcnc1_p14", sep = " | ")
+)))
+bubble_data$x_axis <- factor(bubble_data$x_axis, levels = ordered_x)
+# 8. Color the x-axis labels
+x_axis_colors <- ifelse(grepl("WT_p14", ordered_x), "black", "red")
+# 9. Plot
+pdf("output/CellChat/ggplot_netVisual_bubble_pairLR_upregulated-GlutamateSignaling_PurkinjeCerebellarNuclei-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2_FINAL.pdf", width = 4, height = 6)
+ggplot(bubble_data, aes(x = x_axis, y = interaction_name_2)) +
+  geom_point(aes(size= 1, color = prob), na.rm = TRUE) +
+  scale_color_viridis_c(option = "viridis", na.value = "white") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, color = x_axis_colors),
+    panel.grid.major.x = element_line(color = "gray85", linetype = "dotted"),
+    panel.grid.minor.x = element_blank()
+  ) +
+  labs(
+    title = "Glutamate Signaling (WT vs Kcnc1 p14)",
+    x = "",
+    y = ""
+  )
+dev.off()
+
+
+
+
+
+############### GABA signaling ###############
+## Golgi to Granule; MLI2 to MLI1, MLI1 to purkinje; purkinje to CerbellarNuclei
+# 1. Filter only GABA signaling
+pairLR.use.up <- net.up[, "interaction_name", drop = FALSE]
+pairLR.gaba <- subset(pairLR.use.up, grepl("^GABA", interaction_name))
+# 2. Collect plot information
+bubble_data_list <- netVisual_bubble(
+  cellchat,
+  pairLR.use = pairLR.gaba,
+  sources.use = c("Golgi", "MLI2", "MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg"),
+  targets.use = c("ImmatureGranule", "Granule", "MLI1", "Purkinje", "CerebellarNuclei"),
+  comparison = c(1, 2),
+  angle.x = 90,
+  remove.isolate = FALSE,
+  title.name = "Up-regulated signaling in Kcnc1",
+  color.text = c("gray9", "red"),
+  color.heatmap = "viridis",
+  line.on = TRUE,
+  line.size = 0.2,
+  return.data = TRUE
+)
+bubble_data <- bubble_data_list$communication
+# 3. Define desired textbook interactions
+desired_pairs <- c(
+  "Golgi -> ImmatureGranule", "Golgi -> Granule",
+  "MLI2 -> MLI1", "MLI1 -> Purkinje_AldocPos", "MLI1 -> Purkinje_AldocNeg", "Purkinje_AldocPos -> CerebellarNuclei", "Purkinje_AldocNeg -> CerebellarNuclei"
+)
+# 4. Filter to desired pairs
+bubble_data <- bubble_data[!is.na(bubble_data$interaction_name), ]
+bubble_data <- subset(bubble_data, group.names %in% desired_pairs)
+# 5. Create x-axis combo keys
+complete_combos <- expand.grid(
+  group.names = desired_pairs,
+  dataset = c("WT_p14", "Kcnc1_p14"),
+  stringsAsFactors = FALSE
+)
+bubble_data$combo_key <- paste(bubble_data$group.names, bubble_data$dataset)
+complete_combos$combo_key <- paste(complete_combos$group.names, complete_combos$dataset)
+# 6. Fill in missing WT/Kcnc1 combinations
+missing_keys <- setdiff(complete_combos$combo_key, bubble_data$combo_key)
+missing_rows <- complete_combos[complete_combos$combo_key %in% missing_keys, ]
+if (nrow(missing_rows) > 0) {
+  template <- bubble_data[1, , drop = FALSE]
+  fake_rows <- do.call(rbind, lapply(1:nrow(missing_rows), function(i) {
+    row <- template
+    row$group.names <- missing_rows$group.names[i]
+    row$dataset <- missing_rows$dataset[i]
+    row$combo_key <- missing_rows$combo_key[i]
+    row$interaction_name <- NA
+    row$prob <- NA
+    row$pval <- NA
+    return(row)
+  }))
+  bubble_data <- rbind(bubble_data, fake_rows)
+}
+# 7. Build ordered x-axis (WT first)
+bubble_data$x_axis <- paste(bubble_data$group.names, bubble_data$dataset, sep = " | ")
+ordered_x <- as.vector(sapply(desired_pairs, function(pair) c(
+  paste(pair, "WT_p14", sep = " | "),
+  paste(pair, "Kcnc1_p14", sep = " | ")
+)))
+bubble_data$x_axis <- factor(bubble_data$x_axis, levels = ordered_x)
+# 8. Color the x-axis labels
+x_axis_colors <- ifelse(grepl("WT_p14", ordered_x), "black", "red")
+# 9. Plot
+pdf("output/CellChat/ggplot_netVisual_bubble_pairLR_upregulated-GABASignaling-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2_FINAL.pdf", width = 6, height = 6)
+ggplot(bubble_data, aes(x = x_axis, y = interaction_name_2)) +
+  geom_point(aes(size= 1, color = prob), na.rm = TRUE) +
+  scale_color_viridis_c(option = "viridis", na.value = "white") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, color = x_axis_colors),
+    panel.grid.major.x = element_line(color = "gray85", linetype = "dotted"),
+    panel.grid.minor.x = element_blank()
+  ) +
+  labs(
+    title = "GABA Signaling (WT vs Kcnc1 p14)",
+    x = "",
+    y = ""
+  ) +
+  geom_vline(xintercept = seq(2.5, length(levels(bubble_data$x_axis)), by = 2), linetype = "dotted", color = "black", size = 0.7) 
+dev.off()
+#--> For GABA, only Purkinje and Cerebellar Nuclei is signifcant
+pdf("output/CellChat/ggplot_netVisual_bubble_pairLR_upregulated-GABASignaling_PurkinjeCerebellarNuclei-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2_FINAL.pdf", width = 6, height = 6)
+bubble_data %>% filter(group.names %in% c("Purkinje_AldocPos -> CerebellarNuclei", "Purkinje_AldocNeg -> CerebellarNuclei")) %>%
+ggplot(., aes(x = x_axis, y = interaction_name_2)) +
+  geom_point(aes(size= 1, color = prob), na.rm = TRUE) +
+  scale_color_viridis_c(option = "viridis", na.value = "white") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, color = x_axis_colors),
+    panel.grid.major.x = element_line(color = "gray85", linetype = "dotted"),
+    panel.grid.minor.x = element_blank()
+  ) +
+  labs(
+    title = "GABA Signaling (WT vs Kcnc1 p14)",
+    x = "",
+    y = ""
+  ) +
+  geom_vline(xintercept = seq(2.5, length(levels(bubble_data$x_axis)), by = 2), linetype = "dotted", color = "black", size = 0.7) 
+dev.off()
+
+
+
+
+
+
+
+
+# Part IV: Visually compare cell-cell communication using Hierarchy plot, Circle plot or Chord diagram
+
+
+
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pathways.show <- c("2-AG") 
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-2AG-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 20, height = 7)
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+
+## SHOW ONLY biologically relevant interactions
+#!!! PLOT TO SHOW!!!
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-Glutamate_BioRelevant-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 7)
+pathways.show <- c("Glutamate") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("ImmatureGranule" ,"Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg", "Golgi", "CerebellarNuclei","ImmatureGranule" ,"Granule", "PLI"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-Glutamate_BioRelevant2-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 7)
+pathways.show <- c("Glutamate") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("ImmatureGranule" ,"Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg", "Golgi", "PLI"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-Glutamate_BioRelevant3-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 7)
+pathways.show <- c("Glutamate") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("ImmatureGranule" ,"Granule") , targets.use =  c("MLI2", "MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg", "Golgi", "PLI", "ImmatureGranule" ,"Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+#--> PLOT used PPT 20250626
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-Glutamate_BioRelevant4-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 7)
+pathways.show <- c("Glutamate") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje_AldocPos", "Purkinje_AldocNeg") , targets.use =  c("CerebellarNuclei"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+#--> PLOT used PPT 20250626
+
+
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-GABA_Purkinje_BioRelevant-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 7)
+pathways.show <- c("GABA-A") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje_AldocPos", "Purkinje_AldocNeg") , targets.use =  c("Purkinje_AldocPos", "Purkinje_AldocNeg", "CerebellarNuclei","ImmatureGranule" ,"Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+pathways.show <- c("GABA-B") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c("Purkinje_AldocPos", "Purkinje_AldocNeg") , targets.use =  c("Purkinje_AldocPos", "Purkinje_AldocNeg", "CerebellarNuclei","ImmatureGranule" ,"Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+
+pdf("output/CellChat/netVisual_aggregate_CIRCLE-GABA_Purkinje_BioRelevant2-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 7)
+pathways.show <- c("GABA-A") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c(  "MLI2","MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg", "Golgi"), targets.use = c( "MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg",  "CerebellarNuclei", "Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+pathways.show <- c("GABA-B") 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, sources.use = c(  "MLI2","MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg", "Golgi"), targets.use = c( "MLI1", "Purkinje_AldocPos", "Purkinje_AldocNeg",  "CerebellarNuclei", "Granule"), vertex.label.cex = 1, point.size= 5, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+#--> PLOT used PPT 20250626; modified with Inkscape to only keep true interaction
+
+
+
+
+
+
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pathways.show <- c("2-AG") 
+pdf("output/CellChat/netVisual_heatmap-Glutamate-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 20, height = 7)
+par(mfrow = c(1,2), xpd=TRUE)
+ht <- list()
+for (i in 1:length(object.list)) {
+  ht[[i]] <- netVisual_heatmap(object.list[[i]], signaling = pathways.show, color.heatmap = "Reds",title.name = paste(pathways.show, "signaling ",names(object.list)[i]))
+}
+ComplexHeatmap::draw(ht[[1]] + ht[[2]], ht_gap = unit(0.5, "cm"))
+dev.off()
+
+
+pathways.show <- c("Glutamate") 
+pathways.show <- c("GABA-A") 
+pathways.show <- c("GABA-B") 
+pathways.show <- c("2-AG") 
+pdf("output/CellChat/netVisual_aggregate_CHORD-Glutamate-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 20, height = 7)
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "chord", signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+
+
+
+# Specify group of interest 
+# Define the groups based on the cell type categorization
+# Define the groups based on the revised cell type categorization
+group.cellType <- rep(NA, length(levels(cellchat@idents)))
+names(group.cellType) <- levels(cellchat@idents)
+# Assign each cell type to a category
+group.cellType[c("ImmatureGranule",  "Granule" ,  "UBC" ,  "CerebellarNuclei")] <- "Glutamatergic"
+group.cellType[c("Purkinje_AldocPos", "Purkinje_AldocNeg", "MLI1",  "MLI2",  "PLI",  "Golgi")] <- "GABAergic"
+# Check if all assignments are done correctly
+print(group.cellType)
+names(group.cellType) <- levels(cellchat@idents)
+names(group.cellType) <- levels(object.list[[1]]@idents)
+
+
+pdf("output/CellChat/netVisual_aggregate_CHORD1-GlutamateGABAGABAB2AG-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 20, height = 7)
+pathways.show <- c("Glutamate") 
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_cell(object.list[[i]], signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network - ", names(object.list)[i]))
+}
+pathways.show <- c("GABA-A") 
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_cell(object.list[[i]], signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network - ", names(object.list)[i]))
+}
+pathways.show <- c("GABA-B") 
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_cell(object.list[[i]], signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network - ", names(object.list)[i]))
+}
+pathways.show <- c("2-AG") 
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_cell(object.list[[i]], signaling = pathways.show, group = group.cellType, title.name = paste0(pathways.show, " signaling network - ", names(object.list)[i]))
+}
+dev.off()
+#!!! PLOT TO SHOW!!!
+
+
+
+
+
+
+
+
+
+pdf("output/CellChat/netVisual_chord_GENE-Granule-vs-MLI2MLI1Purkinje-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 20, height = 7)
+par(mfrow = c(1, 2), xpd=TRUE)
+# compare all the interactions 
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = "Granule", targets.use = c("MLI2","MLI1","Purkinje_AldocPos", "Purkinje_AldocNeg"), lab.cex = 0.5, title.name = paste0("Signaling from Granule - ", names(object.list)[i]))
+}
+# compare all the interactions - CHANGING SIZE TEXT
+par(mfrow = c(1, 2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = "Granule", targets.use = c("MLI2","MLI1","Purkinje_AldocPos", "Purkinje_AldocNeg"),  title.name = paste0("Signaling from Granule - ", names(object.list)[i]), legend.pos.x = 10)
+}
+# show all the significant signaling pathways from fibroblast to immune cells
+par(mfrow = c(1, 2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = "Granule", targets.use = c("MLI2","MLI1","Purkinje_AldocPos", "Purkinje_AldocNeg"), slot.name = "netP", title.name = paste0("Signaling from Granule - ", names(object.list)[i]), legend.pos.x = 10)
+}
+dev.off()
+#!!! PLOT TO SHOW!!!
+
+pdf("output/CellChat/netVisual_chord_GENE-Purkinje-vs-GranuleCerebellarNuclei-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 20, height = 7)
+par(mfrow = c(1, 2), xpd=TRUE)
+# compare all the interactions 
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = c("Purkinje_AldocPos", "Purkinje_AldocNeg"), targets.use = c("Granule", "CerebellarNuclei"), lab.cex = 0.5, title.name = paste0("Signaling from Purkinje - ", names(object.list)[i]))
+}
+# compare all the interactions - CHANGING SIZE TEXT
+par(mfrow = c(1, 2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = c("Purkinje_AldocPos", "Purkinje_AldocNeg"), targets.use = c("Granule", "CerebellarNuclei"),  title.name = paste0("Signaling from Purkinje - ", names(object.list)[i]), legend.pos.x = 10)
+}
+# show all the significant signaling pathways from fibroblast to immune cells
+par(mfrow = c(1, 2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = c("Purkinje_AldocPos", "Purkinje_AldocNeg"), targets.use = c("Granule", "CerebellarNuclei"), slot.name = "netP", title.name = paste0("Signaling from Purkinje - ", names(object.list)[i]), legend.pos.x = 10)
+}
+dev.off()
+#!!! PLOT TO SHOW!!!
+
+
+
+# Part V: Compare the signaling gene expression distribution between different datasets
+
+
+pdf("output/CellChat/plotGeneExpression-Glutamate-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 15)
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c("WT_p14", "Kcnc1_p14")) # set factor level
+plotGeneExpression(cellchat, signaling = "Glutamate", split.by = "datasets", colors.ggplot = T) # Glutamate, GABA-A, GABA-B, 2-AG
+dev.off()
+
+pdf("output/CellChat/plotGeneExpression-GABAA-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 13)
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c("WT_p14", "Kcnc1_p14")) # set factor level
+plotGeneExpression(cellchat, signaling = "GABA-A", split.by = "datasets", colors.ggplot = T) # Glutamate, GABA-A, GABA-B, 2-AG
+dev.off()
+
+
+pdf("output/CellChat/plotGeneExpression-GABAB-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 8)
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c("WT_p14", "Kcnc1_p14")) # set factor level
+plotGeneExpression(cellchat, signaling = "GABA-B", split.by = "datasets", colors.ggplot = T) # Glutamate, GABA-A, GABA-B, 2-AG
+dev.off()
+
+
+pdf("output/CellChat/plotGeneExpression-2AG-p14_CB-version5dim40kparam15res015-filterNeuronsclusterannot2.pdf", width = 10, height = 6)
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c("WT_p14", "Kcnc1_p14")) # set factor level
+plotGeneExpression(cellchat, signaling = "2-AG", split.by = "datasets", colors.ggplot = T) # Glutamate, GABA-A, GABA-B, 2-AG
+dev.off()
+
+
+
+
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS #####################
+###############################################################
+
+
+XXXY below not mod
+
+# RELATED to cellchaT ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule" ,  "UBC" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"))
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi"))
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",  "Granule" ,  "UBC" ,  "CerebellarNuclei","Purkinje",  "MLI1",  "MLI2",  "PLI",  "Golgi")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Slc1a2", "Gls", "Grik1", "Grik2", "Grik4", "Gria1", "Gria2", "Gria3", "Grm1", "Grm3", "Grm5", "Grm7", "Grm8") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-geneUpSignif-filterNeurons-STAT.pdf", width=5, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+
+# Kcnc1 gene in cell type of interest ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "Granule", "MLI2", "PLI", "Golgi", "CerebellarNuclei"))
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "Granule", "MLI2", "PLI", "Golgi", "CerebellarNuclei"))
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("Granule", "MLI2", "PLI", "Golgi", "CerebellarNuclei")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- "Kcnc1" # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-Kcnc1-filterKCNC1celltypes-STAT.pdf", width=3.5, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+## Subset seurat object in granule only
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "Granule"))
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "Granule"))
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+#### import all clsuter DEGs output :
+cluster_types <- c("Granule")
+##### Initialize empty list to store data
+deg_list <- list()
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Myt1l", "Grin2b", "Cntn5") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-Kcnc1-GranuleNeuronDevExamples-STAT.pdf", width=3, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Related to DAM microglia - Subset seurat object in BergmanGlia only
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "BergmanGlia"))
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "BergmanGlia"))
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+#### import all clsuter DEGs output :
+cluster_types <- c("BergmanGlia")
+##### Initialize empty list to store data
+deg_list <- list()
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("P2ry12","P2ry13","Cx3cr1","Tmem119","Trem2","Apoe","Lpl","Itgax","Axl","Ctsd","Tyrobp","Spp1" ,"Cst7","B2m","Prdx1") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-Kcnc1-HMDAMMicroglia-STAT.pdf", width=3, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# RELATED to cellchaT - gene upreg Glutamate ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi"))
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi"))
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",  "Granule", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Slc1a2", "Gls", "Grik1", "Grik2", "Grik4", "Gria1", "Gria2", "Gria3", "Grm1", "Grm3", "Grm5", "Grm7", "Grm8") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-geneUpGlu-filterNeurons-STAT.pdf", width=5, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+
+
+# RELATED to xxx ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule"))
+
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",  "Granule")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+
+
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Ctnnb1", "Pax6", "Lrp8", "Cbln1", "Sox11") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-overlapKellyCBgenes-filterNeurons-STAT.pdf", width=3, height=3)
+
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+# All Kelly CB-related genes ################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule", "UBC", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi", "CerebellarNuclei", "BergmanGlia", "Astrocyte", "Oligodendrocyte"))
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",  "Granule", "UBC", "MLI1", "MLI2", "PLI", "Purkinje", "Golgi", "CerebellarNuclei", "BergmanGlia", "Astrocyte", "Oligodendrocyte")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.05   & abs(avg_log2FC) >= 0.1 ~ "*",
+    TRUE                                           ~ ""
+  ))
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Atoh1","Lrp8","Bdnf","Ctnnb1","Cbln1","Chd4","Chd7","En1","En2","Fgf22","Gli1","Gli2","Gli3","Stk11","Mxd3","Magea6","Neurod1","Nlgn1","Notch2","Mycn","Nrxn1","Ntf3","Pax6","Ptf1a","Reln","Shh","Sox2","Sox3","Sox11","Cntn2","Wnt7a","Zic1","Zic4") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-CBrelatedKelly-filterNeurons-STAT.pdf", width=5, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+
+
+
+
+
+# Some Kelly CB-related genes - granule################################################################
+## Subset seurat object to keep cell tye of interest
+
+WT_Kcnc1_p14_CB_1step_subset <- subset(WT_Kcnc1_p14_CB_1step.sct, 
+                                       subset = cluster.annot %in% c( "ImmatureGranule",  "Granule"))
+
+
+# Check some genes
+DefaultAssay(WT_Kcnc1_p14_CB_1step_subset) <- "RNA"
+
+
+
+#### import all clsuter DEGs output :
+cluster_types <- c("ImmatureGranule",  "Granule")
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+##### Add significance stars based on adjusted p-value
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.0001 ~ "***",
+    p_val_adj < 0.001  ~ "**",
+    p_val_adj < 0.05   ~ "*",
+    TRUE               ~ ""
+  ))
+
+combined_deg <- combined_deg %>%
+  mutate(significance = case_when(
+    p_val_adj < 0.05   & abs(avg_log2FC) >= 0.25 ~ "*",
+    TRUE                                           ~ ""
+  ))
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Pax6", "Cntn2", "Chd7", "Cbln1", "Reln", "Nrxn1", "Nlgn1", "Kcnd2", "Grik2") # gene.down gene.up 
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest)
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(WT_Kcnc1_p14_CB_1step_subset, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(WT_Kcnc1_p14_CB_1step_subset))  # Convert to character to match
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+pdf("output/seurat/VlnPlot_RNA_WT_Kcnc1_p14_CB_1step_subset-version5dim40kparam15res015-CBrelatedKellyGranule-filterNeurons-STAT.pdf", width=3, height=3)
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(WT_Kcnc1_p14_CB_1step_subset, 
+               features = gene, 
+               pt.size = 0, 
+               split.by = "condition", cols = c("black", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = significance), 
+                     size = 6, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
+
+
+```
+
+
+
+
 
 
 ##### miloR for cell type abundance
@@ -89748,6 +91931,32 @@ aldoc_summary <- df %>%
 aldoc_summary
 
 
+
+
+# Proportion of cells Kcng4 + #############
+## Make sure RNA is the active assay
+DefaultAssay(Part_Purkinje_sct) <- "RNA"
+## Extract Kcng4 expression and condition
+df <- FetchData(
+  Part_Purkinje_sct,
+  vars = c("Kcng4", "condition")
+)
+## Count Kcng4+ cells per condition
+kcng4_summary <- df %>%
+  dplyr::mutate(Kcng4_pos = Kcng4 > 0) %>%
+  dplyr::group_by(condition) %>%
+  dplyr::summarise(
+    total_cells = n(),
+    Kcng4_pos_cells = sum(Kcng4_pos),
+    Kcng4_neg_cells = total_cells - Kcng4_pos_cells,
+    prop_Kcng4_pos = Kcng4_pos_cells / total_cells,
+    prop_Kcng4_neg = Kcng4_neg_cells / total_cells
+  )
+
+kcng4_summary
+
+
+
 Part_Purkinje_sct_p35 = Part_Purkinje_sct
 
 
@@ -89847,6 +92056,35 @@ FeaturePlot(
   cols = c("grey90", "green3", "red3"), split.by = "condition", pt.size = .5
 )
 dev.off()
+
+
+
+# Proportion of cells Aldoc + #############
+## Make sure RNA is the active assay
+DefaultAssay(Part_Purkinje_sct) <- "RNA"
+## Extract Aldoc expression and condition
+df <- FetchData(
+  Part_Purkinje_sct,
+  vars = c("Aldoc", "condition")
+)
+## Count Aldoc+ cells per condition
+aldoc_summary <- df %>%
+  dplyr::mutate(Aldoc_pos = Aldoc > 0) %>%
+  dplyr::group_by(condition) %>%
+  dplyr::summarise(
+    total_cells = n(),
+    Aldoc_pos_cells = sum(Aldoc_pos),
+    Aldoc_neg_cells = total_cells - Aldoc_pos_cells,
+    prop_Aldoc_pos = Aldoc_pos_cells / total_cells,
+    prop_Aldoc_neg = Aldoc_neg_cells / total_cells
+  )
+
+aldoc_summary
+
+
+Part_Purkinje_sct_p35 = Part_Purkinje_sct
+
+
 
 
 
