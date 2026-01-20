@@ -44,7 +44,7 @@ Let's try to follow the LOGLIMMA method used in Proteomics; we will need to **no
 
 
 
-# Testing - v1 - LOGLIMMA
+# LOGLIMMA
 
 
 
@@ -1788,3 +1788,2017 @@ Lysosome and whole-cell fractions prepared and measured in separate experiments 
 --> Easier to focus on Lysosome fraction only; identify interesting lipid changes and check whehter they also occur in Cell fraction; if not, these are likely speficic of lysosome: even easier: forget the cell fraction!
 
 
+
+
+
+
+# LOGLIMMA - DMSO condition
+
+Let's make heatmnap to check for basal differences; Scramble, siSNX13, siSNX14 in DMSO condition
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+
+```R
+
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("limma")
+library("readxl")
+
+
+
+
+# Import file
+lip <- read_excel(
+  path  = "input/For_Thomas_Lipidomics_tidy.xlsx",
+  sheet = "tidy clean"
+)
+
+# Tidy files
+sample_cols <- names(lip)[str_detect(names(lip), "^(Lysosomes|Cells)-")]
+
+lip_tidy <- lip %>%
+  pivot_longer(
+    cols = all_of(sample_cols),
+    names_to = "sample",
+    values_to = "abundance",
+    values_transform = list(abundance = as.numeric)
+  ) %>%
+  extract(
+    col = sample,
+    into = c("fraction", "condition", "genotype", "replicate"),
+    regex = "^(Lysosomes|Cells)-([A-Za-z0-9]+)_([^&]+)&(\\d+)$",
+    remove = FALSE
+  ) 
+
+
+
+########################################
+## Normalize to sum per Class ##########
+########################################
+
+
+lip_tidy_norm <- lip_tidy %>%
+  group_by(
+    sample,
+    fraction,
+    condition,
+    genotype,
+    replicate,
+    Class
+  ) %>%
+  mutate(
+    Class_total     = sum(abundance, na.rm = TRUE),
+    abundance_Class = ifelse(Class_total > 0,
+                             abundance / Class_total,
+                             NA_real_)
+  ) %>%
+  ungroup()
+
+
+
+
+
+
+########################################
+## Scram siSNX13 siSNX14 in DMSO - Cells ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Cells",
+         condition == "DMSO",
+         genotype %in% c("Scram", "siSNX13", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+
+genotype_cols <- grep("^genotype", colnames(design))
+
+interaction_global <- topTableF(
+  fit,
+  genotype_cols,
+  number = Inf
+)
+head(interaction_global)
+#--> Signficant Component = different between genotype 
+
+
+
+interaction_tbl <- interaction_global %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble() 
+  
+
+
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX13),
+      abs(genotypesiSNX14),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 0)   # <-- threshold here
+
+
+sig_acc <- interaction_tbl_filt$Component
+
+log2_expr_sig <- log2_expr[rownames(log2_expr) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_sig)   # should be 255
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX13","siSNX14"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_sig_ord <- log2_expr_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 7
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Component = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Component)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Component")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+
+
+block_sizes <- sample_order %>%
+  count(genotype, condition, .drop = FALSE) %>%   # add fraction here too if needed
+  pull(n)
+
+gaps_col <- cumsum(block_sizes)[-length(block_sizes)] 
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-SNX1314_Cells_DMSO-7Cluster.pdf", width = 4, height = 4)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = gaps_col,
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+#--> Clean, no outliers
+
+
+
+out_tbl <- cluster_tbl %>%
+  left_join(df %>% dplyr::select(Component, Class, Size, Saturation) %>% unique) %>%
+  arrange(cluster, Component)
+
+write_tsv(out_tbl, "output/GENELIST-LOGLIMMA-SNX1314_Cells_DMSO-7Cluster.tsv")
+
+
+
+pca <- prcomp(t(log2_expr_sig), scale. = TRUE)
+
+pca_df <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  coldata
+)
+pdf("output/pca-LOGLIMMA-SNX1314_Cells_DMSO.pdf", width = 4, height = 4)
+ggplot(pca_df, aes(PC1, PC2, color = genotype, shape = condition)) +
+  geom_point(size = 4) +
+  geom_text(aes(label = replicate), vjust = -1) +
+  theme_bw()
+dev.off()
+#--> PCA is good
+
+
+
+
+# Show top 10 Component per cluster
+# 1) Keep DMSO only + join clusters + log2 transform
+lip_tidy_for_plot <- df %>%
+  left_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  filter(!is.na(cluster)) %>%
+  filter(condition == "DMSO") %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram", "siSNX13", "siSNX14")),
+    log2_abund = log2(abundance_Class + 1)
+  )
+# 2) Pick top 10 Components per cluster (based on mean abundance across all DMSO samples)
+top10_per_cluster <- lip_tidy_for_plot %>%
+  group_by(cluster, Component) %>%
+  summarise(mean_abund = mean(abundance_Class, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_abund, n = 10, with_ties = FALSE) %>%
+  ungroup()
+# 3) Build plotting DF (replicate-level values kept!)
+plot_df <- lip_tidy_for_plot %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Component")) %>%
+  mutate(panel_label = paste0(" (", Component, ")"))
+# 4) Plot: one PDF per cluster (top 10 panels)
+for (cl in sort(unique(plot_df$cluster))) {
+
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = genotype, y = log2_abund)) +
+    geom_boxplot(outlier.shape = NA, linewidth = 0.6) +
+    geom_jitter(aes(color = genotype),
+                width = 0.12, size = 2.2, alpha = 0.9) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram" = "black", "siSNX13" = "red", "siSNX14" = "blue")) +
+    labs(
+      title = paste0("Top 10 lipids — Cluster ", cl, " (DMSO only)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1)"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "none",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5),
+      axis.text.x = element_text(angle = 25, hjust = 1)
+    )
+
+  ggsave(
+    filename = sprintf("output/top10_cluster_%02d-LOGLIMMA-SNX1314_Cells_DMSO-7Cluster.pdf", cl),
+    plot = p,
+    width = 5, height = 6
+  )
+}
+
+
+
+
+
+
+
+
+
+
+########################################
+## Scram siSNX13 siSNX14 in DMSO - Lysosomes ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Lysosomes",
+         condition == "DMSO",
+         genotype %in% c("Scram", "siSNX13", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+
+genotype_cols <- grep("^genotype", colnames(design))
+
+interaction_global <- topTableF(
+  fit,
+  genotype_cols,
+  number = Inf
+)
+head(interaction_global)
+#--> Signficant Component = different between genotype 
+
+
+
+interaction_tbl <- interaction_global %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble() 
+  
+
+
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX13),
+      abs(genotypesiSNX14),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= .25)   # <-- threshold here
+
+
+sig_acc <- interaction_tbl_filt$Component
+
+log2_expr_sig <- log2_expr[rownames(log2_expr) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_sig)   # should be 252
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX13","siSNX14"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_sig_ord <- log2_expr_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 7
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Component = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Component)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Component")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+
+
+block_sizes <- sample_order %>%
+  count(genotype, condition, .drop = FALSE) %>%   # add fraction here too if needed
+  pull(n)
+
+gaps_col <- cumsum(block_sizes)[-length(block_sizes)] 
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-SNX1314_Lysosomes_DMSO-7Cluster.pdf", width = 4, height = 5)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = gaps_col,
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+#--> Clean, no outliers
+
+
+
+out_tbl <- cluster_tbl %>%
+  left_join(df %>% dplyr::select(Component, Class, Size, Saturation) %>% unique) %>%
+  arrange(cluster, Component)
+
+write_tsv(out_tbl, "output/GENELIST-LOGLIMMA-SNX1314_Lysosomes_DMSO-7Cluster.tsv")
+
+
+
+pca <- prcomp(t(log2_expr_sig), scale. = TRUE)
+
+pca_df <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  coldata
+)
+pdf("output/pca-LOGLIMMA-SNX1314_Lysosomes_DMSO.pdf", width = 4, height = 4)
+ggplot(pca_df, aes(PC1, PC2, color = genotype, shape = condition)) +
+  geom_point(size = 4) +
+  geom_text(aes(label = replicate), vjust = -1) +
+  theme_bw()
+dev.off()
+#--> PCA is good
+
+
+
+
+# Show top 10 Component per cluster
+# 1) Keep DMSO only + join clusters + log2 transform
+lip_tidy_for_plot <- df %>%
+  left_join(cluster_tbl %>% select(Component, cluster), by = "Component") %>%
+  filter(!is.na(cluster)) %>%
+  filter(condition == "DMSO") %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram", "siSNX13", "siSNX14")),
+    log2_abund = log2(abundance_Class + 1)
+  )
+# 2) Pick top 10 Components per cluster (based on mean abundance across all DMSO samples)
+top10_per_cluster <- lip_tidy_for_plot %>%
+  group_by(cluster, Component) %>%
+  summarise(mean_abund = mean(abundance_Class, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_abund, n = 10, with_ties = FALSE) %>%
+  ungroup()
+# 3) Build plotting DF (replicate-level values kept!)
+plot_df <- lip_tidy_for_plot %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Component")) %>%
+  mutate(panel_label = paste0(" (", Component, ")"))
+# 4) Plot: one PDF per cluster (top 10 panels)
+for (cl in sort(unique(plot_df$cluster))) {
+
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = genotype, y = log2_abund)) +
+    geom_boxplot(outlier.shape = NA, linewidth = 0.6) +
+    geom_jitter(aes(color = genotype),
+                width = 0.12, size = 2.2, alpha = 0.9) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram" = "black", "siSNX13" = "red", "siSNX14" = "blue")) +
+    labs(
+      title = paste0("Top 10 lipids — Cluster ", cl, " (DMSO only)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1)"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "none",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5),
+      axis.text.x = element_text(angle = 25, hjust = 1)
+    )
+
+  ggsave(
+    filename = sprintf("output/top10_cluster_%02d-LOGLIMMA-SNX1314_Lysosomes_DMSO-7Cluster.pdf", cl),
+    plot = p,
+    width = 5, height = 6
+  )
+}
+
+```
+
+
+--> The Cell fraction much more clean than the Lysosome fraction; overall data worth be exploring here!
+
+
+
+
+
+
+
+
+
+
+
+# LOGLIMMA - pairwise comparison
+
+
+Let's do pairwise comparison: Scramble vs mutant for each condition, and fraction; represent as Volcano plots
+
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+
+```R
+
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("limma")
+library("readxl")
+
+library("EnhancedVolcano")
+
+
+
+# Import file
+lip <- read_excel(
+  path  = "input/For_Thomas_Lipidomics_tidy.xlsx",
+  sheet = "tidy clean"
+)
+
+# Tidy files
+sample_cols <- names(lip)[str_detect(names(lip), "^(Lysosomes|Cells)-")]
+
+lip_tidy <- lip %>%
+  pivot_longer(
+    cols = all_of(sample_cols),
+    names_to = "sample",
+    values_to = "abundance",
+    values_transform = list(abundance = as.numeric)
+  ) %>%
+  extract(
+    col = sample,
+    into = c("fraction", "condition", "genotype", "replicate"),
+    regex = "^(Lysosomes|Cells)-([A-Za-z0-9]+)_([^&]+)&(\\d+)$",
+    remove = FALSE
+  ) 
+
+
+
+########################################
+## Normalize to sum per Class ##########
+########################################
+
+
+lip_tidy_norm <- lip_tidy %>%
+  group_by(
+    sample,
+    fraction,
+    condition,
+    genotype,
+    replicate,
+    Class
+  ) %>%
+  mutate(
+    Class_total     = sum(abundance, na.rm = TRUE),
+    abundance_Class = ifelse(Class_total > 0,
+                             abundance / Class_total,
+                             NA_real_)
+  ) %>%
+  ungroup()
+
+
+
+
+
+
+########################################
+## Scram vs siSNX13 - DMSO - Cells ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Cells",
+         condition == "DMSO",
+         genotype %in% c("Scram", "siSNX13")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX13 <- topTable(
+  fit,
+  coef = "genotypesiSNX13",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX13_tbl <- res_siSNX13 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+write.table(
+  res_siSNX13_tbl,
+  file = "output/res-Scramble_vs_siSNX13-DMSO-Cells.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX13_tbl$logFC < -0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX13_tbl$logFC > 0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX13-DMSO-Cells-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX13_tbl,
+  lab = res_siSNX13_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX13-DMSO-Cells',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX14 - DMSO - Cells ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Cells",
+         condition == "DMSO",
+         genotype %in% c("Scram", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX14 <- topTable(
+  fit,
+  coef = "genotypesiSNX14",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX14_tbl <- res_siSNX14 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX14_tbl,
+  file = "output/res-Scramble_vs_siSNX14-DMSO-Cells.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX14_tbl$logFC < -0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX14_tbl$logFC > 0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX14-DMSO-Cells-q05FC0-testAxis.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-DMSO-Cells',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) 
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+pdf("output/plotVolcano-Scramble_vs_siSNX14-DMSO-Cells-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-DMSO-Cells',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX13 - LLOME - Cells ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Cells",
+         condition == "LLOME",
+         genotype %in% c("Scram", "siSNX13")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("LLOME"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX13 <- topTable(
+  fit,
+  coef = "genotypesiSNX13",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX13_tbl <- res_siSNX13 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX13_tbl,
+  file = "output/res-Scramble_vs_siSNX13-LLOME-Cells.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX13_tbl$logFC < -0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX13_tbl$logFC > 0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX13-LLOME-Cells-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX13_tbl,
+  lab = res_siSNX13_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX13-LLOME-Cells',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX14 - LLOME - Cells ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Cells",
+         condition == "LLOME",
+         genotype %in% c("Scram", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("LLOME"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX14 <- topTable(
+  fit,
+  coef = "genotypesiSNX14",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX14_tbl <- res_siSNX14 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX14_tbl,
+  file = "output/res-Scramble_vs_siSNX14-LLOME-Cells.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX14_tbl$logFC < -0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX14_tbl$logFC > 0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX14-LLOME-Cells-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-LLOME-Cells',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX13 - RECOVERY - Cells ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Cells",
+         condition == "RECOVERY",
+         genotype %in% c("Scram", "siSNX13")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("RECOVERY"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX13 <- topTable(
+  fit,
+  coef = "genotypesiSNX13",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX13_tbl <- res_siSNX13 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX13_tbl,
+  file = "output/res-Scramble_vs_siSNX13-RECOVERY-Cells.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX13_tbl$logFC < -0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX13_tbl$logFC > 0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX13-RECOVERY-Cells-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX13_tbl,
+  lab = res_siSNX13_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX13-RECOVERY-Cells',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX14 - RECOVERY - Cells ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Cells",
+         condition == "RECOVERY",
+         genotype %in% c("Scram", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("LLOME"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX14 <- topTable(
+  fit,
+  coef = "genotypesiSNX14",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX14_tbl <- res_siSNX14 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX14_tbl,
+  file = "output/res-Scramble_vs_siSNX14-RECOVERY-Cells.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX14_tbl$logFC < -0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX14_tbl$logFC > 0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX14-RECOVERY-Cells-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-RECOVERY-Cells',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX13 - DMSO - Lysosomes ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Lysosomes",
+         condition == "DMSO",
+         genotype %in% c("Scram", "siSNX13")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX13 <- topTable(
+  fit,
+  coef = "genotypesiSNX13",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX13_tbl <- res_siSNX13 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+write.table(
+  res_siSNX13_tbl,
+  file = "output/res-Scramble_vs_siSNX13-DMSO-Lysosomes.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX13_tbl$logFC < -0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX13_tbl$logFC > 0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX13-DMSO-Lysosomes-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX13_tbl,
+  lab = res_siSNX13_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX13-DMSO-Lysosomes',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX14 - DMSO - Lysosomes ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Lysosomes",
+         condition == "DMSO",
+         genotype %in% c("Scram", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX14 <- topTable(
+  fit,
+  coef = "genotypesiSNX14",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX14_tbl <- res_siSNX14 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX14_tbl,
+  file = "output/res-Scramble_vs_siSNX14-DMSO-Lysosomes.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX14_tbl$logFC < -0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX14_tbl$logFC > 0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX14-DMSO-Lysosomes-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-DMSO-Lysosomes',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX13 - LLOME - Lysosomes ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Lysosomes",
+         condition == "LLOME",
+         genotype %in% c("Scram", "siSNX13")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("LLOME"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX13 <- topTable(
+  fit,
+  coef = "genotypesiSNX13",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX13_tbl <- res_siSNX13 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX13_tbl,
+  file = "output/res-Scramble_vs_siSNX13-LLOME-Lysosomes.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX13_tbl$logFC < -0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX13_tbl$logFC > 0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX13-LLOME-Lysosomes-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX13_tbl,
+  lab = res_siSNX13_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX13-LLOME-Lysosomes',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX14 - LLOME - Lysosomes ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Lysosomes",
+         condition == "LLOME",
+         genotype %in% c("Scram", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("LLOME"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX14 <- topTable(
+  fit,
+  coef = "genotypesiSNX14",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX14_tbl <- res_siSNX14 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX14_tbl,
+  file = "output/res-Scramble_vs_siSNX14-LLOME-Lysosomes.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX14_tbl$logFC < -0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX14_tbl$logFC > 0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX14-LLOME-Lysosomes-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-LLOME-Lysosomes',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX13 - RECOVERY - Lysosomes ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Lysosomes",
+         condition == "RECOVERY",
+         genotype %in% c("Scram", "siSNX13")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("RECOVERY"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX13 <- topTable(
+  fit,
+  coef = "genotypesiSNX13",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX13_tbl <- res_siSNX13 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX13_tbl,
+  file = "output/res-Scramble_vs_siSNX13-RECOVERY-Lysosomes.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX13_tbl$logFC < -0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX13_tbl$logFC > 0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX13-RECOVERY-Lysosomes-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX13_tbl,
+  lab = res_siSNX13_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX13-RECOVERY-Lysosomes',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+########################################
+## Scram vs siSNX14 - RECOVERY - Lysosomes ####################
+########################################
+
+df <- lip_tidy_norm %>%
+  filter(fraction == "Lysosomes",
+         condition == "RECOVERY",
+         genotype %in% c("Scram", "siSNX14")) %>%
+  dplyr::select(Class, Size, Saturation, Component, sample, condition, genotype, replicate, abundance_Class)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Component, sample, abundance_Class) %>%
+  pivot_wider(names_from = sample, values_from = abundance_Class) %>%
+  column_to_rownames("Component") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("LLOME"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata)
+
+fit <- lmFit(log2_expr, design_full)
+fit <- eBayes(fit)
+
+res_siSNX14 <- topTable(
+  fit,
+  coef = "genotypesiSNX14",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX14_tbl <- res_siSNX14 %>%
+  rownames_to_column(var = "Component") %>%
+  as_tibble()
+
+
+write.table(
+  res_siSNX14_tbl,
+  file = "output/res-Scramble_vs_siSNX14-RECOVERY-Lysosomes.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX14_tbl$logFC < -0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX14_tbl$logFC > 0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+pdf("output/plotVolcano-Scramble_vs_siSNX14-RECOVERY-Lysosomes-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$Component,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-RECOVERY-Lysosomes',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3
+) +
+  coord_cartesian(xlim = c(-0.2, 0.2), ylim = c(0,5)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+
+```

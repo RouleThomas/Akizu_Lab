@@ -1687,7 +1687,7 @@ library("tidyverse")
 library("RColorBrewer")
 library("pheatmap")
 library("limma")
-
+library("readxl")
 
 
 
@@ -1754,6 +1754,24 @@ coldata$replicate <- factor(coldata$replicate)
 ## 5) Strict filter: remove any protein with ≥1 NA
 keep <- complete.cases(log2_expr)
 log2_expr_f <- log2_expr[keep, , drop = FALSE]
+
+
+####################################################
+## Export the proteins I removed: ####
+removed_accessions <- rownames(log2_expr)[!keep]
+# Keep ALL columns/rows from df for those proteins
+df_removed <- df %>%
+  filter(Accession %in% removed_accessions) %>%
+  arrange(Accession, genotype, condition, replicate, sample)
+write.table(
+  df_removed,
+  file = "output/removed_proteins_rows_with_NA-SNX13filter.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+######################################################
+
 
 ## 6) Model: full model = genotype + condition + genotype:condition
 design_full <- model.matrix(~ genotype * condition, data = coldata)
@@ -1972,6 +1990,28 @@ coldata$replicate <- factor(coldata$replicate)
 ## 5) Strict filter: remove any protein with ≥1 NA
 keep <- complete.cases(log2_expr)
 log2_expr_f <- log2_expr[keep, , drop = FALSE]
+
+
+
+
+####################################################
+## Export the proteins I removed: ####
+removed_accessions <- rownames(log2_expr)[!keep]
+# Keep ALL columns/rows from df for those proteins
+df_removed <- df %>%
+  filter(Accession %in% removed_accessions) %>%
+  arrange(Accession, genotype, condition, replicate, sample)
+write.table(
+  df_removed,
+  file = "output/removed_proteins_rows_with_NA-SNX14filter.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+######################################################
+
+
+
 
 ## 6) Model: full model = genotype + condition + genotype:condition
 design_full <- model.matrix(~ genotype * condition, data = coldata)

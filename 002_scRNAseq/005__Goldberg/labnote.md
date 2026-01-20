@@ -35454,7 +35454,15 @@ fgsea_sets <- list(
 )
 
 
-
+### List19 Granule immature markers Tan et al 2023
+fgsea_sets <- list(
+  TanEtAl2023_ImmGranuleA = read_table(file = "output/Pathway/geneList_TanEtAl2023_ImmGranuleA.txt")$Gene,
+  TanEtAl2023_ImmGranuleB = read_table(file = "output/Pathway/geneList_TanEtAl2023_ImmGranuleB.txt")$Gene,
+  TanEtAl2023_ImmGranuleC = read_table(file = "output/Pathway/geneList_TanEtAl2023_ImmGranuleC.txt")$Gene,
+  TanEtAl2023_ImmGranuleD = read_table(file = "output/Pathway/geneList_TanEtAl2023_ImmGranuleD.txt")$Gene,
+  TanEtAl2023_ImmGranuleE = read_table(file = "output/Pathway/geneList_TanEtAl2023_ImmGranuleE.txt")$Gene,
+  TanEtAl2023_ImmGranuleF = read_table(file = "output/Pathway/geneList_TanEtAl2023_ImmGranuleF.txt")$Gene
+)
 
 
 
@@ -35547,10 +35555,10 @@ for (cluster in cluster_types) {
 final_results <- bind_rows(all_results, .id = "cluster") %>%
   mutate(leadingEdge = sapply(leadingEdge, function(x) paste(x, collapse = ",")))
 
-write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List18gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
+write.table(final_results, file = c("output/Pathway/gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List19gene.txt"), sep = "\t", quote = FALSE, row.names = FALSE)  # CHANGE FILE NAME !!!!!!!!!!!!!!
 
 # Heatmap all GSEA
-pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List18.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
+pdf("output/Pathway/heatmap_gsea_output_Kcnc1_response_p14_CB_version5dim40kparam15res015_allGenes_MAST-List19.pdf", width=10, height=3) # CHANGE FILE NAME !!!!!!!!!!!!!!
 final_results$cluster <- factor(final_results$cluster, levels = c(
   "ImmatureGranule",
   "Granule",
