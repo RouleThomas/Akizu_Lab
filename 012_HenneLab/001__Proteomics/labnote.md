@@ -1673,6 +1673,9 @@ Let's follow `# Testing - v2 - LOGLIMMA` with the log limma method:
 --> Let's remove the outliers samples
 
 
+In this version any proteins with 1 NA value in one sample was removed! 
+
+
 ```bash
 conda activate deseq2
 ```
@@ -2191,6 +2194,704 @@ for (cl in sort(unique(plot_df$cluster))) {
 
 
 --> Seems to work great, individual gene plot in agreement with the heamtap
+  --> Although filtering NA value proteins might be a bit rough, see next version
+
+
+
+
+
+  
+# LOGLIMMA - NA values filtering
+
+Let's follow previous version `# LOGLIMMA`; just improve the filtering of NA values:
+- Keep proteins that have at least 2 replicates in at least 1 condition and assing 0 (or an arbitrary number close to 0) to the NA values in other conditions
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+
+
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("limma")
+library("readxl")
+
+
+
+
+# Import file
+prot <- read_excel(
+  path  = "input/For_Thomas_Proteomics_tidy.xlsx",
+  sheet = "Proteins"
+)
+
+# Tidy abundance output file
+sample_cols <- names(prot)[str_detect(names(prot), "^(Raw|Norm)-")]
+
+prot_tidy <- prot %>%
+  pivot_longer(
+    cols = all_of(sample_cols),
+    names_to = "sample",
+    values_to = "abundance",
+    values_transform = list(abundance = as.numeric)
+  ) %>%
+  extract(
+    col = sample,
+    into = c("type", "condition", "genotype", "replicate"),
+    regex = "^(Raw|Norm)-([A-Za-z0-9]+)_([^&]+)&(\\d+)$",
+    remove = FALSE
+  ) 
+
+
+############################################################
+## Scram vs siSNX13 - without outlier (siSNX13 DMSO Rep1) - ####################
+############################################################
+
+df <- prot_tidy %>%
+  filter(!(condition == "DMSO" & genotype == "siSNX13" & replicate == "1")) %>%
+  filter(`Protein_FDR` == "High",
+         type == "Norm",
+         genotype %in% c("Scram", "siSNX13")) %>%
+  dplyr::select(Accession, GeneSymbol, sample, condition, genotype, replicate, abundance)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Accession, sample, abundance) %>%
+  pivot_wider(names_from = sample, values_from = abundance) %>%
+  column_to_rownames("Accession") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+coldata <- as.data.frame(coldata)
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO","LLOME","RECOVERY"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13"))
+coldata$replicate <- factor(coldata$replicate)
+
+## log2_expr is a matrix with rownames = Accession, colnames = sample
+## coldata has rownames = sample, and columns condition, genotype, replicate
+
+group <- interaction(coldata$condition, coldata$genotype, drop = TRUE)
+
+# For each protein, count non-NA per group
+ok_by_group <- sapply(levels(group), function(g) {
+  cols <- rownames(coldata)[group == g]
+  rowSums(!is.na(log2_expr[, cols, drop = FALSE])) >= 2
+})
+
+keep <- apply(ok_by_group, 1, any)
+log2_expr_keep <- log2_expr[keep, , drop = FALSE]
+
+
+log2_expr_imp <- log2_expr_keep
+
+for (j in seq_len(ncol(log2_expr_imp))) {
+  x <- log2_expr_imp[, j]
+  min_x <- min(x, na.rm = TRUE)
+  # put missing slightly below the observed minimum
+  x[is.na(x)] <- min_x - 1
+  log2_expr_imp[, j] <- x
+}
+
+
+
+# Table that say which Accession got NA values and whtehr it has been change with another value
+imp_info <- tibble(
+  Accession = rownames(log2_expr_keep),
+  n_imputed = rowSums(is.na(log2_expr_keep)),
+  any_imputed = n_imputed > 0
+)
+
+
+
+
+
+
+
+
+
+####################################################
+## Export the proteins I removed (and why)
+####################################################
+# 1) Removed accessions
+removed_accessions <- rownames(log2_expr)[!keep]
+# 2) Per-protein non-NA counts per (condition x genotype) group
+group <- interaction(coldata$condition, coldata$genotype, drop = TRUE)
+non_na_counts <- sapply(levels(group), function(g) {
+  cols <- rownames(coldata)[group == g]
+  rowSums(!is.na(log2_expr[, cols, drop = FALSE]))
+})
+non_na_counts <- as.data.frame(non_na_counts)
+non_na_counts$Accession <- rownames(log2_expr)
+# max replicates observed in ANY group (your keep criterion was >=2)
+non_na_counts$max_non_na_any_group <- apply(non_na_counts[levels(group)], 1, max)
+# 3) Build a small “removed summary” table
+removed_summary <- non_na_counts %>%
+  dplyr::filter(Accession %in% removed_accessions) %>%
+  dplyr::arrange(desc(max_non_na_any_group), Accession)
+write.table(
+  removed_summary,
+  file = "output/removed_proteins_summary-SNX13filterNAvaluesFilter.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+# 4) Export the full long df rows for removed proteins (all samples/conditions)
+df_removed <- df %>%
+  dplyr::filter(Accession %in% removed_accessions) %>%
+  dplyr::arrange(Accession, genotype, condition, replicate, sample)
+write.table(
+  df_removed,
+  file = "output/removed_proteins_longrows-SNX13filterNAvaluesFilter.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+####################################################
+
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype * condition, data = coldata)
+
+fit <- lmFit(log2_expr_imp, design_full)
+fit <- eBayes(fit)
+
+## 7) "LRT-like" global test: are interaction terms jointly != 0?
+## This is the analogue of testing full vs reduced (~ genotype + condition)
+int_cols <- grep("^genotypesiSNX13:condition", colnames(design_full))
+
+interaction_global <- topTableF(
+  fit,
+  int_cols,
+  number = Inf
+) 
+head(interaction_global)
+#--> Signficant Accession = different between genotype during the time-course condition
+
+interaction_tbl <- interaction_global %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() 
+  
+
+############################
+## max_abs_interaction >= 2  ####
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX13.conditionLLOME),
+      abs(genotypesiSNX13.conditionRECOVERY),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 2)   # <-- threshold here adj.P.Val < 0.05, max_abs_interaction >= 1
+
+
+sig_acc <- interaction_tbl_filt$Accession
+
+log2_expr_imp_sig <- log2_expr_imp[rownames(log2_expr_imp) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_imp_sig)   # should be 3429/1815/1023
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX13"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_imp_sig_ord <- log2_expr_imp_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_imp_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 7
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Accession = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Accession, GeneSymbol)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Accession")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+block_sizes <- n_rep$n
+
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-SNX13filterNAvaluesFilter-7Cluster-max_abs_interaction2.pdf", width = 4, height = 5)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = head(cumsum(sample_order %>% count(genotype, condition) %>% arrange(genotype, condition) %>% pull(n)), -1),
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+
+
+cluster_tbl <- cluster_tbl %>%
+  left_join(imp_info, by = "Accession") %>%
+  mutate(
+    n_imputed = replace_na(n_imputed, 0L),
+    any_imputed = replace_na(any_imputed, FALSE)
+  )
+  
+write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-SNX13filterNAvaluesFilter-7Cluster-max_abs_interaction2.tsv")
+
+
+
+# Show top 10 genes per cluster
+## Make a tidy table with cluster + log2(norm+1) values (replicate-level)
+prot_tidy_for_plot <- df %>%
+  left_join(cluster_tbl %>% select(Accession, GeneSymbol, cluster), by = "Accession") %>%
+  filter(!is.na(cluster)) %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO", "LLOME", "RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram", "siSNX13")),
+    log2_abund = log2(abundance + 1)
+  )
+top10_per_cluster <- prot_tidy_for_plot %>%
+  group_by(cluster, Accession, GeneSymbol.x) %>%
+  summarise(mean_abund = mean(abundance, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_abund, n = 10, with_ties = FALSE) %>%
+  ungroup()
+## Summarise mean ± SEM for plotting (keeps bio reps)
+plot_df <- prot_tidy_for_plot %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Accession", "GeneSymbol.x")) %>%
+  group_by(cluster, Accession, GeneSymbol.x, genotype, condition) %>%
+  summarise(
+    mean_log2 = mean(log2_abund, na.rm = TRUE),
+    sem_log2  = sd(log2_abund, na.rm = TRUE) / sqrt(sum(!is.na(log2_abund))),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    ymin = mean_log2 - sem_log2,
+    ymax = mean_log2 + sem_log2,
+    panel_label = paste0(GeneSymbol.x, " (", Accession, ")")
+  )
+## Plot: one PDF per cluster (top 10 panels)
+for (cl in sort(unique(plot_df$cluster))) {
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = condition, y = mean_log2, color = genotype, group = genotype)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2) +
+    geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.15, linewidth = 0.6) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram" = "black", "siSNX13" = "red")) +
+    labs(
+      title = paste0("Top 10 proteins — Cluster ", cl, " (Scram vs siSNX13)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1)",
+      color = "genotype"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "top",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5)
+    )
+  ggsave(
+    filename = sprintf("output/top10_cluster_%02d-LOGLIMMA-SNX13filterNAvaluesFilter-7Cluster-max_abs_interaction2.pdf", cl),
+    plot = p,
+    width = 5, height = 6
+  )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################################################
+## Scram vs siSNX14 - without outlier (siSNX14 DMSO Rep3) ####################
+############################################################
+
+df <- prot_tidy %>%
+  filter(!(condition == "DMSO" & genotype == "siSNX14" & replicate == "3")) %>%
+  filter(`Protein_FDR` == "High",
+         type == "Norm",
+         genotype %in% c("Scram", "siSNX14")) %>%
+  dplyr::select(Accession, GeneSymbol, sample, condition, genotype, replicate, abundance)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Accession, sample, abundance) %>%
+  pivot_wider(names_from = sample, values_from = abundance) %>%
+  column_to_rownames("Accession") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+coldata <- as.data.frame(coldata)
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO","LLOME","RECOVERY"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+## log2_expr is a matrix with rownames = Accession, colnames = sample
+## coldata has rownames = sample, and columns condition, genotype, replicate
+
+group <- interaction(coldata$condition, coldata$genotype, drop = TRUE)
+
+# For each protein, count non-NA per group
+ok_by_group <- sapply(levels(group), function(g) {
+  cols <- rownames(coldata)[group == g]
+  rowSums(!is.na(log2_expr[, cols, drop = FALSE])) >= 2
+})
+
+keep <- apply(ok_by_group, 1, any)
+log2_expr_keep <- log2_expr[keep, , drop = FALSE]
+
+
+log2_expr_imp <- log2_expr_keep
+
+for (j in seq_len(ncol(log2_expr_imp))) {
+  x <- log2_expr_imp[, j]
+  min_x <- min(x, na.rm = TRUE)
+  # put missing slightly below the observed minimum
+  x[is.na(x)] <- min_x - 1
+  log2_expr_imp[, j] <- x
+}
+
+
+
+# Table that say which Accession got NA values and whtehr it has been change with another value
+imp_info <- tibble(
+  Accession = rownames(log2_expr_keep),
+  n_imputed = rowSums(is.na(log2_expr_keep)),
+  any_imputed = n_imputed > 0
+)
+
+
+
+
+
+
+
+
+
+####################################################
+## Export the proteins I removed (and why)
+####################################################
+# 1) Removed accessions
+removed_accessions <- rownames(log2_expr)[!keep]
+# 2) Per-protein non-NA counts per (condition x genotype) group
+group <- interaction(coldata$condition, coldata$genotype, drop = TRUE)
+non_na_counts <- sapply(levels(group), function(g) {
+  cols <- rownames(coldata)[group == g]
+  rowSums(!is.na(log2_expr[, cols, drop = FALSE]))
+})
+non_na_counts <- as.data.frame(non_na_counts)
+non_na_counts$Accession <- rownames(log2_expr)
+# max replicates observed in ANY group (your keep criterion was >=2)
+non_na_counts$max_non_na_any_group <- apply(non_na_counts[levels(group)], 1, max)
+# 3) Build a small “removed summary” table
+removed_summary <- non_na_counts %>%
+  dplyr::filter(Accession %in% removed_accessions) %>%
+  dplyr::arrange(desc(max_non_na_any_group), Accession)
+write.table(
+  removed_summary,
+  file = "output/removed_proteins_summary-SNX14filterNAvaluesFilter.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+# 4) Export the full long df rows for removed proteins (all samples/conditions)
+df_removed <- df %>%
+  dplyr::filter(Accession %in% removed_accessions) %>%
+  dplyr::arrange(Accession, genotype, condition, replicate, sample)
+write.table(
+  df_removed,
+  file = "output/removed_proteins_longrows-SNX14filterNAvaluesFilter.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+####################################################
+
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype * condition, data = coldata)
+
+fit <- lmFit(log2_expr_imp, design_full)
+fit <- eBayes(fit)
+
+## 7) "LRT-like" global test: are interaction terms jointly != 0?
+## This is the analogue of testing full vs reduced (~ genotype + condition)
+int_cols <- grep("^genotypesiSNX14:condition", colnames(design_full))
+
+interaction_global <- topTableF(
+  fit,
+  int_cols,
+  number = Inf
+) 
+head(interaction_global)
+#--> Signficant Accession = different between genotype during the time-course condition
+
+interaction_tbl <- interaction_global %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() 
+  
+
+############################
+## max_abs_interaction >= 2  ####
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX14.conditionLLOME),
+      abs(genotypesiSNX14.conditionRECOVERY),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 2)   # <-- threshold here adj.P.Val < 0.05, max_abs_interaction >= 1
+
+
+sig_acc <- interaction_tbl_filt$Accession
+
+log2_expr_imp_sig <- log2_expr_imp[rownames(log2_expr_imp) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_imp_sig)   # should be 3205/1959/1129
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX13"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_imp_sig_ord <- log2_expr_imp_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_imp_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 8
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Accession = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Accession, GeneSymbol)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Accession")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+block_sizes <- n_rep$n
+
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-SNX14filterNAvaluesFilter-8Cluster-max_abs_interaction2.pdf", width = 4, height = 5)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = head(cumsum(sample_order %>% count(genotype, condition) %>% arrange(genotype, condition) %>% pull(n)), -1),
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+
+
+cluster_tbl <- cluster_tbl %>%
+  left_join(imp_info, by = "Accession") %>%
+  mutate(
+    n_imputed = replace_na(n_imputed, 0L),
+    any_imputed = replace_na(any_imputed, FALSE)
+  )
+  
+write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-SNX14filterNAvaluesFilter-8Cluster-max_abs_interaction2.tsv")
+
+
+
+# Show top 10 genes per cluster
+## Make a tidy table with cluster + log2(norm+1) values (replicate-level)
+prot_tidy_for_plot <- df %>%
+  left_join(cluster_tbl %>% select(Accession, GeneSymbol, cluster), by = "Accession") %>%
+  filter(!is.na(cluster)) %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO", "LLOME", "RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram", "siSNX14")),
+    log2_abund = log2(abundance + 1)
+  )
+top10_per_cluster <- prot_tidy_for_plot %>%
+  group_by(cluster, Accession, GeneSymbol.x) %>%
+  summarise(mean_abund = mean(abundance, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_abund, n = 10, with_ties = FALSE) %>%
+  ungroup()
+## Summarise mean ± SEM for plotting (keeps bio reps)
+plot_df <- prot_tidy_for_plot %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Accession", "GeneSymbol.x")) %>%
+  group_by(cluster, Accession, GeneSymbol.x, genotype, condition) %>%
+  summarise(
+    mean_log2 = mean(log2_abund, na.rm = TRUE),
+    sem_log2  = sd(log2_abund, na.rm = TRUE) / sqrt(sum(!is.na(log2_abund))),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    ymin = mean_log2 - sem_log2,
+    ymax = mean_log2 + sem_log2,
+    panel_label = paste0(GeneSymbol.x, " (", Accession, ")")
+  )
+## Plot: one PDF per cluster (top 10 panels)
+for (cl in sort(unique(plot_df$cluster))) {
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = condition, y = mean_log2, color = genotype, group = genotype)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2) +
+    geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.15, linewidth = 0.6) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram" = "black", "siSNX14" = "red")) +
+    labs(
+      title = paste0("Top 10 proteins — Cluster ", cl, " (Scram vs siSNX14)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1)",
+      color = "genotype"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "top",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5)
+    )
+  ggsave(
+    filename = sprintf("output/top10_cluster_%02d-LOGLIMMA-SNX14filterNAvaluesFilter-8Cluster-max_abs_interaction2.pdf", cl),
+    plot = p,
+    width = 5, height = 6
+  )
+}
+
+
+
+
+
+```
+
+
+--> xxxx
+
+
+
+
 
 
 
