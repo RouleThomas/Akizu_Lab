@@ -10144,6 +10144,7 @@ DotPlot(embryo.combined.sct, assay = "SCT", features = all_markers, cols = c("gr
 dev.off()
 
 ## Downsampling with bootstrap to compare the nb of cell per cell types
+embryo.combined.sct <- SetIdent(embryo.combined.sct, value = "seurat_clusters") # reverse back identiy to cluster number
 
 library("tidyverse")
 
@@ -10174,6 +10175,7 @@ for (i in 1:100) { # Change this to 100 for the final run
   cYAPKO_clusters_counts[i, names(cYAPKO_clusters)] <- as.numeric(cYAPKO_clusters)
 }
 
+XXXY HERE!!!!!!!
 
 ### Calculate mean and standard error
 mean_control_clusters <- colMeans(control_clusters_counts)
@@ -10237,6 +10239,24 @@ ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   geom_text(
     data = filter(plot_data, condition == "cYAPKO"),
     aes(label = significance, y = value + std_error_WT_clusters),
+    vjust = -0.8,
+    position = position_dodge(0.9), size = 5
+  ) +
+  scale_fill_manual(values = c("WT" = "#4365AE", "cYAPKO" = "#981E33")) +
+  labs(x = "Cluster", y = "Number of Cells") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5, size = 13)) +
+  theme(axis.text.y = element_text(size = 13)) +
+  ylim(0,900)
+dev.off()
+
+
+pdf("output/seurat/Cluster_cell_counts_BootstrapDownsampling10_clean_embryo_V3_stat.pdf", width=9, height=4)
+ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(
+    data = filter(plot_data, condition == "cYAPKO"),
+    aes(label = adjusted_p_values, y = value + std_error_WT_clusters),
     vjust = -0.8,
     position = position_dodge(0.9), size = 5
   ) +
@@ -29802,7 +29822,6 @@ embryoE7.combined.sct$cluster.annot <- factor(embryoE7.combined.sct$cluster.anno
 # VLN PLOTS with STATISTICS #####################
 ###############################################################
 
-
 # Check some genes
 DefaultAssay(embryoE7.combined.sct) <- "RNA"
 
@@ -29894,6 +29913,103 @@ for (gene in genes_of_interest) {
   print(p)
 }
 dev.off()
+
+
+
+
+
+###############################################################
+# VLN PLOTS with STATISTICS qvalues #####################
+###############################################################
+
+# Check some genes
+DefaultAssay(embryoE7.combined.sct) <- "RNA"
+
+## email Liz 20260121
+
+
+#### import all clsuter DEGs output :
+
+cluster_types <- c("Blood_Progenitor", "Endoderm", "Exe_Ectoderm", "Primitive_Streak", "Nascent_Mesoderm", "Cardiac_Mesoderm", "Exe_Endoderm_1", "Exe_Endoderm_2", "Epiblast")
+
+
+##### Initialize empty list to store data
+deg_list <- list()
+
+##### Read all DEG files and add cluster column
+for (i in seq_along(cluster_types)) {
+  cluster <- cluster_types[i]
+  file_path <- paste0("output/seurat/", cluster, "-cYAPKO_response_E7_19dim_allGenes_V2.txt")
+  if (file.exists(file_path)) {
+    data <- read.delim(file_path, header = TRUE, row.names = 1)
+    data$cluster <- cluster 
+    data$gene <- rownames(data)  # Preserve gene names
+    deg_list[[cluster]] <- data
+  }
+}
+
+##### Combine all DEG results
+combined_deg <- bind_rows(deg_list)
+
+
+# Generate the violin plot
+###### Define genes of interest
+genes_of_interest <- c("Yap1", "Nodal", "Fgf8", "Axin2", "Wnt3", "Wwtr1", "Qser1")
+###### Extract the subset of significant DEGs
+sig_data <- combined_deg %>%
+  filter(gene %in% genes_of_interest) %>%
+  mutate(
+    p_val_adj_label = ifelse(
+      p_val_adj < 0.001,
+      formatC(p_val_adj, format = "e", digits = 1),
+      sprintf("%.2f", p_val_adj)
+    )
+  )
+###### Convert gene names to factor (to match Violin plot features)
+sig_data$gene <- factor(sig_data$gene, levels = genes_of_interest)
+###### Fetch expression data from Seurat object
+expr_data <- FetchData(embryoE7.combined.sct, vars = genes_of_interest, slot = "data")
+###### Add cluster identity for correct mapping
+expr_data$Identity <- as.character(Idents(embryoE7.combined.sct))  # Convert to character to match
+
+###### Convert expression data into long format
+expr_data_long <- expr_data %>%
+  pivot_longer(cols = -Identity, names_to = "gene", values_to = "expression")
+###### Compute the max expression per gene and cluster for better positioning
+max_expr <- expr_data_long %>%
+  group_by(gene, Identity) %>%
+  summarise(y_pos = max(expression, na.rm = TRUE) + 0, .groups = "drop")  # Add padding for clarity
+###### Convert Identity to character to match Seurat identities
+sig_data$Identity <- as.character(sig_data$cluster)  # Ensure Identity matches cluster
+###### Merge significance with computed max expression
+sig_data <- sig_data %>%
+  left_join(max_expr, by = c("gene" = "gene", "Identity" = "Identity"))
+
+
+pdf("output/seurat/VlnPlot_RNA_E7_control_cYAPKO_7genes_sct_19dim_V2_STATmiddle_orderUpdated.pdf", width=7, height=3.5)
+Idents(embryoE7.combined.sct) <- "cluster.annot"
+###### Generate separate plots per gene
+for (gene in genes_of_interest) {
+  print(paste("Generating plot for:", gene))
+  # Generate violin plot for a single gene
+  p <- VlnPlot(embryoE7.combined.sct, 
+               features = gene, 
+               pt.size = 0.1, 
+               split.by = "condition", cols = c("blue", "red")) +
+    theme(plot.title = element_text(size=10),
+          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  # Filter significance stars for this specific gene
+  gene_sig_data <- sig_data %>%
+    filter(gene == !!gene)
+  # Add significance stars manually
+  p <- p + geom_text(data = gene_sig_data, 
+                     aes(x = Identity, y = y_pos-0.2, label = p_val_adj_label), 
+                     size = 4, color = "black", inherit.aes = FALSE)
+  # Print each plot to a new PDF page
+  print(p)
+}
+dev.off()
+
 
 
 
