@@ -10175,7 +10175,7 @@ for (i in 1:100) { # Change this to 100 for the final run
   cYAPKO_clusters_counts[i, names(cYAPKO_clusters)] <- as.numeric(cYAPKO_clusters)
 }
 
-XXXY HERE!!!!!!!
+
 
 ### Calculate mean and standard error
 mean_control_clusters <- colMeans(control_clusters_counts)
@@ -10225,6 +10225,13 @@ plot_data <- data.frame(
     significance = ifelse(p_value < 0.0001, "***",
                        ifelse(p_value < 0.001, "**",
                               ifelse(p_value < 0.05, "*", "")))
+  ) %>%
+  mutate(
+    p_value = ifelse(
+      p_value < 0.001,
+      formatC(p_value, format = "e", digits = 1),
+      sprintf("%.2f", p_value)
+    )
   )
 
 plot_data$condition <- factor(plot_data$condition, levels = c("WT", "cYAPKO")) # Reorder untreated 1st
@@ -10256,9 +10263,9 @@ ggplot(plot_data, aes(x = cluster, y = value, fill = condition)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(
     data = filter(plot_data, condition == "cYAPKO"),
-    aes(label = adjusted_p_values, y = value + std_error_WT_clusters),
+    aes(label = p_value, y = value + std_error_WT_clusters),
     vjust = -0.8,
-    position = position_dodge(0.9), size = 5
+    position = position_dodge(0.9), size = 3
   ) +
   scale_fill_manual(values = c("WT" = "#4365AE", "cYAPKO" = "#981E33")) +
   labs(x = "Cluster", y = "Number of Cells") +
