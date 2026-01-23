@@ -3202,7 +3202,7 @@ row_hclust <- hclust(row_dist, method = "complete")
 
 
 
-k <- 12
+k <- 10
 row_clusters <- cutree(row_hclust, k = k)
 
 
@@ -3231,7 +3231,7 @@ ann_colors <- list(Cluster = clust_cols)
 
 
 
-pdf("output/pheatmap-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-12Cluster-max_abs_interaction2.pdf", width = 4, height = 5)
+pdf("output/pheatmap-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-10Cluster-max_abs_interaction2.pdf", width = 4, height = 5)
 pheatmap(expr_scaled,
          cluster_rows = row_hclust,
          cluster_cols = FALSE,
@@ -3250,45 +3250,171 @@ cluster_tbl <- cluster_tbl %>%
     any_imputed = replace_na(any_imputed, FALSE)
   )
   
-write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-12Cluster-max_abs_interaction2.tsv")
+write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-10Cluster-max_abs_interaction2.tsv")
 
 
 
-XXXY HERE pick the best clustering and pursue! !!!!
+
+
+
+
+
+
+
+
+############################
+## max_abs_interaction >= 3  ####
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX13.conditionLLOME),
+      abs(genotypesiSNX13.conditionRECOVERY),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 3)   # <-- threshold here adj.P.Val < 0.05, max_abs_interaction >= 1
+
+
+sig_acc <- interaction_tbl_filt$Accession
+
+log2_expr_imp__Scramble_vs_siSNX13_sig <- log2_expr_imp__Scramble_vs_siSNX13[rownames(log2_expr_imp__Scramble_vs_siSNX13) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_imp__Scramble_vs_siSNX13_sig)   # should be 1032
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata__Scramble_vs_siSNX13 %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX13"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_imp__Scramble_vs_siSNX13_sig_ord <- log2_expr_imp__Scramble_vs_siSNX13_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_imp__Scramble_vs_siSNX13_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 9
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Accession = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Accession, GeneSymbol)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Accession")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+block_sizes <- n_rep$n
+
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.pdf", width = 4, height = 5)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = head(cumsum(sample_order %>% count(genotype, condition) %>% arrange(genotype, condition) %>% pull(n)), -1),
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+
+
+cluster_tbl <- cluster_tbl %>%
+  left_join(imp_info, by = "Accession") %>%
+  mutate(
+    n_imputed = replace_na(n_imputed, 0L),
+    any_imputed = replace_na(any_imputed, FALSE)
+  )
+  
+write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.tsv")
+
+
 
 
 # Show top 10 genes per cluster
-## Make a tidy table with cluster + log2(norm+1) values (replicate-level)
-prot_tidy_for_plot <- df %>%
-  left_join(cluster_tbl %>% select(Accession, GeneSymbol, cluster), by = "Accession") %>%
-  filter(!is.na(cluster)) %>%
-  mutate(
-    condition = factor(condition, levels = c("DMSO", "LLOME", "RECOVERY")),
-    genotype  = factor(genotype, levels = c("Scram", "siSNX13")),
-    log2_abund = log2(abundance + 1)
-  )
-top10_per_cluster <- prot_tidy_for_plot %>%
-  group_by(cluster, Accession, GeneSymbol.x) %>%
-  summarise(mean_abund = mean(abundance, na.rm = TRUE), .groups = "drop") %>%
+
+## -------------------------------------------------
+## 1) Build a tidy long table FROM the IMPUTED MATRIX
+##    (log2_expr_imp__Scramble_vs_siSNX13)
+## -------------------------------------------------
+prot_imp_long <- as.data.frame(log2_expr_imp__Scramble_vs_siSNX13) %>%
+  tibble::rownames_to_column("Accession") %>%
+  tidyr::pivot_longer(
+    cols = -Accession,
+    names_to = "sample",
+    values_to = "log2_abund_imp"
+  ) %>%
+  dplyr::left_join(
+    coldata__Scramble_vs_siSNX13,   # <-- no rownames_to_column here
+    by = "sample"
+  ) %>%
+  dplyr::left_join(
+    cluster_tbl %>% dplyr::select(Accession, GeneSymbol, cluster),
+    by = "Accession"
+  ) %>%
+  dplyr::filter(!is.na(cluster))
+
+## -------------------------------------------------
+## 2) Choose TOP 10 proteins per cluster using the IMPUTED log2 values
+##    (This mimics your "mean abundance" ranking, but on log2 scale.)
+## -------------------------------------------------
+top10_per_cluster <- prot_imp_long %>%
+  group_by(cluster, Accession, GeneSymbol) %>%
+  summarise(mean_log2_all = mean(log2_abund_imp, na.rm = TRUE), .groups = "drop") %>%
   group_by(cluster) %>%
-  slice_max(order_by = mean_abund, n = 10, with_ties = FALSE) %>%
+  slice_max(order_by = mean_log2_all, n = 10, with_ties = FALSE) %>%
   ungroup()
-## Summarise mean ± SEM for plotting (keeps bio reps)
-plot_df <- prot_tidy_for_plot %>%
-  semi_join(top10_per_cluster, by = c("cluster", "Accession", "GeneSymbol.x")) %>%
-  group_by(cluster, Accession, GeneSymbol.x, genotype, condition) %>%
+
+## -------------------------------------------------
+## 3) Summarise mean ± SEM for plotting (replicates stay as n=3 per group)
+## -------------------------------------------------
+plot_df <- prot_imp_long %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Accession", "GeneSymbol")) %>%
+  group_by(cluster, Accession, GeneSymbol, genotype, condition) %>%
   summarise(
-    mean_log2 = mean(log2_abund, na.rm = TRUE),
-    sem_log2  = sd(log2_abund, na.rm = TRUE) / sqrt(sum(!is.na(log2_abund))),
+    mean_log2 = mean(log2_abund_imp, na.rm = TRUE),
+    sem_log2  = sd(log2_abund_imp, na.rm = TRUE) / sqrt(sum(!is.na(log2_abund_imp))),
     .groups = "drop"
   ) %>%
   mutate(
     ymin = mean_log2 - sem_log2,
     ymax = mean_log2 + sem_log2,
-    panel_label = paste0(GeneSymbol.x, " (", Accession, ")")
+    panel_label = paste0(GeneSymbol, " (", Accession, ")")
   )
-## Plot: one PDF per cluster (top 10 panels)
+
+## -------------------------------------------------
+## 4) Plot: one PDF per cluster
+## -------------------------------------------------
 for (cl in sort(unique(plot_df$cluster))) {
+
   p <- plot_df %>%
     filter(cluster == cl) %>%
     ggplot(aes(x = condition, y = mean_log2, color = genotype, group = genotype)) +
@@ -3300,7 +3426,7 @@ for (cl in sort(unique(plot_df$cluster))) {
     labs(
       title = paste0("Top 10 proteins — Cluster ", cl, " (Scram vs siSNX13)"),
       x = NULL,
-      y = "log2(Normalized abundance + 1)",
+      y = "log2(Normalized abundance + 1) (imputed)",
       color = "genotype"
     ) +
     theme_bw(base_size = 11) +
@@ -3309,8 +3435,351 @@ for (cl in sort(unique(plot_df$cluster))) {
       strip.text = element_text(size = 9),
       plot.title = element_text(hjust = 0.5)
     )
+
   ggsave(
-    filename = sprintf("output/top10_cluster_%02d-LOGLIMMA-SNX13filterNAvaluesFilter-7Cluster-max_abs_interaction2.pdf", cl),
+    filename = sprintf(
+      "output/top10_cluster_%02d-LOGLIMMA-AllNAvaluesFilter-IMPUTEDLOG2-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.pdf", cl
+    ),
+    plot = p,
+    width = 5, height = 6
+  )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################################
+## Scramble vs siSNX14 #############################
+####################################################
+
+coldata__Scramble_vs_siSNX14 = coldata %>%
+  filter(genotype %in% c("Scram", "siSNX14")) %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram","siSNX14")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+
+log2_expr_imp__Scramble_vs_siSNX14 <- log2_expr_imp[
+  , rownames(coldata__Scramble_vs_siSNX14), drop = FALSE
+]
+
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype * condition, data = coldata__Scramble_vs_siSNX14)
+
+fit <- lmFit(log2_expr_imp__Scramble_vs_siSNX14, design_full)
+fit <- eBayes(fit)
+
+## 7) "LRT-like" global test: are interaction terms jointly != 0?
+## This is the analogue of testing full vs reduced (~ genotype + condition)
+int_cols <- grep("^genotypesiSNX14:condition", colnames(design_full))
+
+interaction_global <- topTableF(
+  fit,
+  int_cols,
+  number = Inf
+) 
+head(interaction_global)
+#--> Signficant Accession = different between genotype during the time-course condition
+
+interaction_tbl <- interaction_global %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() 
+  
+
+############################
+## max_abs_interaction >= 2  ####
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX14.conditionLLOME),
+      abs(genotypesiSNX14.conditionRECOVERY),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 2)   # <-- threshold here adj.P.Val < 0.05, max_abs_interaction >= 1
+
+
+sig_acc <- interaction_tbl_filt$Accession
+
+log2_expr_imp__Scramble_vs_siSNX14_sig <- log2_expr_imp__Scramble_vs_siSNX14[rownames(log2_expr_imp__Scramble_vs_siSNX14) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_imp__Scramble_vs_siSNX14_sig)   # should be 1985
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata__Scramble_vs_siSNX14 %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX14"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_imp__Scramble_vs_siSNX14_sig_ord <- log2_expr_imp__Scramble_vs_siSNX14_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_imp__Scramble_vs_siSNX14_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 9
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Accession = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Accession, GeneSymbol)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Accession")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+block_sizes <- n_rep$n
+
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-9Cluster-max_abs_interaction2.pdf", width = 4, height = 5)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = head(cumsum(sample_order %>% count(genotype, condition) %>% arrange(genotype, condition) %>% pull(n)), -1),
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+
+
+cluster_tbl <- cluster_tbl %>%
+  left_join(imp_info, by = "Accession") %>%
+  mutate(
+    n_imputed = replace_na(n_imputed, 0L),
+    any_imputed = replace_na(any_imputed, FALSE)
+  )
+  
+write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-9Cluster-max_abs_interaction2.tsv")
+
+
+
+
+
+
+
+
+
+############################
+## max_abs_interaction >= 3  ####
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX14.conditionLLOME),
+      abs(genotypesiSNX14.conditionRECOVERY),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 3)   # <-- threshold here adj.P.Val < 0.05, max_abs_interaction >= 1
+
+
+sig_acc <- interaction_tbl_filt$Accession
+
+log2_expr_imp__Scramble_vs_siSNX14_sig <- log2_expr_imp__Scramble_vs_siSNX14[rownames(log2_expr_imp__Scramble_vs_siSNX14) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_imp__Scramble_vs_siSNX14_sig)   # should be 1135
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata__Scramble_vs_siSNX14 %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX14"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_imp__Scramble_vs_siSNX14_sig_ord <- log2_expr_imp__Scramble_vs_siSNX14_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_imp__Scramble_vs_siSNX14_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 10
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Accession = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Accession, GeneSymbol)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Accession")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+block_sizes <- n_rep$n
+
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.pdf", width = 4, height = 5)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = head(cumsum(sample_order %>% count(genotype, condition) %>% arrange(genotype, condition) %>% pull(n)), -1),
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+
+
+cluster_tbl <- cluster_tbl %>%
+  left_join(imp_info, by = "Accession") %>%
+  mutate(
+    n_imputed = replace_na(n_imputed, 0L),
+    any_imputed = replace_na(any_imputed, FALSE)
+  )
+  
+write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.tsv")
+
+
+
+
+# Show top 10 genes per cluster
+## -------------------------------------------------
+## 1) Build a tidy long table FROM the IMPUTED MATRIX
+##    (log2_expr_imp__Scramble_vs_siSNX14)
+## -------------------------------------------------
+prot_imp_long <- as.data.frame(log2_expr_imp__Scramble_vs_siSNX14) %>%
+  tibble::rownames_to_column("Accession") %>%
+  tidyr::pivot_longer(
+    cols = -Accession,
+    names_to = "sample",
+    values_to = "log2_abund_imp"
+  ) %>%
+  dplyr::left_join(
+    coldata__Scramble_vs_siSNX14,   # <-- no rownames_to_column here
+    by = "sample"
+  ) %>%
+  dplyr::left_join(
+    cluster_tbl %>% dplyr::select(Accession, GeneSymbol, cluster),
+    by = "Accession"
+  ) %>%
+  dplyr::filter(!is.na(cluster))
+
+## -------------------------------------------------
+## 2) Choose TOP 10 proteins per cluster using the IMPUTED log2 values
+##    (This mimics your "mean abundance" ranking, but on log2 scale.)
+## -------------------------------------------------
+top10_per_cluster <- prot_imp_long %>%
+  group_by(cluster, Accession, GeneSymbol) %>%
+  summarise(mean_log2_all = mean(log2_abund_imp, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_log2_all, n = 10, with_ties = FALSE) %>%
+  ungroup()
+
+## -------------------------------------------------
+## 3) Summarise mean ± SEM for plotting (replicates stay as n=3 per group)
+## -------------------------------------------------
+plot_df <- prot_imp_long %>%
+  semi_join(top10_per_cluster, by = c("cluster", "Accession", "GeneSymbol")) %>%
+  group_by(cluster, Accession, GeneSymbol, genotype, condition) %>%
+  summarise(
+    mean_log2 = mean(log2_abund_imp, na.rm = TRUE),
+    sem_log2  = sd(log2_abund_imp, na.rm = TRUE) / sqrt(sum(!is.na(log2_abund_imp))),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    ymin = mean_log2 - sem_log2,
+    ymax = mean_log2 + sem_log2,
+    panel_label = paste0(GeneSymbol, " (", Accession, ")")
+  )
+
+## -------------------------------------------------
+## 4) Plot: one PDF per cluster
+## -------------------------------------------------
+for (cl in sort(unique(plot_df$cluster))) {
+
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = condition, y = mean_log2, color = genotype, group = genotype)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2) +
+    geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.15, linewidth = 0.6) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram" = "black", "siSNX14" = "red")) +
+    labs(
+      title = paste0("Top 10 proteins — Cluster ", cl, " (Scram vs siSNX14)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1) (imputed)",
+      color = "genotype"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "top",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5)
+    )
+
+  ggsave(
+    filename = sprintf(
+      "output/top10_cluster_%02d-LOGLIMMA-AllNAvaluesFilter-IMPUTEDLOG2-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.pdf", cl
+    ),
     plot = p,
     width = 5, height = 6
   )
@@ -3333,6 +3802,326 @@ for (cl in sort(unique(plot_df$cluster))) {
 
 
 
+
+
+####################################################
+## DMSO: Scramble vs siSNX13 vs siSNX14 #############################
+####################################################
+
+coldata__Scramble_vs_siSNX13_vs_siSNX14 = coldata %>%
+  filter(genotype %in% c("Scram", "siSNX13", "siSNX14"),
+         condition == "DMSO") %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram","siSNX13", "siSNX14")),
+    condition = factor(condition, levels = c("DMSO"))
+  )
+
+log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14 <- log2_expr_imp[
+  , rownames(coldata__Scramble_vs_siSNX13_vs_siSNX14), drop = FALSE
+]
+
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata__Scramble_vs_siSNX13_vs_siSNX14)
+
+fit <- lmFit(log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14, design_full)
+fit <- eBayes(fit)
+
+genotype_cols <- grep("^genotype", colnames(design))
+
+interaction_global <- topTableF(
+  fit,
+  genotype_cols,
+  number = Inf
+)
+head(interaction_global)
+#--> Signficant Component = different between genotype 
+
+
+
+interaction_tbl <- interaction_global %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() 
+  
+
+############################
+## max_abs_interaction >= 2  ####
+
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX13),
+      abs(genotypesiSNX14),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 2) 
+
+
+
+
+sig_acc <- interaction_tbl_filt$Accession
+
+log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig <- log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14[rownames(log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig)   # should be 1480
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata__Scramble_vs_siSNX13_vs_siSNX14 %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX13", "siSNX14"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig_ord <- log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 5
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Accession = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Accession, GeneSymbol)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Accession")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+block_sizes <- n_rep$n
+
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction2.pdf", width = 3, height = 5)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = head(cumsum(sample_order %>% count(genotype, condition) %>% arrange(genotype, condition) %>% pull(n)), -1),
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+
+
+cluster_tbl <- cluster_tbl %>%
+  left_join(imp_info, by = "Accession") %>%
+  mutate(
+    n_imputed = replace_na(n_imputed, 0L),
+    any_imputed = replace_na(any_imputed, FALSE)
+  )
+  
+write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction2.tsv")
+
+
+
+
+
+
+
+
+
+############################
+## max_abs_interaction >= 3  ####
+
+
+interaction_tbl_filt <- interaction_tbl %>%
+  mutate(
+    max_abs_interaction = pmax(
+      abs(genotypesiSNX13),
+      abs(genotypesiSNX14),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(adj.P.Val < 0.05, max_abs_interaction >= 3) 
+
+
+
+
+sig_acc <- interaction_tbl_filt$Accession
+
+log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig <- log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14[rownames(log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14) %in% sig_acc, , drop = FALSE]
+nrow(log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig)   # should be 809
+
+
+
+
+# Build ordered sample table
+sample_order <- coldata__Scramble_vs_siSNX13_vs_siSNX14 %>%
+  mutate(
+    condition = factor(condition, levels = c("DMSO")),
+    genotype  = factor(genotype, levels = c("Scram","siSNX13", "siSNX14"))
+  ) %>%
+  arrange(genotype, condition, replicate)
+
+# Reorder matrix
+log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig_ord <- log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig[, sample_order$sample]
+
+
+
+
+expr_scaled <- t(scale(t(log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig_ord)))
+
+row_dist   <- dist(expr_scaled, method = "euclidean")
+row_hclust <- hclust(row_dist, method = "complete")
+
+
+
+
+k <- 5
+row_clusters <- cutree(row_hclust, k = k)
+
+
+cluster_tbl <- tibble(
+  Accession = rownames(expr_scaled),
+  cluster   = row_clusters
+)
+
+# add gene symbols
+gene_map <- df %>% distinct(Accession, GeneSymbol)
+cluster_tbl <- cluster_tbl %>% left_join(gene_map, by = "Accession")
+
+
+n_rep <- sample_order %>%
+  count(genotype, condition)
+block_sizes <- n_rep$n
+
+
+row_annot <- data.frame(Cluster = factor(row_clusters))
+rownames(row_annot) <- rownames(expr_scaled)
+
+clust_cols <- setNames(RColorBrewer::brewer.pal(max(3, k), "Set3")[1:k], levels(row_annot$Cluster))
+
+ann_colors <- list(Cluster = clust_cols)
+
+
+
+
+pdf("output/pheatmap-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.pdf", width = 3, height = 5)
+pheatmap(expr_scaled,
+         cluster_rows = row_hclust,
+         cluster_cols = FALSE,
+         cutree_rows = k,
+         show_rownames = FALSE,
+         gaps_col = head(cumsum(sample_order %>% count(genotype, condition) %>% arrange(genotype, condition) %>% pull(n)), -1),
+         annotation_row = row_annot,
+         annotation_colors = ann_colors )
+dev.off()
+
+
+cluster_tbl <- cluster_tbl %>%
+  left_join(imp_info, by = "Accession") %>%
+  mutate(
+    n_imputed = replace_na(n_imputed, 0L),
+    any_imputed = replace_na(any_imputed, FALSE)
+  )
+  
+write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv")
+
+
+
+
+
+
+
+# Show top 10 genes per cluster
+## -------------------------------------------------
+## 1) Build tidy long table from the SAME matrix + sample_order + cluster_tbl
+## -------------------------------------------------
+prot_long <- as.data.frame(log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig_ord) %>%
+  rownames_to_column("Accession") %>%
+  pivot_longer(
+    cols = -Accession,
+    names_to = "sample",
+    values_to = "log2_abund_imp"
+  ) %>%
+  left_join(sample_order, by = "sample") %>%   # brings genotype/condition/replicate (DMSO only)
+  left_join(cluster_tbl %>% select(Accession, GeneSymbol, cluster), by = "Accession") %>%
+  filter(!is.na(cluster)) %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram","siSNX13","siSNX14")),
+    condition = factor(condition, levels = c("DMSO")),
+    panel_label = paste0(GeneSymbol, " (", Accession, ")")
+  )
+
+## -------------------------------------------------
+## 2) Pick top 10 proteins per cluster
+##    (ranking by mean log2 abundance across ALL DMSO samples)
+## -------------------------------------------------
+top10_per_cluster <- prot_long %>%
+  group_by(cluster, Accession, GeneSymbol) %>%
+  summarise(mean_log2 = mean(log2_abund_imp, na.rm = TRUE), .groups = "drop") %>%
+  group_by(cluster) %>%
+  slice_max(order_by = mean_log2, n = 10, with_ties = FALSE) %>%
+  ungroup()
+
+plot_df <- prot_long %>%
+  semi_join(top10_per_cluster, by = c("cluster","Accession","GeneSymbol"))
+
+## -------------------------------------------------
+## 3) Plot: boxplot + jitter, one PDF per cluster
+## -------------------------------------------------
+for (cl in sort(unique(plot_df$cluster))) {
+
+  p <- plot_df %>%
+    filter(cluster == cl) %>%
+    ggplot(aes(x = genotype, y = log2_abund_imp)) +
+    geom_boxplot(outlier.shape = NA, linewidth = 0.6) +
+    geom_jitter(aes(color = genotype), width = 0.12, size = 2.0, alpha = 0.9) +
+    facet_wrap(~ panel_label, scales = "free_y", ncol = 2) +
+    scale_color_manual(values = c("Scram"="black","siSNX13"="red","siSNX14"="blue")) +
+    labs(
+      title = paste0("Top 10 proteins — Cluster ", cl, " (DMSO only; significant set)"),
+      x = NULL,
+      y = "log2(Normalized abundance + 1) (imputed)"
+    ) +
+    theme_bw(base_size = 11) +
+    theme(
+      legend.position = "none",
+      strip.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5),
+      axis.text.x = element_text(angle = 25, hjust = 1)
+    )
+
+  ggsave(
+    filename = sprintf(
+      "output/top10_cluster_%02d-LOGLIMMA-AllNAvaluesFilter-IMPUTEDLOG2-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.pdf", cl
+    ),
+    plot = p,
+    width = 5, height = 6
+  )
+}
 
 
 
@@ -3886,6 +4675,213 @@ dev.off()
 
 
 
+
+
+## LOGLIMMA - NA values filtering - v2
+
+
+
+```R
+# packages
+library("clusterProfiler")
+library("pathview")
+library("DOSE")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("rtracklayer")
+library("tidyverse")
+
+## Read GTF file
+gtf_file <- "../../Master/meta/gencode.v47.annotation.gtf"
+gtf_data <- import(gtf_file)
+
+## Extract gene_id and gene_name
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+
+## Combine gene_id and gene_name into a data frame
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+### GeneSymbol list of signif LOGLIMMA signif
+
+output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.tsv
+
+
+XXXY HERE BELOW NOT MOD
+
+
+###############################################
+############ SNX13  ############
+###############################################
+
+
+
+SNX13filter_12Cluster <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv")
+
+
+## GO BP ################
+ego <- enrichGO(gene = as.character(scram_SNX13_10Cluster$GeneSymbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+## Loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%      
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_GOBP-LOGLIMMA-SNX13filter-12Cluster.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+  genes <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+  ego <- enrichGO(
+    gene          = genes,
+    keyType       = "SYMBOL",
+    OrgDb         = org.Hs.eg.db,
+    ont           = "BP",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05,
+    readable      = TRUE
+  )
+  if (is.null(ego) || nrow(as.data.frame(ego)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant GO BP terms (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ego, showCategory = 10) +
+      ggtitle(paste0("GO BP — Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+## KEGG ################
+
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_up$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+
+# loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_KEGG-LOGLIMMA-SNX13filter-12Cluster.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+
+  ## symbols for this cluster
+  genes_sym <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+
+  ## SYMBOL -> ENTREZID (KEGG uses Entrez IDs)
+  entrez <- mapIds(
+    x        = org.Hs.eg.db,
+    keys     = genes_sym,
+    keytype  = "SYMBOL",
+    column   = "ENTREZID",
+    multiVals = "first"
+  )
+
+  entrez_genes <- unique(na.omit(as.character(entrez)))
+
+  ## KEGG enrichment
+  ekegg <- enrichKEGG(
+    gene          = entrez_genes,
+    organism      = "hsa",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05
+  )
+  ## optional: convert Entrez IDs in result back to readable gene symbols
+  if (!is.null(ekegg) && nrow(as.data.frame(ekegg)) > 0) {
+    ekegg <- setReadable(ekegg, OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+  }
+  ## plot one page per cluster
+  if (length(entrez_genes) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl, " (n genes = ", length(genes_sym), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No Entrez IDs after SYMBOL->ENTREZ conversion", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else if (is.null(ekegg) || nrow(as.data.frame(ekegg)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant KEGG pathways (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ekegg, showCategory = 20) +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+
+```
 
 
 
