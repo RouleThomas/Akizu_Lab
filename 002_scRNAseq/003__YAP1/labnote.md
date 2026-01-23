@@ -29967,7 +29967,7 @@ sig_data <- combined_deg %>%
   filter(gene %in% genes_of_interest) %>%
   mutate(
     p_val_adj_label = ifelse(
-      p_val_adj < 0.001,
+      p_val_adj < 0.05,
       formatC(p_val_adj, format = "e", digits = 1),
       sprintf("%.2f", p_val_adj)
     )
