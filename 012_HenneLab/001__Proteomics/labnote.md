@@ -2938,7 +2938,7 @@ for (cl in sort(unique(plot_df$cluster))) {
 
 
 
-# LOGLIMMA - NA values filtering - v2
+# LOGLIMMA - NA values filtering - v2 - ~genotype*condition and ~genotype in DMSO
 
 - remove outlier samples
 - Filter the NA values and generate a new table with normalize abundance
@@ -4133,6 +4133,705 @@ for (cl in sort(unique(plot_df$cluster))) {
 
 
 
+# LOGLIMMA - NA values filtering - v2 - pairwise comparison - ~genotype
+
+
+Same method for NA value as in `# LOGLIMMA - NA values filtering - v2 - ~genotype*condition and ~genotype in DMSO`; then follow with pairwise genotype comparison for each condition, separately.
+
+
+
+```bash
+conda activate deseq2
+```
+
+
+```R
+
+
+# Load packages
+library("DESeq2")
+library("tidyverse")
+library("RColorBrewer")
+library("pheatmap")
+library("limma")
+library("readxl")
+
+
+
+
+# Import file
+prot <- read_excel(
+  path  = "input/For_Thomas_Proteomics_tidy.xlsx",
+  sheet = "Proteins"
+)
+
+# Tidy abundance output file
+sample_cols <- names(prot)[str_detect(names(prot), "^(Raw|Norm)-")]
+
+prot_tidy <- prot %>%
+  pivot_longer(
+    cols = all_of(sample_cols),
+    names_to = "sample",
+    values_to = "abundance",
+    values_transform = list(abundance = as.numeric)
+  ) %>%
+  extract(
+    col = sample,
+    into = c("type", "condition", "genotype", "replicate"),
+    regex = "^(Raw|Norm)-([A-Za-z0-9]+)_([^&]+)&(\\d+)$",
+    remove = FALSE
+  ) 
+
+
+####################################################################################################
+## Filter outlier samples (siSNX13 DMSO Rep1, siSNX14 DMSO Rep3)  #######
+####################################################################################################
+
+df <- prot_tidy %>%
+  filter(!(condition == "DMSO" & genotype == "siSNX13" & replicate == "1")) %>%
+  filter(!(condition == "DMSO" & genotype == "siSNX14" & replicate == "3")) %>%
+  filter(`Protein_FDR` == "High",
+         type == "Norm",
+         genotype %in% c("Scram", "siSNX13", "siSNX14")) %>%
+  dplyr::select(Accession, GeneSymbol, sample, condition, genotype, replicate, abundance)
+
+
+## 2) Expression matrix: proteins (rows) x samples (cols)
+expr_mat <- df %>%
+  select(Accession, sample, abundance) %>%
+  pivot_wider(names_from = sample, values_from = abundance) %>%
+  column_to_rownames("Accession") %>%
+  as.matrix()
+
+
+log2_expr <- log2(expr_mat + 1)
+
+
+## 4) Sample metadata (like your colData)
+coldata <- df %>%
+  distinct(sample, condition, genotype, replicate) %>%
+  arrange(match(sample, colnames(log2_expr)))
+
+stopifnot(all(coldata$sample == colnames(log2_expr)))
+
+coldata <- as.data.frame(coldata)
+rownames(coldata) <- coldata$sample
+coldata$condition <- factor(coldata$condition, levels = c("DMSO","LLOME","RECOVERY"))
+coldata$genotype  <- factor(coldata$genotype,  levels = c("Scram","siSNX13","siSNX14"))
+coldata$replicate <- factor(coldata$replicate)
+
+## log2_expr is a matrix with rownames = Accession, colnames = sample
+## coldata has rownames = sample, and columns condition, genotype, replicate
+
+
+####################################################################################################
+## Filter and/or transform NA values  #######
+####################################################################################################
+
+
+group <- interaction(coldata$condition, coldata$genotype, drop = TRUE)
+
+# For each protein, count non-NA per group
+ok_by_group <- sapply(levels(group), function(g) {
+  cols <- rownames(coldata)[group == g]
+  rowSums(!is.na(log2_expr[, cols, drop = FALSE])) >= 2
+})
+
+keep <- apply(ok_by_group, 1, any)
+log2_expr_keep <- log2_expr[keep, , drop = FALSE]
+
+
+log2_expr_imp <- log2_expr_keep
+
+for (j in seq_len(ncol(log2_expr_imp))) {
+  x <- log2_expr_imp[, j]
+  min_x <- min(x, na.rm = TRUE)
+  # put missing slightly below the observed minimum
+  x[is.na(x)] <- min_x - 1
+  log2_expr_imp[, j] <- x
+}
+
+
+# Table that say which Accession got NA values and whtehr it has been change with another value
+imp_info <- tibble(
+  Accession = rownames(log2_expr_keep),
+  n_imputed = rowSums(is.na(log2_expr_keep)),
+  any_imputed = n_imputed > 0
+)
+
+
+
+
+
+
+####################################################
+## Scram vs siSNX13 - DMSO #############################
+####################################################
+
+coldata__Scramble_vs_siSNX13_DMSO = coldata %>%
+  filter(genotype %in% c("Scram", "siSNX13"),
+         condition == "DMSO") %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram","siSNX13")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+
+log2_expr_imp__Scramble_vs_siSNX13 <- log2_expr_imp[
+  , rownames(coldata__Scramble_vs_siSNX13_DMSO), drop = FALSE
+]
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata__Scramble_vs_siSNX13_DMSO)
+
+fit <- lmFit(log2_expr_imp__Scramble_vs_siSNX13, design_full)
+fit <- eBayes(fit)
+
+res_siSNX13 <- topTable(
+  fit,
+  coef = "genotypesiSNX13",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX13_tbl <- res_siSNX13 %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() %>%
+  left_join(df %>% dplyr::select("Accession", "GeneSymbol") %>% unique())
+
+write.table(
+  res_siSNX13_tbl,
+  file = "output/res-AllNAvaluesFilter-Scramble_vs_siSNX13-DMSO.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX13_tbl$logFC < -0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX13_tbl$logFC > 0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-AllNAvaluesFilter-Scramble_vs_siSNX13-DMSO-Cells-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX13_tbl,
+  lab = res_siSNX13_tbl$GeneSymbol,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX13-DMSO',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3,
+  max.overlaps = 25
+) +
+  coord_cartesian(xlim = c(-10, 10), ylim = c(0,3)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+####################################################
+## Scram vs siSNX13 - LLOME #############################
+####################################################
+
+coldata__Scramble_vs_siSNX13_LLOME = coldata %>%
+  filter(genotype %in% c("Scram", "siSNX13"),
+         condition == "LLOME") %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram","siSNX13")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+
+log2_expr_imp__Scramble_vs_siSNX13 <- log2_expr_imp[
+  , rownames(coldata__Scramble_vs_siSNX13_LLOME), drop = FALSE
+]
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata__Scramble_vs_siSNX13_LLOME)
+
+fit <- lmFit(log2_expr_imp__Scramble_vs_siSNX13, design_full)
+fit <- eBayes(fit)
+
+res_siSNX13 <- topTable(
+  fit,
+  coef = "genotypesiSNX13",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX13_tbl <- res_siSNX13 %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() %>%
+  left_join(df %>% dplyr::select("Accession", "GeneSymbol") %>% unique())
+
+write.table(
+  res_siSNX13_tbl,
+  file = "output/res-AllNAvaluesFilter-Scramble_vs_siSNX13-LLOME.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX13_tbl$logFC < -0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX13_tbl$logFC > 0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-AllNAvaluesFilter-Scramble_vs_siSNX13-LLOME-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX13_tbl,
+  lab = res_siSNX13_tbl$GeneSymbol,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX13-LLOME',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3,
+  max.overlaps = 25
+) +
+  coord_cartesian(xlim = c(-10, 10), ylim = c(0,3)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+####################################################
+## Scram vs siSNX13 - RECOVERY #############################
+####################################################
+
+coldata__Scramble_vs_siSNX13_RECOVERY = coldata %>%
+  filter(genotype %in% c("Scram", "siSNX13"),
+         condition == "RECOVERY") %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram","siSNX13")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+
+log2_expr_imp__Scramble_vs_siSNX13 <- log2_expr_imp[
+  , rownames(coldata__Scramble_vs_siSNX13_RECOVERY), drop = FALSE
+]
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata__Scramble_vs_siSNX13_RECOVERY)
+
+fit <- lmFit(log2_expr_imp__Scramble_vs_siSNX13, design_full)
+fit <- eBayes(fit)
+
+res_siSNX13 <- topTable(
+  fit,
+  coef = "genotypesiSNX13",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX13_tbl <- res_siSNX13 %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() %>%
+  left_join(df %>% dplyr::select("Accession", "GeneSymbol") %>% unique())
+
+write.table(
+  res_siSNX13_tbl,
+  file = "output/res-AllNAvaluesFilter-Scramble_vs_siSNX13-RECOVERY.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX13_tbl$logFC < -0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX13_tbl$logFC > 0 & res_siSNX13_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-AllNAvaluesFilter-Scramble_vs_siSNX13-RECOVERY-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX13_tbl,
+  lab = res_siSNX13_tbl$GeneSymbol,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX13-RECOVERY',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3,
+  max.overlaps = 25
+) +
+  coord_cartesian(xlim = c(-10, 10), ylim = c(0,3)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+
+
+####################################################
+## Scram vs siSNX14 - DMSO #############################
+####################################################
+
+coldata__Scramble_vs_siSNX14_DMSO = coldata %>%
+  filter(genotype %in% c("Scram", "siSNX14"),
+         condition == "DMSO") %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram","siSNX14")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+
+log2_expr_imp__Scramble_vs_siSNX14 <- log2_expr_imp[
+  , rownames(coldata__Scramble_vs_siSNX14_DMSO), drop = FALSE
+]
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata__Scramble_vs_siSNX14_DMSO)
+
+fit <- lmFit(log2_expr_imp__Scramble_vs_siSNX14, design_full)
+fit <- eBayes(fit)
+
+res_siSNX14 <- topTable(
+  fit,
+  coef = "genotypesiSNX14",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX14_tbl <- res_siSNX14 %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() %>%
+  left_join(df %>% dplyr::select("Accession", "GeneSymbol") %>% unique())
+
+write.table(
+  res_siSNX14_tbl,
+  file = "output/res-AllNAvaluesFilter-Scramble_vs_siSNX14-DMSO.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX14_tbl$logFC < -0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX14_tbl$logFC > 0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-AllNAvaluesFilter-Scramble_vs_siSNX14-DMSO-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$GeneSymbol,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-DMSO',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3,
+  max.overlaps = 25
+) +
+  coord_cartesian(xlim = c(-10, 10), ylim = c(0,3)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+####################################################
+## Scram vs siSNX14 - LLOME #############################
+####################################################
+
+coldata__Scramble_vs_siSNX14_LLOME = coldata %>%
+  filter(genotype %in% c("Scram", "siSNX14"),
+         condition == "LLOME") %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram","siSNX14")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+
+log2_expr_imp__Scramble_vs_siSNX14 <- log2_expr_imp[
+  , rownames(coldata__Scramble_vs_siSNX14_LLOME), drop = FALSE
+]
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata__Scramble_vs_siSNX14_LLOME)
+
+fit <- lmFit(log2_expr_imp__Scramble_vs_siSNX14, design_full)
+fit <- eBayes(fit)
+
+res_siSNX14 <- topTable(
+  fit,
+  coef = "genotypesiSNX14",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX14_tbl <- res_siSNX14 %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() %>%
+  left_join(df %>% dplyr::select("Accession", "GeneSymbol") %>% unique())
+
+write.table(
+  res_siSNX14_tbl,
+  file = "output/res-AllNAvaluesFilter-Scramble_vs_siSNX14-LLOME.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX14_tbl$logFC < -0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX14_tbl$logFC > 0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-AllNAvaluesFilter-Scramble_vs_siSNX14-LLOME-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$GeneSymbol,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-LLOME',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3,
+  max.overlaps = 25
+) +
+  coord_cartesian(xlim = c(-10, 10), ylim = c(0,3)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+
+
+
+####################################################
+## Scram vs siSNX14 - RECOVERY #############################
+####################################################
+
+coldata__Scramble_vs_siSNX14_RECOVERY = coldata %>%
+  filter(genotype %in% c("Scram", "siSNX14"),
+         condition == "RECOVERY") %>%
+  mutate(
+    genotype  = factor(genotype, levels = c("Scram","siSNX14")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+
+log2_expr_imp__Scramble_vs_siSNX14 <- log2_expr_imp[
+  , rownames(coldata__Scramble_vs_siSNX14_RECOVERY), drop = FALSE
+]
+
+
+
+
+## 6) Model: full model = genotype + condition + genotype:condition
+design_full <- model.matrix(~ genotype, data = coldata__Scramble_vs_siSNX14_RECOVERY)
+
+fit <- lmFit(log2_expr_imp__Scramble_vs_siSNX14, design_full)
+fit <- eBayes(fit)
+
+res_siSNX14 <- topTable(
+  fit,
+  coef = "genotypesiSNX14",
+  number = Inf,
+  adjust.method = "BH"
+) 
+
+res_siSNX14_tbl <- res_siSNX14 %>%
+  rownames_to_column(var = "Accession") %>%
+  as_tibble() %>%
+  left_join(df %>% dplyr::select("Accession", "GeneSymbol") %>% unique())
+
+write.table(
+  res_siSNX14_tbl,
+  file = "output/res-AllNAvaluesFilter-Scramble_vs_siSNX14-RECOVERY.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Volcan plots
+
+keyvals <- ifelse(
+  res_siSNX14_tbl$logFC < -0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Sky Blue',
+    ifelse(res_siSNX14_tbl$logFC > 0 & res_siSNX14_tbl$'adj.P.Val' < 5e-2, 'Orange',
+      'grey'))
+
+
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; logFC > 0)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; logFC < 0)'
+
+
+
+
+pdf("output/plotVolcano-AllNAvaluesFilter-Scramble_vs_siSNX14-RECOVERY-q05FC0.pdf", width=7, height=8)    
+EnhancedVolcano(res_siSNX14_tbl,
+  lab = res_siSNX14_tbl$GeneSymbol,
+  x = 'logFC',
+  y = 'adj.P.Val',
+  title = 'Scramble_vs_siSNX14-RECOVERY',
+  pCutoff = 5e-2,
+  FCcutoff = 0,                      # no FC threshold
+  pointSize = 2.0,
+  labSize = 5.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none',
+  drawConnectors = TRUE,             # helps readability
+  widthConnectors = 0.3,
+  max.overlaps = 25
+) +
+  coord_cartesian(xlim = c(-10, 10), ylim = c(0,3)) +   # <-- zoom without dropping points
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  )
+dev.off()
+
+
+
+
+
+```
 
 
 
@@ -4709,9 +5408,9 @@ gene_id_name <- data.frame(gene_id, gene_name) %>%
 ### GeneSymbol list of signif LOGLIMMA signif
 
 output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.tsv
+output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.tsv
+output/GENELIST-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv
 
-
-XXXY HERE BELOW NOT MOD
 
 
 ###############################################
@@ -4720,11 +5419,11 @@ XXXY HERE BELOW NOT MOD
 
 
 
-SNX13filter_12Cluster <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv")
+SNX13AllNAvaluesFilter_9Cluster_maxabsint3 <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.tsv")
 
 
 ## GO BP ################
-ego <- enrichGO(gene = as.character(scram_SNX13_10Cluster$GeneSymbol), 
+ego <- enrichGO(gene = as.character(SNX13AllNAvaluesFilter_9Cluster_maxabsint3$GeneSymbol), 
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
                 OrgDb = org.Hs.eg.db, 
                 ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
@@ -4739,7 +5438,7 @@ dev.off()
 
 
 ## Loop
-df <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv") %>%
+df <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.tsv") %>%
   dplyr::select(GeneSymbol, cluster) %>%
   unique() %>%
   mutate(cluster = as.integer(cluster)) %>%      
@@ -4750,7 +5449,7 @@ df <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv") %>%
 clusters <- sort(unique(df$cluster))
 print(clusters)
 
-out_pdf <- "output/GO/dotplot_GOBP-LOGLIMMA-SNX13filter-12Cluster.pdf"
+out_pdf <- "output/GO/dotplot_GOBP-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.pdf"
 pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
 
 for (cl in clusters) {
@@ -4803,7 +5502,7 @@ dev.off()
 
 
 # loop
-df <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv") %>%
+df <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.tsv") %>%
   dplyr::select(GeneSymbol, cluster) %>%
   unique() %>%
   mutate(cluster = as.integer(cluster)) %>%
@@ -4814,7 +5513,7 @@ df <- read_tsv("output/GENELIST-LOGLIMMA-SNX13filter-12Cluster.tsv") %>%
 clusters <- sort(unique(df$cluster))
 print(clusters)
 
-out_pdf <- "output/GO/dotplot_KEGG-LOGLIMMA-SNX13filter-12Cluster.pdf"
+out_pdf <- "output/GO/dotplot_KEGG-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.pdf"
 pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
 
 for (cl in clusters) {
@@ -4881,7 +5580,563 @@ dev.off()
 
 
 
+
+
+
+
+
+###############################################
+############ SNX14  ############
+###############################################
+
+
+
+SNX13AllNAvaluesFilter_9Cluster_maxabsint3 <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.tsv")
+
+
+## GO BP ################
+ego <- enrichGO(gene = as.character(SNX13AllNAvaluesFilter_9Cluster_maxabsint3$GeneSymbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+## Loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%      
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_GOBP-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+  genes <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+  ego <- enrichGO(
+    gene          = genes,
+    keyType       = "SYMBOL",
+    OrgDb         = org.Hs.eg.db,
+    ont           = "BP",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05,
+    readable      = TRUE
+  )
+  if (is.null(ego) || nrow(as.data.frame(ego)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant GO BP terms (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ego, showCategory = 10) +
+      ggtitle(paste0("GO BP — Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+## KEGG ################
+
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_up$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+
+# loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_KEGG-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+
+  ## symbols for this cluster
+  genes_sym <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+
+  ## SYMBOL -> ENTREZID (KEGG uses Entrez IDs)
+  entrez <- mapIds(
+    x        = org.Hs.eg.db,
+    keys     = genes_sym,
+    keytype  = "SYMBOL",
+    column   = "ENTREZID",
+    multiVals = "first"
+  )
+
+  entrez_genes <- unique(na.omit(as.character(entrez)))
+
+  ## KEGG enrichment
+  ekegg <- enrichKEGG(
+    gene          = entrez_genes,
+    organism      = "hsa",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05
+  )
+  ## optional: convert Entrez IDs in result back to readable gene symbols
+  if (!is.null(ekegg) && nrow(as.data.frame(ekegg)) > 0) {
+    ekegg <- setReadable(ekegg, OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+  }
+  ## plot one page per cluster
+  if (length(entrez_genes) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl, " (n genes = ", length(genes_sym), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No Entrez IDs after SYMBOL->ENTREZ conversion", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else if (is.null(ekegg) || nrow(as.data.frame(ekegg)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant KEGG pathways (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ekegg, showCategory = 20) +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+###############################################
+############ DMSO - Scramble vs siSNX13 vs siSNX14  ############
+###############################################
+
+
+
+SNX13AllNAvaluesFilter_9Cluster_maxabsint3 <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv")
+
+
+## GO BP ################
+ego <- enrichGO(gene = as.character(SNX13AllNAvaluesFilter_9Cluster_maxabsint3$GeneSymbol), 
+                keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          # “BP” (Biological Process), “MF” (Molecular Function), and “CC” (Cellular Component) 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+
+pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+
+## Loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%      
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_GOBP-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+  genes <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+  ego <- enrichGO(
+    gene          = genes,
+    keyType       = "SYMBOL",
+    OrgDb         = org.Hs.eg.db,
+    ont           = "BP",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05,
+    readable      = TRUE
+  )
+  if (is.null(ego) || nrow(as.data.frame(ego)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant GO BP terms (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ego, showCategory = 10) +
+      ggtitle(paste0("GO BP — Cluster ", cl, " (n genes = ", length(genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+## KEGG ################
+
+
+
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_up$gene_name), 'ENTREZID', 'SYMBOL') )
+
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)
+                
+pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+
+
+# loop
+df <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  unique() %>%
+  mutate(cluster = as.integer(cluster)) %>%
+  filter(!is.na(cluster)) %>%
+  filter(!is.na(GeneSymbol), GeneSymbol != "") %>%
+  distinct(cluster, GeneSymbol, .keep_all = TRUE)
+
+clusters <- sort(unique(df$cluster))
+print(clusters)
+
+out_pdf <- "output/GO/dotplot_KEGG-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv.pdf"
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+
+for (cl in clusters) {
+
+  ## symbols for this cluster
+  genes_sym <- df %>%
+    filter(cluster == cl) %>%
+    pull(GeneSymbol) %>%
+    unique()
+
+  ## SYMBOL -> ENTREZID (KEGG uses Entrez IDs)
+  entrez <- mapIds(
+    x        = org.Hs.eg.db,
+    keys     = genes_sym,
+    keytype  = "SYMBOL",
+    column   = "ENTREZID",
+    multiVals = "first"
+  )
+
+  entrez_genes <- unique(na.omit(as.character(entrez)))
+
+  ## KEGG enrichment
+  ekegg <- enrichKEGG(
+    gene          = entrez_genes,
+    organism      = "hsa",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05
+  )
+  ## optional: convert Entrez IDs in result back to readable gene symbols
+  if (!is.null(ekegg) && nrow(as.data.frame(ekegg)) > 0) {
+    ekegg <- setReadable(ekegg, OrgDb = org.Hs.eg.db, keyType = "ENTREZID")
+  }
+  ## plot one page per cluster
+  if (length(entrez_genes) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl, " (n genes = ", length(genes_sym), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No Entrez IDs after SYMBOL->ENTREZ conversion", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else if (is.null(ekegg) || nrow(as.data.frame(ekegg)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant KEGG pathways (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ekegg, showCategory = 20) +
+      ggtitle(paste0("KEGG — Cluster ", cl,
+                     " (n genes = ", length(genes_sym),
+                     "; n Entrez = ", length(entrez_genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+
+
 ```
+
+
+
+
+
+
+
+
+
+
+# Cross reference Kaitlynn gene list
+
+## LOGLIMMA - NA values filtering - v2 - ~genotype*condition and ~genotype in DMSO
+
+Cross reference the gene list from Kaitlynn, `output/POI_TR.xlsx`; see where all these genes ~130 falls; which cluster, for all comparison
+
+
+
+```R
+# packages
+library("tidyverse")
+library("readxl")
+
+# gene list Kaitlynn
+output/POI_TR.xlsx
+
+# file of interest to cross-reference
+output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.tsv
+output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.tsv
+output/GENELIST-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv
+
+
+
+
+# import files
+POI_TR <- read_excel("output/POI_TR.xlsx")
+
+Scramble_vs_siSNX13_cl9_maxint3 <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  rename(cluster_SNX13 = cluster)
+Scramble_vs_siSNX14_cl10_maxint3 <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  rename(cluster_SNX14 = cluster)
+DMSO_Scramble_vs_siSNX13_vs_siSNX14_cl5_maxint3 <- read_tsv("output/GENELIST-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv") %>%
+  dplyr::select(GeneSymbol, cluster) %>%
+  rename(cluster_DMSO = cluster)
+
+
+# Cross-reference
+POI_TR_crossRef1 <- POI_TR %>%
+  rename(GeneSymbol = gene) %>%
+  left_join(Scramble_vs_siSNX13_cl9_maxint3, by = "GeneSymbol") %>%
+  left_join(Scramble_vs_siSNX14_cl10_maxint3, by = "GeneSymbol") %>%
+  left_join(DMSO_Scramble_vs_siSNX13_vs_siSNX14_cl5_maxint3, by = "GeneSymbol")
+
+
+
+# Save output files
+write_tsv(
+  POI_TR_crossRef1,
+  "output/POI_TR_crossRef1.tsv"
+)
+
+```
+
+
+
+
+
+
+
+
+
+## LOGLIMMA - NA values filtering - v2 - pairwise comparison - ~genotype
+
+Cross reference the gene list from Kaitlynn, `output/POI_TR.xlsx`; see where all these genes ~130 falls; which cluster, for all comparison
+
+
+
+```R
+# packages
+library("tidyverse")
+library("readxl")
+
+# gene list Kaitlynn
+output/POI_TR.xlsx
+
+# file of interest to cross-reference
+output/res-AllNAvaluesFilter-Scramble_vs_siSNX13-DMSO.tsv
+output/res-AllNAvaluesFilter-Scramble_vs_siSNX13-LLOME.tsv
+output/res-AllNAvaluesFilter-Scramble_vs_siSNX13-RECOVERY.tsv
+
+output/res-AllNAvaluesFilter-Scramble_vs_siSNX14-DMSO.tsv
+output/res-AllNAvaluesFilter-Scramble_vs_siSNX14-LLOME.tsv
+output/res-AllNAvaluesFilter-Scramble_vs_siSNX14-RECOVERY.tsv
+
+
+
+
+# import files
+POI_TR <- read_excel("output/POI_TR.xlsx")
+
+Scramble_vs_siSNX13__DMSO <- read_tsv("output/res-AllNAvaluesFilter-Scramble_vs_siSNX13-DMSO.tsv") %>%
+  dplyr::select(GeneSymbol, logFC, adj.P.Val) %>%
+  mutate(
+    signif_Scramble_vs_siSNX13__DMSO = case_when(
+      logFC > 0  & adj.P.Val < 5e-2 ~ "up",
+      logFC < 0  & adj.P.Val < 5e-2 ~ "down",
+      TRUE                         ~ NA_character_
+    )
+  ) %>% 
+  select(GeneSymbol, signif_Scramble_vs_siSNX13__DMSO)
+
+
+Scramble_vs_siSNX13__LLOME <- read_tsv("output/res-AllNAvaluesFilter-Scramble_vs_siSNX13-LLOME.tsv") %>%
+  dplyr::select(GeneSymbol, logFC, adj.P.Val) %>%
+  mutate(
+    signif_Scramble_vs_siSNX13__LLOME = case_when(
+      logFC > 0  & adj.P.Val < 5e-2 ~ "up",
+      logFC < 0  & adj.P.Val < 5e-2 ~ "down",
+      TRUE                         ~ NA_character_
+    )
+  ) %>% 
+  select(GeneSymbol, signif_Scramble_vs_siSNX13__LLOME)
+
+Scramble_vs_siSNX13__RECOVERY <- read_tsv("output/res-AllNAvaluesFilter-Scramble_vs_siSNX13-RECOVERY.tsv") %>%
+  dplyr::select(GeneSymbol, logFC, adj.P.Val) %>%
+  mutate(
+    signif_Scramble_vs_siSNX13__RECOVERY = case_when(
+      logFC > 0  & adj.P.Val < 5e-2 ~ "up",
+      logFC < 0  & adj.P.Val < 5e-2 ~ "down",
+      TRUE                         ~ NA_character_
+    )
+  ) %>% 
+  select(GeneSymbol, signif_Scramble_vs_siSNX13__RECOVERY)
+
+
+
+
+
+Scramble_vs_siSNX14__DMSO <- read_tsv("output/res-AllNAvaluesFilter-Scramble_vs_siSNX14-DMSO.tsv") %>%
+  dplyr::select(GeneSymbol, logFC, adj.P.Val) %>%
+  mutate(
+    signif_Scramble_vs_siSNX14__DMSO = case_when(
+      logFC > 0  & adj.P.Val < 5e-2 ~ "up",
+      logFC < 0  & adj.P.Val < 5e-2 ~ "down",
+      TRUE                         ~ NA_character_
+    )
+  ) %>% 
+  select(GeneSymbol, signif_Scramble_vs_siSNX14__DMSO)
+
+
+Scramble_vs_siSNX14__LLOME <- read_tsv("output/res-AllNAvaluesFilter-Scramble_vs_siSNX14-LLOME.tsv") %>%
+  dplyr::select(GeneSymbol, logFC, adj.P.Val) %>%
+  mutate(
+    signif_Scramble_vs_siSNX14__LLOME = case_when(
+      logFC > 0  & adj.P.Val < 5e-2 ~ "up",
+      logFC < 0  & adj.P.Val < 5e-2 ~ "down",
+      TRUE                         ~ NA_character_
+    )
+  ) %>% 
+  select(GeneSymbol, signif_Scramble_vs_siSNX14__LLOME)
+
+Scramble_vs_siSNX14__RECOVERY <- read_tsv("output/res-AllNAvaluesFilter-Scramble_vs_siSNX14-RECOVERY.tsv") %>%
+  dplyr::select(GeneSymbol, logFC, adj.P.Val) %>%
+  mutate(
+    signif_Scramble_vs_siSNX14__RECOVERY = case_when(
+      logFC > 0  & adj.P.Val < 5e-2 ~ "up",
+      logFC < 0  & adj.P.Val < 5e-2 ~ "down",
+      TRUE                         ~ NA_character_
+    )
+  ) %>% 
+  select(GeneSymbol, signif_Scramble_vs_siSNX14__RECOVERY)
+
+
+
+# Cross-reference
+POI_TR_crossRef2 <- POI_TR %>%
+  rename(GeneSymbol = gene) %>%
+  left_join(Scramble_vs_siSNX13__DMSO, by = "GeneSymbol") %>%
+  left_join(Scramble_vs_siSNX13__LLOME, by = "GeneSymbol") %>%
+  left_join(Scramble_vs_siSNX13__RECOVERY, by = "GeneSymbol") %>%
+  left_join(Scramble_vs_siSNX14__DMSO, by = "GeneSymbol") %>%
+  left_join(Scramble_vs_siSNX14__LLOME, by = "GeneSymbol") %>%
+  left_join(Scramble_vs_siSNX14__RECOVERY, by = "GeneSymbol")
+
+
+
+
+# Save output files
+write_tsv(
+  POI_TR_crossRef2,
+  "output/POI_TR_crossRef2.tsv"
+)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
