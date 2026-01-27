@@ -477,15 +477,16 @@ plot_data$condition <-
 
 # Plot with ggpubr
 c("EFNB2", "EPHA4", "MKI67", "TOP2A", "PCNA", "MCM2", "MCM5", "MCM7") # 
+c("EFNB1", "EFNA5", "EPHB2", "EPHA3") # 
 
 
 
 library("ggpubr")
 my_comparisons <- list( c("Norm", "Hypo") )
 
-pdf("output/tpm_featurecounts_multi/tpm-MCM7.pdf", width=4, height=3)
+pdf("output/tpm_featurecounts_multi/tpm-EPHB2.pdf", width=4, height=3)
 tpm_all_sample_tidy %>%
-  filter(geneSymbol %in% c("MCM7") ) %>% 
+  filter(geneSymbol %in% c("EPHB2") ) %>% 
   unique() %>%
   mutate(TPM = log2(tpm + 1) ) %>%
     ggboxplot(., x = "condition", y = "TPM",
@@ -498,11 +499,51 @@ tpm_all_sample_tidy %>%
       theme_bw() +
       facet_wrap(~tissue) +
       ylab("log2(TPM + 1)") +
-      ggtitle("MCM7")
+      ggtitle("EPHB2")
 dev.off()
+
+
+
+
+
+
+# dotplots with individual replicates
+## Hypoxia marker genes 
+
+
+pdf("output/tpm_featurecounts_multi/tpm-hypoxia_genes-dots_by_rep.pdf", width=5, height=15)
+tpm_all_sample_tidy %>%
+  filter(geneSymbol %in% c( "VEGFA",  "ADM",  "EGLN3",  "BNIP3",  "BNIP3L",  "CA9",  "CA12",  "LDHA",  "SLC2A1",  "ENO1",  "PFKP",  "HK2",  "ALDOA",  "PDK1")) %>%
+  distinct(geneSymbol, tissue, condition, replicate, tpm, .keep_all = TRUE) %>%
+  mutate(
+    condition = factor(condition, levels = c("Norm", "Hypo")),
+    replicate = factor(replicate),
+    TPM = log2(tpm + 1)
+  ) %>%
+  ggplot(aes(x = condition, y = TPM, color = replicate)) +
+  geom_point(
+    position = position_jitter(width = 0.15, height = 0),
+    size = 2.2,
+    alpha = 0.9
+  ) +
+  theme_bw() +
+  facet_grid(geneSymbol ~ tissue, scales = "free_y") +
+  ylab("log2(TPM + 1)") +
+  xlab("") +
+  guides(color = guide_legend(title = "Bio Rep"))
+
+dev.off()
+
+
+
+
+
 
 ```
 
+
+--> Check Hypoxia marker genes to check whether all replicate not responsive to Hypoxia in ReN; confirm no outlier Hypoxia-response.
+  --> No replicate effect: ReN cells globally respond less to Hypoxia, all replicates behave similarly
 
 
 
@@ -1075,11 +1116,86 @@ dev.off()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## padj 0.00001 FC 0.58 ##################################
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.00001, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 1 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -1 & res_df$padj == TRUE, na.rm = TRUE)
+
+
+
+## Plot-volcano
+# FILTER ON QVALUE 0.00001 GOOD !!!! ###############################################
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -1 & res_tibble$padj < 0.00001, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 1 & res_tibble$padj < 0.00001, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.00001; log2FC > 1)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.00001; log2FC < -1)'
+
+pdf("output/deseq2/plotVolcano_resXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 0.00001,         #
+  FCcutoff = 1,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+
+
+# Save as gene list for GO analysis:
+
+
+### GO EntrezID Up and Down
+#### Filter for up-regulated genes
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 1 & res_tibble$padj < 0.00001, ]
+
+#### Filter for down-regulated genes
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -1 & res_tibble$padj < 0.00001, ]
+#### Save
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+
+
+
 ```
 
 
-
-
+--> The default padj 0.05 and FC 0.58 treshold lead to too many DEGs; and some show weird profile with very high FC (weird) --> Lets prefer use padj XXX
 
 
 
@@ -1614,6 +1730,8 @@ Let's do a test of the pipeline with genes from cluster4 amd cluster14 from the 
 **IMPORTANT NOTE: When doing GO, do NOT set a universe (background list of genes) it perform better!**
 
 
+
+
 ```R
 # packages
 library("clusterProfiler")
@@ -1646,13 +1764,19 @@ output/deseq2/downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt
 output/deseq2/upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt
 output/deseq2/downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt
 
+output/deseq2/upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt
+output/deseq2/downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt
+
 ### Genes with significant splicing changes
 output/IsoformSwitchAnalyzeR_kallisto/PSC/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.txt
+
+output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceEnrichment.txt
+output/IsoformSwitchAnalyzeR_kallisto/ReN/extractConsequenceEnrichment.txt
 
 
 ############ PSC - UP ############
 
-PSC_up = read_csv("output/deseq2/upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", col_names = "gene_name")
+PSC_up = read_csv("output/deseq2/upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt", col_names = "gene_name")
 
 ego <- enrichGO(gene = as.character(PSC_up$gene_name), 
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
@@ -1662,13 +1786,44 @@ ego <- enrichGO(gene = as.character(PSC_up$gene_name),
                 pvalueCutoff = 0.05, 
                 readable = TRUE)
                 
-pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+pdf("output/GO/dotplot_BP-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
 dotplot(ego, showCategory=20)
 dev.off()
 
-pdf("output/GO/dotplot_BP-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+pdf("output/GO/dotplot_BP-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
 dotplot(ego, showCategory=10)
 dev.off()
+
+# Export gene GO output
+ego_tbl_clean <- as.data.frame(ego) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    GO_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    GO_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/BP-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
 
 
 entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_up$gene_name), 'ENTREZID', 'SYMBOL') )
@@ -1677,20 +1832,53 @@ ekegg <- enrichKEGG(gene = entrez_genes,
                 pAdjustMethod = "BH",   
                 pvalueCutoff = 0.05)
                 
-pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+pdf("output/GO/dotplot_KEGG-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
 dotplot(ekegg, showCategory=20)
 dev.off()
 
-pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+pdf("output/GO/dotplot_KEGG-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
 dotplot(ekegg, showCategory=10)
 dev.off()
+
+
+# Export gene KEGG output
+eekegg_tbl_clean <- as.data.frame(ekegg) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    KEGG_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    KEGG_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/KEGG-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
+
 
 
 
 
 ############ PSC - DOWN ############
 
-PSC_down = read_csv("output/deseq2/downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", col_names = "gene_name")
+PSC_down = read_csv("output/deseq2/downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt", col_names = "gene_name")
 
 ego <- enrichGO(gene = as.character(PSC_down$gene_name), 
                 keyType = "SYMBOL",     # Use ENSEMBL if want to use ENSG000XXXX format
@@ -1700,13 +1888,49 @@ ego <- enrichGO(gene = as.character(PSC_down$gene_name),
                 pvalueCutoff = 0.05, 
                 readable = TRUE)
                 
-pdf("output/GO/dotplot_BP-downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+pdf("output/GO/dotplot_BP-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
 dotplot(ego, showCategory=20)
 dev.off()
 
-pdf("output/GO/dotplot_BP-downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+pdf("output/GO/dotplot_BP-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=5)
 dotplot(ego, showCategory=10)
 dev.off()
+
+
+
+# Export gene GO output
+ego_tbl_clean <- as.data.frame(ego) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    GO_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    GO_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/BP-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
+
+
+
 
 
 entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_down$gene_name), 'ENTREZID', 'SYMBOL') )
@@ -1715,18 +1939,52 @@ ekegg <- enrichKEGG(gene = entrez_genes,
                 pAdjustMethod = "BH",   
                 pvalueCutoff = 0.05)
                 
-pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+pdf("output/GO/dotplot_KEGG-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
 dotplot(ekegg, showCategory=20)
 dev.off()
 
-pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+pdf("output/GO/dotplot_KEGG-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
 dotplot(ekegg, showCategory=10)
 dev.off()
 
 
 
+# Export gene KEGG output
+eekegg_tbl_clean <- as.data.frame(ekegg) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    KEGG_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    KEGG_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/KEGG-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
 
-############ PSC - SPLICING CHANGES ############
+
+
+
+
+############ PSC - SPLICING CHANGES ALL ############
 
 PSC_splicing = read_csv("output/IsoformSwitchAnalyzeR_kallisto/PSC/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.txt", col_names = "gene_name")
 
@@ -1747,6 +2005,41 @@ dotplot(ego, showCategory=10)
 dev.off()
 
 
+
+# Export gene GO output
+ego_tbl_clean <- as.data.frame(ego) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    GO_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    GO_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
+
+
+
+
 entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_splicing$gene_name), 'ENTREZID', 'SYMBOL') )
 
 ekegg <- enrichKEGG(gene = entrez_genes, 
@@ -1760,6 +2053,316 @@ dev.off()
 pdf("output/GO/dotplot_KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC-top10.pdf", width=5, height=4)
 dotplot(ekegg, showCategory=10)
 dev.off()
+
+
+
+
+# Export gene KEGG output
+eekegg_tbl_clean <- as.data.frame(ekegg) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    KEGG_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    KEGG_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
+
+
+
+
+
+
+
+
+
+
+
+
+
+############ PSC - SPLICING Consequences ############
+
+PSC_splicing = read_tsv("output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceEnrichment.txt")
+
+
+out_pdf <- "output/GO/dotplot_BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-extractConsequenceEnrichment-PSC-top10.pdf"
+show_n <- 10
+df <- PSC_splicing %>%
+  filter(!is.na(switchConsequence), switchConsequence != "") %>%
+  filter(!is.na(gene_name), gene_name != "") %>%
+  distinct(switchConsequence, gene_name)
+categories <- sort(unique(df$switchConsequence))
+print(categories)
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+for (cat in categories) {
+  genes <- df %>%
+    filter(switchConsequence == cat) %>%
+    pull(gene_name) %>%
+    unique()
+  ego <- enrichGO(
+    gene          = genes,
+    keyType       = "SYMBOL",
+    OrgDb         = org.Hs.eg.db,
+    ont           = "BP",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05,
+    readable      = TRUE
+  )
+  # handle empty results
+  if (is.null(ego) || nrow(as.data.frame(ego)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("switchConsequence: ", cat, " (n genes = ", length(genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant GO BP terms (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+
+  } else {
+    p <- dotplot(ego, showCategory = show_n) +
+      ggtitle(paste0("GO BP — ", cat, " (n genes = ", length(genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+# Export gene GO outputdf <- PSC_splicing %>%
+df <- PSC_splicing %>%
+  filter(!is.na(switchConsequence), switchConsequence != "") %>%
+  filter(!is.na(gene_name), gene_name != "") %>%
+  distinct(switchConsequence, gene_name)
+
+categories <- sort(unique(df$switchConsequence))
+
+out_dir <- "output/GO/"
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+# helper to make safe filenames
+safe_name <- function(x) {
+  x %>%
+    gsub("[/\\\\]+", "_", .) %>%        # slashes
+    gsub("[^A-Za-z0-9._-]+", "_", .) %>% # weird chars -> _
+    gsub("_+", "_", .) %>%              # collapse __
+    gsub("^_|_$", "", .)                # trim _
+}
+# ---- loop: run GO + save table ----
+for (cat in categories) {
+  genes <- df %>%
+    filter(switchConsequence == cat) %>%
+    pull(gene_name) %>%
+    unique()
+  ego <- enrichGO(
+    gene          = genes,
+    keyType       = "SYMBOL",
+    OrgDb         = org.Hs.eg.db,
+    ont           = "BP",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05,
+    readable      = TRUE
+  )
+  out_file <- file.path(out_dir, paste0("BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-extractConsequenceEnrichment-", safe_name(cat),"-PSC" , ".tsv"))
+  # if empty, still write an empty table with headers (nice for pipelines)
+  if (is.null(ego) || nrow(as.data.frame(ego)) == 0) {
+    empty <- data.frame(
+      GO_ID = character(),
+      Description = character(),
+      GeneRatio = character(),
+      BgRatio = character(),
+      pvalue = numeric(),
+      p.adjust = numeric(),
+      qvalue = numeric(),
+      geneID = character(),
+      Count = integer()
+    )
+    write.table(empty, out_file, sep = "\t", quote = FALSE, row.names = FALSE)
+    next
+  }
+  ego_tbl <- as.data.frame(ego)
+  # optional: add the category + gene list size as metadata columns
+  ego_tbl <- ego_tbl %>%
+    mutate(
+      switchConsequence = cat,
+      nGenesInput = length(genes)
+    )
+  write.table(ego_tbl, out_file, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+###
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+out_pdf <- "output/GO/KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-extractConsequenceEnrichment-PSC-top10.pdf"
+show_n <- 10
+
+dir.create("output/GO", recursive = TRUE, showWarnings = FALSE)
+
+df <- PSC_splicing %>%
+  filter(!is.na(switchConsequence), switchConsequence != "") %>%
+  filter(!is.na(gene_name), gene_name != "") %>%
+  distinct(switchConsequence, gene_name)
+
+categories <- sort(unique(df$switchConsequence))
+
+pdf(out_pdf, width = 7, height = 5, onefile = TRUE)
+for (cat in categories) {
+  genes_sym <- df %>%
+    filter(switchConsequence == cat) %>%
+    pull(gene_name) %>%
+    unique()
+  # map SYMBOL -> ENTREZ
+  entrez <- mapIds(
+    org.Hs.eg.db,
+    keys     = genes_sym,
+    column   = "ENTREZID",
+    keytype  = "SYMBOL",
+    multiVals = "first"
+  )
+  entrez_genes <- unique(na.omit(as.character(entrez)))
+  # run KEGG (human)
+  ekegg <- enrichKEGG(
+    gene          = entrez_genes,
+    organism      = "hsa",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05
+  )
+  if (is.null(ekegg) || nrow(as.data.frame(ekegg)) == 0) {
+    p <- ggplot() +
+      theme_void() +
+      ggtitle(paste0("KEGG — ", cat,
+                     " (n SYMBOL = ", length(genes_sym),
+                     ", n ENTREZ = ", length(entrez_genes), ")")) +
+      annotate("text", x = 0, y = 0,
+               label = "No significant KEGG terms (p<0.05)", size = 5) +
+      xlim(-1, 1) + ylim(-1, 1)
+    print(p)
+  } else {
+    p <- dotplot(ekegg, showCategory = show_n) +
+      ggtitle(paste0("KEGG — ", cat,
+                     " (n SYMBOL = ", length(genes_sym),
+                     ", n ENTREZ = ", length(entrez_genes), ")")) +
+      theme(plot.title = element_text(hjust = 0.5))
+    print(p)
+  }
+}
+dev.off()
+
+
+
+
+# Export gene KEGG output
+out_dir <- "output/GO"
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+safe_name <- function(x) {
+  x %>%
+    gsub("[/\\\\]+", "_", .) %>%          # slashes
+    gsub("[^A-Za-z0-9._-]+", "_", .) %>%  # weird chars -> _
+    gsub("_+", "_", .) %>%                # collapse __
+    gsub("^_|_$", "", .)                  # trim _
+}
+df <- PSC_splicing %>%
+  filter(!is.na(switchConsequence), switchConsequence != "") %>%
+  filter(!is.na(gene_name), gene_name != "") %>%
+  distinct(switchConsequence, gene_name)
+
+categories <- sort(unique(df$switchConsequence))
+
+for (cat in categories) {
+  genes_sym <- df %>%
+    filter(switchConsequence == cat) %>%
+    pull(gene_name) %>%
+    unique()
+  # map SYMBOL -> ENTREZ
+  entrez <- mapIds(
+    org.Hs.eg.db,
+    keys      = genes_sym,
+    column    = "ENTREZID",
+    keytype   = "SYMBOL",
+    multiVals = "first"
+  )
+  entrez_genes <- unique(na.omit(as.character(entrez)))
+  ekegg <- enrichKEGG(
+    gene          = entrez_genes,
+    organism      = "hsa",
+    pAdjustMethod = "BH",
+    pvalueCutoff  = 0.05
+  )
+
+  out_file <- file.path(out_dir, paste0("KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-extractConsequenceEnrichment-", safe_name(cat),"-PSC" , ".tsv"))
+  # write empty table if nothing significant (keeps pipeline consistent)
+  if (is.null(ekegg) || nrow(as.data.frame(ekegg)) == 0) {
+    empty <- data.frame(
+      ID = character(),
+      Description = character(),
+      GeneRatio = character(),
+      BgRatio = character(),
+      pvalue = numeric(),
+      p.adjust = numeric(),
+      qvalue = numeric(),
+      geneID = character(),
+      Count = integer(),
+      switchConsequence = character(),
+      nGenesSymbol = integer(),
+      nGenesEntrez = integer()
+    )
+    write.table(empty, out_file, sep = "\t", quote = FALSE, row.names = FALSE)
+    next
+  }
+  ekegg_tbl <- as.data.frame(ekegg) %>%
+    mutate(
+      switchConsequence = cat,
+      nGenesSymbol = length(genes_sym),
+      nGenesEntrez = length(entrez_genes)
+    )
+  write.table(ekegg_tbl, out_file, sep = "\t", quote = FALSE, row.names = FALSE)
+}
+###
+
+
+
+
+
+
+
 
 
 
@@ -2386,9 +2989,29 @@ extractConsequenceEnrichment(
     consequencesToAnalyze='all',
     analysisOppositeConsequence = TRUE,
     localTheme = theme_bw(base_size = 14), # Increase font size in vignette
-    returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
+    returnResult = TRUE, 
 )
 dev.off()
+
+
+# Extract consequence for each gene
+res <- extractConsequenceEnrichment(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    analysisOppositeConsequence = TRUE,
+    localTheme = theme_bw(base_size = 14), # Increase font size in vignette
+    returnResult = TRUE,
+    returnSummary = FALSE # This option add the complete summary table
+)
+write.table(
+  res,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceEnrichment.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
 
 
 
@@ -2399,6 +3022,24 @@ extractSplicingEnrichment(
     returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
 )
 dev.off()
+
+
+# Extract consequence for each gene
+res <- extractSplicingEnrichment(
+    analysSwitchList,
+    returnResult = TRUE,
+    returnSummary = FALSE
+)
+write.table(
+  res,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/PSC/extractSplicingEnrichment.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+
 
 #Overview Plots
 ## Volcano like plot
@@ -2472,16 +3113,19 @@ dev.off()
 
 
 ## Generate plot for a gene - All panels
-pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/switchPlot-NormHypo-EPHB3.pdf', onefile = FALSE, height=6, width = 9)
-switchPlot(analysSwitchList, gene= "EPHB3", condition1= "Norm", condition2= "Hypo", reverseMinus = FALSE)
+c("EFNB2", "EFNB1", "EFNA5", "EPHB2", "EPHA4", "EPHA3") # CellChat downreg Ephrin
+
+
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/switchPlot-NormHypo-EPHA3.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(analysSwitchList, gene= "EPHA3", condition1= "Norm", condition2= "Hypo", reverseMinus = FALSE)
 dev.off()
 
 
 ## Only gene and isoform expression
-pdf("output/IsoformSwitchAnalyzeR_kallisto/PSC/switchPlotGeneExp-NormHypo-EPHA2.pdf", width=3, height=5)
+pdf("output/IsoformSwitchAnalyzeR_kallisto/PSC/switchPlotGeneExp-NormHypo-EFNB2.pdf", width=3, height=5)
 switchPlotGeneExp(
   switchAnalyzeRlist = analysSwitchList,
-  gene = "EPHA2",
+  gene = "EFNB2",
   condition1 = "Norm",
   condition2 = "Hypo"
 )  +
@@ -2614,6 +3258,27 @@ dev.off()
 
 
 
+# Extract consequence for each gene
+res <- extractConsequenceEnrichment(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    analysisOppositeConsequence = TRUE,
+    localTheme = theme_bw(base_size = 14), # Increase font size in vignette
+    returnResult = TRUE,
+    returnSummary = FALSE # This option add the complete summary table
+)
+write.table(
+  res,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/ReN/extractConsequenceEnrichment.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+
+
+
 # Splicing Enrichment Analysis
 pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/ReN/extractSplicingEnrichment.pdf', onefile = FALSE, height=4, width = 8)
 extractSplicingEnrichment(
@@ -2621,6 +3286,25 @@ extractSplicingEnrichment(
     returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
 )
 dev.off()
+
+
+# Extract consequence for each gene
+res <- extractSplicingEnrichment(
+    analysSwitchList,
+    returnResult = TRUE,
+    returnSummary = FALSE
+)
+write.table(
+  res,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/ReN/extractSplicingEnrichment.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+
+
+
 
 #Overview Plots
 ## Volcano like plot
