@@ -3,23 +3,23 @@
 Two cell lines (ReNcell and hiPSCs) in two conditions (24h Normoxia vs 24h Hypoxia) in 4 Bio reps.
 
 
---> XXX Directional mRNA library preparation (poly A enrichment), NovaSeq X Plus Series (PE150)
+--> Directional mRNA library preparation (poly A enrichment), NovaSeq X Plus Series (PE150)
 
 
 Key 	Sample name 	Belong experiment
-A1	ReN_Nor_24h	Exp 3 (Pooled)
+A1	ReN_Nor_24h	Exp3 (Pooled)
 A2	ReN_Nor_24h	Exp4 (Pooled)
 A3	ReN_Nor_24h	Exp5 (Pooled)
 A4	ReN_Nor_24h	Exp6 (Pooled)
-A5	ReN_Hyp_24h	Exp 3 (Pooled)
+A5	ReN_Hyp_24h	Exp3 (Pooled)
 A6	ReN_Hyp_24h	Exp4 (Pooled)
 A7	ReN_Hyp_24h	Exp5 (Pooled)
 A8	ReN_Hyp_24h	Exp6 (Pooled)
-B1	hiPSCs_Nor_24h 	Exp 3 (Pooled)
+B1	hiPSCs_Nor_24h 	Exp3 (Pooled)
 B2	hiPSCs_Nor_24h 	Exp4 (Pooled)
 B3	hiPSCs_Nor_24h 	Exp5 (Pooled)
 B4	hiPSCs_Nor_24h 	Exp6 (Pooled)
-B5	hiPSCs_Hyp_24h 	Exp 3 (Pooled)
+B5	hiPSCs_Hyp_24h 	Exp3 (Pooled)
 B6	hiPSCs_Hyp_24h 	Exp4 (Pooled)
 B7	hiPSCs_Hyp_24h 	Exp5 (Pooled)
 B8	hiPSCs_Hyp_24h 	Exp6 (Pooled)
