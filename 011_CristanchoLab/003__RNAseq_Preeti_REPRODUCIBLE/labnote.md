@@ -852,7 +852,238 @@ write.table(
 ## Alternative splicing 
 
 
-XXXY
+Identify, Annotate and Visualize Alternative Splicing and Isoform Switches with Functional Consequences using [IsoformSwitchAnalyzeR](https://github.com/kvittingseerup/IsoformSwitchAnalyzeR).
+
+The ***IsoformSwitchAnalyzeR workflow consists of two main steps***:
+- **isoformSwitchAnalysisPart1**: Identification of significant isoform switches, ORF prediction, and extraction of nucleotide and amino acid sequences for downstream analyses (generate files: `isoformSwitchAnalyzeR_isoform_nt.fasta` and `isoformSwitchAnalyzeR_isoform_AA_complete.fasta`)
+- **isoformSwitchAnalysisPart2**: Functional annotation of isoform switches, alternative splicing analysis, and visualization of predicted functional consequences.
+
+
+***IMPORTANT***: Running `isoformSwitchAnalysisPart2()` requires results from several external sequence analysis tools, which must be run after Part 1 and provided as input files:
+- `isoformSwitchAnalyzeR_isoform_nt.fasta` is used for **[CPC2](https://cpc2.gao-lab.org/) (coding potential)**
+- `isoformSwitchAnalyzeR_isoform_AA_complete.fasta` is used for **PFAM (protein domain), [IUPred2](https://iupred2a.elte.hu/) (intrinsically disordered region) and [SignalP 6.0](https://services.healthtech.dtu.dk/services/SignalP-6.0/) (signal peptide)**
+  - Use web server for [CPC2](https://cpc2.gao-lab.org/), [IUPred2](https://iupred2a.elte.hu/) and [SignalP 6.0](https://services.healthtech.dtu.dk/services/SignalP-6.0/)
+  - Perform analysis on the cluster for PFAM (see below)
+
+PFAM analysis with **HMMER** (v1.0) (After running `isoformSwitchAnalysisPart1()`). The following command was run:
+```bash
+# Run PFAM scan
+./pfam_scan.py <isoformSwitchAnalyzeR_isoform_nt.fasta> ../pfamdb/ -out <isoformSwitchAnalyzeR_isoform_nt.pfamresult>
+
+# Reformat PFAM output for IsoformSwitchAnalyzeR using a custom script
+python3 scripts/reformat_pfam_kallisto-PSC.py
+```
+--> Full script: `011_CristanchoLab/002_RNAseq_Preeti/scripts/reformat_pfam_kallisto-PSC.py`
+
+
+See below **representative example of complete analysis for PSC:**
+
+```R
+# Load packages
+library("IsoformSwitchAnalyzeR") # v2.2.0
+library("rtracklayer") # v1.62.0
+
+
+set.seed(42) # set seed for reproducibility
+
+
+# Import gene annotation file to convert gene ID to gene symbol
+gtf <- import("../../Master/meta/gencode.v47.chr_patch_hapl_scaff.annotation.gtf")
+gtf_df <- as.data.frame(gtf)
+gene_df <- gtf_df %>%
+  filter(type == "gene") %>%
+  dplyr::select(seqnames, gene_name) %>%
+  distinct() %>%
+  rename(chromosome = seqnames) %>%
+  as_tibble()
+
+# Import isoform-level quantification data from kallisto
+salmonQuant <- importIsoformExpression(
+  parentDir = "output/kallisto/",  # Indicate kallisto output folder
+  pattern = "/PSC_"                # Indicate sample pattern
+)
+
+# Process count for isoformSwitchAnalysisPart1
+## Construct sample metadata 
+myDesign <- data.frame(
+  sampleID  = colnames(salmonQuant$abundance)[-1],
+  condition = sub("^PSC_(Hypo|Norm)_.*", "\\1", colnames(salmonQuant$abundance)[-1])
+)
+myDesign$condition <- factor(myDesign$condition, levels = c("Norm", "Hypo"))
+myDesign <- myDesign[order(myDesign$condition, myDesign$sampleID), ]
+rownames(myDesign) <- myDesign$sampleID
+
+## Create IsoformSwitchAnalyzeR input object
+aSwitchList <- importRdata(
+    isoformCountMatrix   = salmonQuant$counts,
+    isoformRepExpression = salmonQuant$abundance,
+    designMatrix         = myDesign,
+    isoformExonAnnoation = "../../Master/meta/gencode.v47.chr_patch_hapl_scaff.annotation.gtf", # gencode.v47.annotation.gtf gencode.v47.chr_patch_hapl_scaff.annotation.gtf
+    isoformNtFasta       = "../../Master/meta/salmon/Homo_sapiens.GRCh38.cdna.all.fa.gz",
+    fixStringTieAnnotationProblem = TRUE,
+    showProgress = FALSE
+)
+summary(aSwitchList)
+
+# Run IsoformSwitchAnalyzeR core analysis (part 1)
+SwitchList <- isoformSwitchAnalysisPart1(
+  switchAnalyzeRlist    = aSwitchList,
+  pathToOutput          = 'output/IsoformSwitchAnalyzeR_kallisto/PSC',
+  outputSequences       = TRUE,  # required for downstream sequence-based analyses
+  prepareForWebServers  = TRUE   # enables compatibility with external web tools
+)
+
+#--> Recommended to SAVE image session or .rds object of `SwitchList`
+
+#--> Run in WebServer the CPC2, PFAM, IUPRED2A, SIGNALP
+
+# Run IsoformSwitchAnalyzeR core analysis (part 2)
+analysSwitchList <- isoformSwitchAnalysisPart2(
+  switchAnalyzeRlist        = SwitchList, 
+  n                         = 10,    # if plotting was enabled, it would only output the top 10 switches
+  removeNoncodinORFs        = TRUE,
+  pathToCPC2resultFile      = "output/IsoformSwitchAnalyzeR_kallisto/PSC/result_cpc2-PSC.txt",
+  pathToPFAMresultFile      = "output/pfam/pfam_results_kallisto_reformat-PSC.txt",
+  pathToIUPred2AresultFile  = "output/IsoformSwitchAnalyzeR_kallisto/PSC/isoformSwitchAnalyzeR_isoform_AA_complete-PSC.result",
+  pathToSignalPresultFile   = "output/IsoformSwitchAnalyzeR_kallisto/PSC/prediction_results_SignalIP6-PSC.txt",
+  outputPlots               = TRUE
+)
+
+# Data exploration
+## Volcano plot showing number of significant isoform switch
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/Overview_Plots.pdf', onefile = FALSE, height=3, width = 4)
+ggplot(data=analysSwitchList$isoformFeatures, aes(x=dIF, y=-log10(isoform_switch_q_value))) +
+     geom_point(
+        aes( color=abs(dIF) > 0.1 & isoform_switch_q_value < 0.05 ), # default cutoff
+        size=1
+    ) +
+    geom_hline(yintercept = -log10(0.05), linetype='dashed') + # default cutoff
+    geom_vline(xintercept = c(-0.1, 0.1), linetype='dashed') + # default cutoff
+    facet_wrap( ~ condition_1) +
+    #facet_grid(condition_1 ~ condition_2) + # alternative to facet_wrap if you have overlapping conditions
+    scale_color_manual('Signficant\nIsoform Switch', values = c('black','red')) +
+    labs(x='dIF', y='-Log10 ( Isoform Switch Q Value )') +
+    theme_bw()
+dev.off()
+
+
+## Consequence of the isoform switch (ie. ORF loss, transcript is non-coding, ...)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceEnrichment.pdf', onefile = FALSE, height=6, width = 8)
+extractConsequenceEnrichment(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    analysisOppositeConsequence = TRUE,
+    localTheme = theme_bw(base_size = 14), # Increase font size in vignette
+    returnResult = TRUE, 
+)
+dev.off()
+
+## Enrichment of Alternative Splicing event (ie. Exon Skipping, Intron Retention, ...)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/extractSplicingEnrichment.pdf', onefile = FALSE, height=4, width = 8)
+extractSplicingEnrichment(
+    analysSwitchList,
+    returnResult = TRUE # if TRUE returns a data.frame with the summary statistics
+)
+dev.off()
+
+## Display isoform switch of a gene of interest (ONLY WORK ON SIGNFICANT GENE!)
+pdf(file = 'output/IsoformSwitchAnalyzeR_kallisto/PSC/switchPlot-NormHypo-EPHA2.pdf', onefile = FALSE, height=6, width = 9)
+switchPlot(analysSwitchList, gene= "EPHA3", condition1= "Norm", condition2= "Hypo", reverseMinus = FALSE)
+dev.off()
+
+
+###### --- Export --- ######
+
+# Consequence of the isoform switch (ie. ORF loss, transcript is non-coding,...)
+res <- extractConsequenceEnrichment(
+    analysSwitchList,
+    consequencesToAnalyze='all',
+    analysisOppositeConsequence = TRUE,
+    localTheme = theme_bw(base_size = 14), # Increase font size in vignette
+    returnResult = TRUE,
+    returnSummary = FALSE # This option add the complete summary table
+)
+write.table(
+  res,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceEnrichment.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Enrichment of Alternative Splicing event (ie. Exon Skipping, Intron Retention, ...)
+res <- extractSplicingEnrichment(
+    analysSwitchList,
+    returnResult = TRUE,
+    returnSummary = FALSE
+)
+write.table(
+  res,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/PSC/extractSplicingEnrichment.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Genes with significant isofom switch with a functional consequence
+significant_isoforms__PSC_geneSymbol =  analysSwitchList$isoformFeatures %>%
+  filter(abs(dIF) > 0.1 & isoform_switch_q_value < 0.05) %>%
+  filter(switchConsequencesGene == TRUE) %>%
+  dplyr::select(gene_name) %>% unique() %>% left_join(gene_df) %>% as_tibble() %>%   dplyr::select(gene_name)
+write.table(
+  significant_isoforms__PSC_geneSymbol,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/PSC/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.txt",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
+
+# R session info
+loaded_pkgs <- sessionInfo()$otherPkgs
+pkg_versions <- data.frame(
+  package = names(loaded_pkgs),
+  version = sapply(loaded_pkgs, function(x) x$Version)
+)
+write.table(
+  pkg_versions,
+  file = "output/IsoformSwitchAnalyzeR_kallisto/RsessionInfo-IsoformSwitchAnalyzeR.txt",
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE
+)
+
+###### -------------- ######
+```
+
+**OUTPUT FILES**:
+- R packages version: `output/IsoformSwitchAnalyzeR_kallisto/RsessionInfo-IsoformSwitchAnalyzeR.txt`
+- **PSC**
+  - Output of `isoformSwitchAnalysisPart1()`:
+    - AA sequences: `output/IsoformSwitchAnalyzeR_kallisto/PSC/isoformSwitchAnalyzer_isoform_AA_complete.fasta` (**and subset version**)
+    - Nucleotide sequences: `output/IsoformSwitchAnalyzeR_kallisto/PSC/isoformSwitchAnalyzer_isoform_nt.fasta`
+  - Volcano plot showing number of significant isoform switch: `output/IsoformSwitchAnalyzeR_kallisto/PSC/Overview_Plots.pdf`
+  - Consequence of the isoform switch (ie. ORF loss, transcript is non-coding,...): 
+    - plot: `output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceEnrichment.pdf`
+    - consequence for each gene: `output/IsoformSwitchAnalyzeR_kallisto/PSC/extractConsequenceEnrichment.txt`
+  - Enrichment of Alternative Splicing event (ie. Exon Skipping, Intron Retention, ...): 
+    - plot: `output/IsoformSwitchAnalyzeR_kallisto/PSC/extractSplicingEnrichment.pdf`
+    - AS event for each gene: `output/IsoformSwitchAnalyzeR_kallisto/PSC/extractSplicingEnrichment.txt`
+  - Genes with significant isofom switch with a functional consequence: `output/IsoformSwitchAnalyzeR_kallisto/PSC/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.txt`
+  - Plot of isoform switch of a gene of interest: `output/IsoformSwitchAnalyzeR_kallisto/PSC/switchPlot-NormHypo-[GENE OF INTEREST].pdf`
+- **ReN**
+  - Output of `isoformSwitchAnalysisPart1()`:
+    - AA sequences: `output/IsoformSwitchAnalyzeR_kallisto/ReN/isoformSwitchAnalyzer_isoform_AA_complete.fasta` (**and subset version**)
+    - Nucleotide sequences: `output/IsoformSwitchAnalyzeR_kallisto/ReN/isoformSwitchAnalyzer_isoform_nt.fasta`
+  - Volcano plot showing number of significant isoform switch: `output/IsoformSwitchAnalyzeR_kallisto/ReN/Overview_Plots.pdf`
+  - Consequence of the isoform switch (ie. ORF loss, transcript is non-coding,...): 
+    - plot: `output/IsoformSwitchAnalyzeR_kallisto/ReN/extractConsequenceEnrichment.pdf`
+    - consequence for each gene: `output/IsoformSwitchAnalyzeR_kallisto/ReN/extractConsequenceEnrichment.txt`
+  - Enrichment of Alternative Splicing event (ie. Exon Skipping, Intron Retention, ...): 
+    - plot: `output/IsoformSwitchAnalyzeR_kallisto/ReN/extractSplicingEnrichment.pdf`
+    - AS event for each gene: `output/IsoformSwitchAnalyzeR_kallisto/ReN/extractSplicingEnrichment.txt`
+  - Genes with significant isofom switch with a functional consequence: `output/IsoformSwitchAnalyzeR_kallisto/ReN/significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-ReN.txt`
+  - Plot of isoform switch of a gene of interest: `output/IsoformSwitchAnalyzeR_kallisto/ReN/switchPlot-NormHypo-[GENE OF INTEREST].pdf`
 
 
 ## Functional enrichment 
