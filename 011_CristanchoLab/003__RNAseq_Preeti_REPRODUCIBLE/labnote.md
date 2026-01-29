@@ -166,10 +166,123 @@ bedGraphToBigWig \
 
 # Data analysis
 
-
-
 ## Gene expression (TPM)
 
+Let's display transcript abundance in TPM for some genes of interest in **R** (v4.2.2):
+
+
+```R
+# Load packages
+library("tidyverse")
+library("rtracklayer")
+library("ggpubr")
+
+set.seed(42) # set seed for reproducibility
+
+# Import gene annotation file to convert gene ID to gene symbol
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+colnames(gene_table) <- c("Geneid", "geneSymbol")
+
+
+# Import TPM counts for each sample and merge them in a unique table
+## Collect samples IDs
+samples <- c("PSC_Norm_Rep1", "PSC_Norm_Rep2" ,"PSC_Norm_Rep3" ,"PSC_Norm_Rep4" ,"PSC_Hypo_Rep1", "PSC_Hypo_Rep2", "PSC_Hypo_Rep3", "PSC_Hypo_Rep4", "ReN_Norm_Rep1", "ReN_Norm_Rep2" ,"ReN_Norm_Rep3" ,"ReN_Norm_Rep4" ,"ReN_Hypo_Rep1", "ReN_Hypo_Rep2", "ReN_Hypo_Rep3", "ReN_Hypo_Rep4")
+
+## Loop over samples and import TPM
+sample_data <- list()
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/tpm_featurecounts_multi/", sample, "_tpm.txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+    dplyr::select(Geneid, starts_with("output.STAR.")) %>%
+    dplyr::rename(!!sample := starts_with("output.STAR."))
+}
+
+## Merge all samples into a single table and add gene symbol
+tpm_all_sample <- purrr::reduce(sample_data, full_join, by = "Geneid")  %>%
+  left_join(gene_table)
+###### --- Export --- ######
+write.table(tpm_all_sample,  file = "output/tpm_featurecounts_multi/tpm_all_sample.tsv",  sep = "\t",  row.names = FALSE,  quote = FALSE)
+###### -------------- ######
+
+
+# Re-shape TPM counts table
+## Shape to long format and extract sample metada from the column names
+tpm_all_sample_tidy <- tpm_all_sample %>%
+  pivot_longer(
+    cols = -c(Geneid, geneSymbol),
+    names_to = "variable",
+    values_to = "tpm"
+  ) %>%
+  separate(
+    variable,
+    into = c("tissue", "condition", "replicate"),
+    sep = "_"
+  ) %>%
+  dplyr::rename(
+    gene = Geneid
+  )
+
+## Plot example: EPHB2 (log2(TPM+1)), Norm vs Hypo, for each tissue
+my_comparisons <- list( c("Norm", "Hypo") )
+pdf("output/tpm_featurecounts_multi/tpm-EPHB2.pdf", width=4, height=3)
+tpm_all_sample_tidy %>%
+  filter(geneSymbol %in% c("EPHB2") ) %>% 
+  unique() %>%
+  mutate(TPM = log2(tpm + 1) ) %>%
+    ggboxplot(., x = "condition", y = "TPM",
+                 fill = "condition",
+                 palette = c("blue","red")) +
+      # Add the statistical comparisons
+      stat_compare_means(comparisons = my_comparisons, 
+                        method = "t.test", 
+                        aes(group = condition)) +
+      theme_bw() +
+      facet_wrap(~tissue) +
+      ylab("log2(TPM + 1)") +
+      ggtitle("EPHB2")
+dev.off()
+
+
+## Replicate-level TPM expression of hypoxia marker genes
+pdf("output/tpm_featurecounts_multi/tpm-hypoxia_genes-dots_by_rep.pdf", width=5, height=15)
+tpm_all_sample_tidy %>%
+  filter(geneSymbol %in% c( "VEGFA",  "ADM",  "EGLN3",  "BNIP3",  "BNIP3L",  "CA9",  "CA12",  "LDHA",  "SLC2A1",  "ENO1",  "PFKP",  "HK2",  "ALDOA",  "PDK1")) %>%
+  distinct(geneSymbol, tissue, condition, replicate, tpm, .keep_all = TRUE) %>%
+  mutate(
+    condition = factor(condition, levels = c("Norm", "Hypo")),
+    replicate = factor(replicate),
+    TPM = log2(tpm + 1)
+  ) %>%
+  ggplot(aes(x = condition, y = TPM, color = replicate)) +
+  geom_point(
+    position = position_jitter(width = 0.15, height = 0),
+    size = 2.2,
+    alpha = 0.9
+  ) +
+  theme_bw() +
+  facet_grid(geneSymbol ~ tissue, scales = "free_y") +
+  ylab("log2(TPM + 1)") +
+  xlab("") +
+  guides(color = guide_legend(title = "Bio Rep"))
+
+dev.off()
+```
+
+**OUTPUT FILES**:
+- Gene-level TPM expression matrix for all samples: `output/tpm_featurecounts_multi/tpm_all_sample.tsv`
+- Gene-specific TPM boxplots: `output/tpm_featurecounts_multi/tpm-[GENE OF INTEREST]`
+- Replicate-level TPM expression of hypoxia marker genes: `output/tpm_featurecounts_multi/tpm-hypoxia_genes-dots_by_rep.pdf`
+
+
+**CONCLUSION**:
+
+--> Due to ReN cells showing far less DEGs than PSC; we checked whether some replicates were more or less sensitive to the Hypoxia condition by checking hypoxia marker genes and label replicates: No replicate effect detected; all Hypoxia marker genes respond similarly between replicates.
+
+Because ReN cells exhibited fewer differentially expressed genes than hiPSCs, replicate-level TPM expression of established hypoxia marker genes was examined using dot plots to assess potential variability in hypoxia sensitivity. No replicate-specific effects were observed: hypoxia markers showed consistent TPM expression patterns across replicates, indicating that the reduced number of DEGs in ReN cells is unlikely to be driven by replicate-level variability.
 
 
 
