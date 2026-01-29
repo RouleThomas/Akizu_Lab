@@ -170,12 +170,11 @@ bedGraphToBigWig \
 
 Let's display transcript abundance in TPM for some genes of interest in **R** (v4.2.2):
 
-
 ```R
 # Load packages
-library("tidyverse")
-library("rtracklayer")
-library("ggpubr")
+library("tidyverse") # v2.0.0
+library("rtracklayer") # v1.58.0
+library("ggpubr") # v0.6.0
 
 set.seed(42) # set seed for reproducibility
 
@@ -280,23 +279,800 @@ dev.off()
 
 **CONCLUSION**:
 
---> Due to ReN cells showing far less DEGs than PSC; we checked whether some replicates were more or less sensitive to the Hypoxia condition by checking hypoxia marker genes and label replicates: No replicate effect detected; all Hypoxia marker genes respond similarly between replicates.
-
-Because ReN cells exhibited fewer differentially expressed genes than hiPSCs, replicate-level TPM expression of established hypoxia marker genes was examined using dot plots to assess potential variability in hypoxia sensitivity. No replicate-specific effects were observed: hypoxia markers showed consistent TPM expression patterns across replicates, indicating that the reduced number of DEGs in ReN cells is unlikely to be driven by replicate-level variability.
-
-
+- Due to ReN cells showing far less DEGs than PSC; we checked whether some replicates were more or less sensitive to the Hypoxia condition by checking hypoxia marker genes and label replicates: **No replicate effect detected; all Hypoxia marker genes respond similarly between replicates**.
+  - **ReN is less responsive that PSC to Hypoxia**
+  
 
 ## Differential Gene Expression 
+
+Differentially expressed genes (DEGs) between normoxia and hypoxia in PSC and ReN cells in **R** (v4.2.2).
+
+### PSC
+
+```R
+# Load packages
+library("tidyverse") # v2.0.0
+library("rtracklayer") # v1.58.0
+library("DESeq2") # v1.38.3
+library("EnhancedVolcano") # v1.16.0
+library("apeglm") # v1.20.0
+
+set.seed(42) # set seed for reproducibility
+
+# Import gene annotation file to convert gene ID to gene symbol
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+colnames(gene_table) <- c("Geneid", "geneSymbol")
+
+# Import featureCounts counts for each sample and merge them in a unique table
+## Collect samples IDs
+samples <- c("PSC_Norm_Rep1", "PSC_Norm_Rep2" ,"PSC_Norm_Rep3" ,"PSC_Norm_Rep4" ,"PSC_Hypo_Rep1", "PSC_Hypo_Rep2", "PSC_Hypo_Rep3", "PSC_Hypo_Rep4")
+
+## Loop over samples and import counts
+sample_data <- list()
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts_multi/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    dplyr::rename(!!sample := starts_with("output/STAR/"))
+}
+
+## Merge all samples into a single table 
+counts_all <- purrr::reduce(sample_data, full_join, by = "Geneid")
+
+# Prepare table for DESEQ2
+## Convert dataframe to matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+counts_all_matrix = make_matrix(dplyr::select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Construct sample metadata information
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("celltype", "condition", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## Convert sample metadata to matrix format
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+# Run DESEQ2
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ condition)
+
+## Filter out lowly expressed genes (minimum total count ≥ 5)
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Set reference (control) condition
+dds$condition <- relevel(dds$condition, ref = "Norm")
+
+## Run DESeq2 model fitting
+dds <- DESeq(dds)
+
+## Extract results with shrunken log2 fold changes
+res <- lfcShrink(dds, coef = "condition_Hypo_vs_Norm", type = "apeglm")
+
+## Add gene symbols to DESeq2 results
+res_tibble = as_tibble(rownames_to_column(as.data.frame(res), var = "Geneid")) %>%
+  left_join(gene_table)
+
+# Identify DEGs
+############################################################
+####### adjusted p-value < 0.05 and |log2FC| > 0.58 ########
+############################################################
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+### Volcano plot of differential expression results
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+### Volcano plot of differential expression results with hypoxia marker genes labelled
+hypoxia_genes <- c(
+  "VEGFA",
+  "ADM",
+  "EGLN3",
+  "BNIP3",
+  "BNIP3L",
+  "CA9",
+  "CA12",
+  "LDHA",
+  "SLC2A1",
+  "ENO1",
+  "PFKP",
+  "HK2",
+  "ALDOA",
+  "PDK1"
+)
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-hypoxia_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = hypoxia_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+### Volcano plot of differential expression results with ephrin genes labelled
+Ephrin_CellChat_genes <- c(
+  "EFNB2",
+  "EFNB1",
+  "EFNA5",
+  "EPHB2",
+  "EPHA4",
+  "EPHA3"
+)
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-Ephrin_CellChat_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = Ephrin_CellChat_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+############################################################
+####### adjusted p-value < 1e-5 and |log2FC| > 1 ########
+############################################################
+
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.00001, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 1 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -1 & res_df$padj == TRUE, na.rm = TRUE)
+
+### Volcano plot of differential expression results
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -1 & res_tibble$padj < 0.00001, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 1 & res_tibble$padj < 0.00001, 'Orange',
+      'grey'))
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.00001; log2FC > 1)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.00001; log2FC < -1)'
+
+pdf("output/deseq2/plotVolcano_resXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 0.00001,         #
+  FCcutoff = 1,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+###### --- Export --- ######
+# DESEQ2 result table
+write.table(res_tibble, file = "output/deseq2/resXinclude_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+# Signif up and down -regulated genes
+## adjusted p-value < 0.05 and |log2FC| > 0.58
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+## adjusted p-value < 1e-5 and |log2FC| > 1
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 1 & res_tibble$padj < 0.00001, ]
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -1 & res_tibble$padj < 0.00001, ]
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+# R session info
+loaded_pkgs <- sessionInfo()$otherPkgs
+pkg_versions <- data.frame(
+  package = names(loaded_pkgs),
+  version = sapply(loaded_pkgs, function(x) x$Version)
+)
+write.table(
+  pkg_versions,
+  file = "output/deseq2/RsessionInfo-DESEQ2_DEG.txt",
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE
+)
+
+###### -------------- ######
+```
+
+**OUTPUT FILES:**
+- Complete DESEQ2 output table: `output/deseq2/resXinclude_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- Volcano plot of DEGs *adjusted p-value < 0.05 and |log2FC| > 0.58* : `output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.pdf`
+- Volcano plot of DEGs with hypoxia marker genes labelled: `output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-hypoxia_genes.pdf`
+- Volcano plot of DEGs with ephrin genes labelled: `output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-Ephrin_CellChat_genes.pdf`
+- Volcano plot of DEGs *adjusted p-value < 1e-5 and |log2FC| > 1*: `output/deseq2/plotVolcano_resXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.pdf`
+- List of up regulated genes *adjusted p-value < 0.05 and |log2FC| > 0.58*: `output/deseq2/upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- List of up regulated genes *adjusted p-value < 1e-5 and |log2FC| > 1*: `output/deseq2/upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- List of down regulated genes *adjusted p-value < 0.05 and |log2FC| > 0.58*: `output/deseq2/downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- List of down regulated genes *adjusted  p-value < 1e-5 and |log2FC| > 1*: `output/deseq2/downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- R packages version: `output/deseq2/RsessionInfo-DESEQ2_DEG.txt`
+
+
+
+
+
+### ReN
+
+```R
+# Load packages
+library("tidyverse") # v2.0.0
+library("rtracklayer") # v1.58.0
+library("DESeq2") # v1.38.3
+library("EnhancedVolcano") # v1.16.0
+library("apeglm") # v1.20.0
+
+set.seed(42) # set seed for reproducibility
+
+# Import gene annotation file to convert gene ID to gene symbol
+gtf <- import("../../Master/meta/gencode.v47.annotation.gtf")
+gene_table <- mcols(gtf) %>%
+  as.data.frame() %>%
+  dplyr::select(gene_id, gene_name) %>%
+  distinct() %>%
+  as_tibble()
+colnames(gene_table) <- c("Geneid", "geneSymbol")
+
+# Import featureCounts counts for each sample and merge them in a unique table
+## Collect samples IDs
+samples <- c("ReN_Norm_Rep1", "ReN_Norm_Rep2" ,"ReN_Norm_Rep3" ,"ReN_Norm_Rep4" ,"ReN_Hypo_Rep1", "ReN_Hypo_Rep2", "ReN_Hypo_Rep3", "ReN_Hypo_Rep4")
+
+## Loop over samples and import counts
+sample_data <- list()
+for (sample in samples) {
+  sample_data[[sample]] <- read_delim(paste0("output/featurecounts_multi/", sample, ".txt"), delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>%
+    dplyr::select(Geneid, starts_with("output/STAR/")) %>%
+    dplyr::rename(!!sample := starts_with("output/STAR/"))
+}
+
+## Merge all samples into a single table 
+counts_all <- purrr::reduce(sample_data, full_join, by = "Geneid")
+
+# Prepare table for DESEQ2
+## Convert dataframe to matrix
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+counts_all_matrix = make_matrix(dplyr::select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+
+## Construct sample metadata information
+coldata_raw <- data.frame(samples) %>%
+  separate(samples, into = c("celltype", "condition", "replicate"), sep = "_") %>%
+  bind_cols(data.frame(samples))
+
+## Convert sample metadata to matrix format
+coldata = make_matrix(dplyr::select(coldata_raw, -samples), pull(coldata_raw, samples))
+
+# Run DESEQ2
+## Construct the DESeqDataSet
+dds <- DESeqDataSetFromMatrix(countData = round(counts_all_matrix),
+                              colData = coldata,
+                              design= ~ condition)
+
+## Filter out lowly expressed genes (minimum total count ≥ 5)
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+## Set reference (control) condition
+dds$condition <- relevel(dds$condition, ref = "Norm")
+
+## Run DESeq2 model fitting
+dds <- DESeq(dds)
+
+## Extract results with shrunken log2 fold changes
+res <- lfcShrink(dds, coef = "condition_Hypo_vs_Norm", type = "apeglm")
+
+## Add gene symbols to DESeq2 results
+res_tibble = as_tibble(rownames_to_column(as.data.frame(res), var = "Geneid")) %>%
+  left_join(gene_table)
+
+# Identify DEGs
+############################################################
+####### adjusted p-value < 0.05 and |log2FC| > 0.58 ########
+############################################################
+res_df <- res_tibble %>% dplyr::select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE))
+n_upregulated <- sum(res_df$log2FoldChange > 0.58 & res_df$padj == TRUE, na.rm = TRUE)
+n_downregulated <- sum(res_df$log2FoldChange < -0.58 & res_df$padj == TRUE, na.rm = TRUE)
+
+### Volcano plot of differential expression results
+keyvals <- ifelse(
+  res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, 'Sky Blue',
+    ifelse(res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, 'Orange',
+      'grey'))
+
+keyvals[is.na(keyvals)] <- 'black'
+names(keyvals)[keyvals == 'Orange'] <- 'Up-regulated (q-val < 0.05; log2FC > 0.58)'
+names(keyvals)[keyvals == 'grey'] <- 'Not significant'
+names(keyvals)[keyvals == 'Sky Blue'] <- 'Down-regulated (q-val < 0.05; log2FC < -0.58)'
+
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.pdf", width=7, height=8)    
+EnhancedVolcano(res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,         #
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  legendPosition = 'none')  + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.text=element_text(size=22),
+        axis.title=element_text(size=24) ) +
+  annotate("text", x = 3, y = 140, 
+           label = paste(n_upregulated), hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140, 
+           label = paste(n_downregulated), hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+### Volcano plot of differential expression results with hypoxia marker genes labelled
+hypoxia_genes <- c(
+  "VEGFA",
+  "ADM",
+  "EGLN3",
+  "BNIP3",
+  "BNIP3L",
+  "CA9",
+  "CA12",
+  "LDHA",
+  "SLC2A1",
+  "ENO1",
+  "PFKP",
+  "HK2",
+  "ALDOA",
+  "PDK1"
+)
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-hypoxia_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = hypoxia_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+### Volcano plot of differential expression results with ephrin genes labelled
+Ephrin_CellChat_genes <- c(
+  "EFNB2",
+  "EFNB1",
+  "EFNA5",
+  "EPHB2",
+  "EPHA4",
+  "EPHA3"
+)
+pdf("output/deseq2/plotVolcano_resXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-Ephrin_CellChat_genes.pdf",
+    width = 7, height = 8)
+EnhancedVolcano(
+  res,
+  lab = res_tibble$geneSymbol,
+  x = 'log2FoldChange',
+  y = 'padj',
+  title = 'Hypo vs Norm, PSC',
+  pCutoff = 5e-2,
+  FCcutoff = 0.58,
+  pointSize = 2.0,
+  colCustom = keyvals,
+  colAlpha = 1,
+  selectLab = Ephrin_CellChat_genes,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  colConnectors = "grey40",
+
+  legendPosition = 'none'
+) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 22),
+    axis.title = element_text(size = 24)
+  ) +
+  annotate("text", x = 3, y = 140,
+           label = paste(n_upregulated),
+           hjust = 1, size = 6, color = "darkred") +
+  annotate("text", x = -3, y = 140,
+           label = paste(n_downregulated),
+           hjust = 0, size = 6, color = "darkred")
+dev.off()
+
+
+
+
+###### --- Export --- ######
+# DESEQ2 result table
+write.table(res_tibble, file = "output/deseq2/resXinclude_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+
+# Signif up and down -regulated genes
+## adjusted p-value < 0.05 and |log2FC| > 0.58
+upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
+downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+
+# R session info
+loaded_pkgs <- sessionInfo()$otherPkgs
+pkg_versions <- data.frame(
+  package = names(loaded_pkgs),
+  version = sapply(loaded_pkgs, function(x) x$Version)
+)
+write.table(
+  pkg_versions,
+  file = "output/deseq2/RsessionInfo-DESEQ2_DEG.txt",
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE
+)
+
+###### -------------- ######
+```
+
+
+**OUTPUT FILES:**
+- Complete DESEQ2 output table: `output/deseq2/resXinclude_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- Volcano plot of DEGs *adjusted p-value < 0.05 and |log2FC| > 0.58* : `output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.pdf`
+- Volcano plot of DEGs with hypoxia marker genes labelled: `output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-hypoxia_genes.pdf`
+- Volcano plot of DEGs with ephrin genes labelled: `output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-Ephrin_CellChat_genes.pdf`
+- List of up regulated genes *adjusted p-value < 0.05 and |log2FC| > 0.58*: `output/deseq2/upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- List of down regulated genes *adjusted p-value < 0.05 and |log2FC| > 0.58*: `output/deseq2/downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- R packages version: `output/deseq2/RsessionInfo-DESEQ2_DEG.txt`
+
+
 
 
 
 ## Alternative splicing 
 
 
+XXXY
+
 
 ## Functional enrichment 
 
+Functional enrichment analyses (GO, KEGG) on differentially expressed genes and genes exhibiting significant isoform switching using the **clusterProfiler** package in **R** (v4.2.2).
+
+List of genes to be analyzed:
+- Up and Down -regulated genes in PSC *adjusted p-value < 0.05 and |log2FC| > 0.58*
+- Up and Down -regulated genes in PSC *adjusted p-value < 1e-5 and |log2FC| > 1*
+- Up and Down -regulated genes in ReN *adjusted p-value < 0.05 and |log2FC| > 0.58*
+- Genes with significant isoform switching in PSC 
+- Genes with significant isoform switching in PSC by consequence (ie. for genes leading to transcript becoming non-coding, IDR loss, loss of functional domain...)
+
+--> One representative example with Up-regulated genes in PSC *adjusted p-value < 1e-5 and |log2FC| > 1* provided
+
+```R
+# Load packages
+library("clusterProfiler") # v4.6.2
+library("pathview") # v1.38.0
+library("DOSE") # v3.24.2
+library("org.Hs.eg.db") # v3.16.0
+library("enrichplot") # v1.18.4
+library("rtracklayer") # v1.58.0
+library("tidyverse") # v2.0.0
+
+set.seed(42) # set seed for reproducibility
+
+# Import gene annotation file to convert gene ID to gene symbol
+gtf_file <- "../../Master/meta/gencode.v47.annotation.gtf"
+gtf_data <- import(gtf_file)
+gene_data <- gtf_data[elementMetadata(gtf_data)$type == "gene"]
+gene_id <- elementMetadata(gene_data)$gene_id
+gene_name <- elementMetadata(gene_data)$gene_name
+gene_id_name <- data.frame(gene_id, gene_name) %>%
+  unique() %>%
+  as_tibble()
+
+
+#########################################################################
+###### Example with PSC --> adjusted p-value < 1e-5 and log2FC > 1 ######
+#########################################################################
+
+# Import list of up-regulated genes in PSC
+PSC_up = read_csv("output/deseq2/upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.txt", col_names = "gene_name")
+
+# Run GO BP enrichment
+ego <- enrichGO(gene = as.character(PSC_up$gene_name), 
+                keyType = "SYMBOL",     
+                OrgDb = org.Hs.eg.db, 
+                ont = "BP",          
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05, 
+                readable = TRUE)
+
+## Plot top 20 term                
+pdf("output/GO/dotplot_BP-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ego, showCategory=20)
+dev.off()
+## Plot top 10 term                
+pdf("output/GO/dotplot_BP-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ego, showCategory=10)
+dev.off()
+
+###### --- Export --- ######
+ego_tbl_clean <- as.data.frame(ego) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    GO_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    GO_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/BP-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###### -------------- ######
 
 
 
+
+
+# Run KEGG pathway enrichment
+entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(PSC_up$gene_name), 'ENTREZID', 'SYMBOL') )
+ekegg <- enrichKEGG(gene = entrez_genes, 
+                pAdjustMethod = "BH",   
+                pvalueCutoff = 0.05)           
+## Plot top 20 term                
+pdf("output/GO/dotplot_KEGG-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf", width=7, height=7)
+dotplot(ekegg, showCategory=20)
+dev.off()
+## Plot top 10 term                
+pdf("output/GO/dotplot_KEGG-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
+dotplot(ekegg, showCategory=10)
+dev.off()
+
+###### --- Export --- ######
+eekegg_tbl_clean <- as.data.frame(ekegg) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    KEGG_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    KEGG_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/KEGG-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###### -------------- ######
+```
+
+
+**OUTPUT FILES**:
+- **Differentially Expressed Genes (DEGs)** - **PSC**
+  - **GO Biological Processes**
+    - adjusted p-value < 0.05 and |log2FC| > 0.58
+      - Top 20 GO terms for up-regulated genes: `output/GO/dotplot_BP-upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 10 GO terms for up-regulated genes:  `output/GO/dotplot_BP-upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Top 20 GO terms for down-regulated genes: `output/GO/dotplot_BP-downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 10 GO terms for down-regulated genes: `output/GO/dotplot_BP-downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Output table with GO term and associated genes for up-regulated genes: `output/GO/BP-upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.tsv`
+      - Output table with GO term and associated genes for down-regulated genes: `output/GO/BP-downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.tsv`
+    - adjusted p-value < 1e-5 and |log2FC| > 1
+      - Top 20 GO terms for up-regulated genes: `output/GO/dotplot_BP-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 10 GO terms for up-regulated genes: `output/GO/dotplot_BP-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Top 20 GO terms for down-regulated genes: `output/GO/dotplot_BP-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 10 GO terms for down-regulated genes: `output/GO/dotplot_BP-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Output table with GO term and associated genes for up-regulated genes: `output/GO/BP-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv`
+      - Output table with GO term and associated genes for down-regulated genes: `output/GO/BP-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv`
+  - **KEGG Pathways**
+    - adjusted p-value < 0.05 and |log2FC| > 0.58
+      - Top 20 KEGG terms for up-regulated genes: `output/GO/dotplot_KEGG-upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 20 KEGG terms for up-regulated genes: `output/GO/dotplot_KEGG-upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Top 20 KEGG terms for down-regulated genes: `output/GO/dotplot_KEGG-downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 20 KEGG terms for down-regulated genes: `output/GO/dotplot_KEGG-downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Output table with KEGG term and associated genes for up-regulated genes: `output/GO/KEGG-upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.tsv`
+      - Output table with KEGG term and associated genes for down-regulated genes: `output/GO/KEGG-downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.tsv`
+    - adjusted p-value < 1e-5 and |log2FC| > 1
+      - Top 20 KEGG terms for up-regulated genes: `output/GO/dotplot_KEGG-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 20 KEGG terms for up-regulated genes: `output/GO/dotplot_KEGG-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Top 20 KEGG terms for down-regulated genes: `output/GO/dotplot_KEGG-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 20 KEGG terms for down-regulated genes: `output/GO/dotplot_KEGG-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Output table with KEGG term and associated genes for up-regulated genes: `output/GO/KEGG-upregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv`
+      - Output table with KEGG term and associated genes for down-regulated genes: `output/GO/KEGG-downregulatedresXinclude_q00001fc1_PSC_Hypo_vs_Norm-featurecounts_multi.tsv`
+
+- **Differentially Expressed Genes (DEGs)** - **ReN**
+  - **GO Biological Processes**
+    - adjusted p-value < 0.05 and |log2FC| > 0.58
+      - Top 20 GO terms for up-regulated genes: `output/GO/dotplot_BP-upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 10 GO terms for up-regulated genes:  `output/GO/dotplot_BP-upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Top 20 GO terms for down-regulated genes: `output/GO/dotplot_BP-downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 10 GO terms for down-regulated genes: `output/GO/dotplot_BP-downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Output table with GO term and associated genes for up-regulated genes: `output/GO/BP-upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.tsv`
+      - Output table with GO term and associated genes for down-regulated genes: `output/GO/BP-downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.tsv`
+  - **KEGG Pathways**
+    - adjusted p-value < 0.05 and |log2FC| > 0.58
+      - Top 20 KEGG terms for up-regulated genes: `output/GO/dotplot_KEGG-upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 10 KEGG terms for up-regulated genes:  `output/GO/dotplot_KEGG-upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Top 20 KEGG terms for down-regulated genes: `output/GO/dotplot_KEGG-downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top20.pdf`
+      - Top 10 KEGG terms for down-regulated genes: `output/GO/dotplot_KEGG-downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf`
+      - Output table with KEGG term and associated genes for up-regulated genes: `output/GO/KEGG-upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.tsv`
+      - Output table with KEGG term and associated genes for down-regulated genes: `output/GO/KEGG-downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.tsv`
+
+- **Genes with significant isoform switch** - **PSC**
+  - ***All genes*** 
+    - **GO Biological Processes**
+      - Top 20 GO terms: `output/GO/dotplot_BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC-top20.pdf`
+      - Top 10 GO terms: `output/GO/dotplot_BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC-top10.pdf`
+      - Output table with GO term and associated genes: `output/GO/BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.tsv`
+    - **KEGG**
+      - Top 20 KEGG terms: `output/GO/dotplot_KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC-top20.pdf`
+      - Top 10 KEGG terms: `output/GO/dotplot_KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC-top10.pdf`
+      - Output table with KEGG term and associated genes: `output/GO/KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-PSC.tsv`
+  - ***Functional enrichment per isoform switch consequence:***
+    - **GO Biological Processes**
+      - Top 10 GO terms; **one page for each category**: `output/GO/dotplot_BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-extractConsequenceEnrichment-PSC-top10.pdf`
+      - Output table with GO term and associated genes: `BP-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-extractConsequenceEnrichment-[CONSEQUENCE ID]-PSC.tsv`
+    - **KEGG**
+      - Top 10 KEGG terms; **one page for each category**: `output/GO/KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-extractConsequenceEnrichment-PSC-top10.pdf`
+      - Output table with KEGG term and associated genes: `KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-extractConsequenceEnrichment-[CONSEQUENCE ID]-PSC.tsv`
+
+
+
+- **Genes with significant isoform switch** - **ReN**
+  - ***All genes*** 
+    - **GO Biological Processes** --> Not signif.
+    - **KEGG**
+      - Top 10 KEGG terms: `output/GO/dotplot_KEGG-significant_isoforms_dIF01qval05switchConsequencesGeneTRUE_geneSymbol-ReN-top10.pdf`
+  - ***Functional enrichment per isoform switch consequence:*** --> NA: no significant consequence enrichment in ReN
 

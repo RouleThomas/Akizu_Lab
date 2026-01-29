@@ -1195,7 +1195,7 @@ write.table(downregulated$geneSymbol, file = "output/deseq2/downregulatedresXinc
 ```
 
 
---> The default padj 0.05 and FC 0.58 treshold lead to too many DEGs; and some show weird profile with very high FC (weird) --> Lets prefer use padj XXX
+--> The default padj 0.05 and FC 0.58 treshold lead to too many DEGs; and some show weird profile with very high FC (weird) --> Lets prefer use padj 0.00001 (1e-5) and FC > 1
 
 
 
@@ -2394,6 +2394,40 @@ dotplot(ego, showCategory=10)
 dev.off()
 
 
+
+# Export gene GO output
+ego_tbl_clean <- as.data.frame(ego) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    GO_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    GO_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/BP-upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
+
+
+
 entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(ReN_up$gene_name), 'ENTREZID', 'SYMBOL') )
 
 ekegg <- enrichKEGG(gene = entrez_genes, 
@@ -2408,6 +2442,37 @@ pdf("output/GO/dotplot_KEGG-upregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_
 dotplot(ekegg, showCategory=10)
 dev.off()
 
+
+# Export gene KEGG output
+eekegg_tbl_clean <- as.data.frame(ekegg) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    KEGG_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    KEGG_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/KEGG-upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
 
 
 
@@ -2432,6 +2497,42 @@ dotplot(ego, showCategory=10)
 dev.off()
 
 
+
+
+# Export gene GO output
+ego_tbl_clean <- as.data.frame(ego) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    GO_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    GO_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/BP-downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
+
+
+
+
 entrez_genes <- as.character( mapIds(org.Hs.eg.db, as.character(ReN_down$gene_name), 'ENTREZID', 'SYMBOL') )
 
 ekegg <- enrichKEGG(gene = entrez_genes, 
@@ -2445,6 +2546,42 @@ dev.off()
 pdf("output/GO/dotplot_KEGG-downregulated_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi-top10.pdf", width=5, height=4)
 dotplot(ekegg, showCategory=10)
 dev.off()
+
+
+
+
+# Export gene KEGG output
+eekegg_tbl_clean <- as.data.frame(ekegg) %>%
+  separate(GeneRatio, into = c("GeneHits", "GeneSetSize"), sep = "/", convert = TRUE) %>%
+  separate(BgRatio,   into = c("BgHits", "BgSetSize"),     sep = "/", convert = TRUE) %>%
+  mutate(
+    GeneRatioNumeric = GeneHits / GeneSetSize,
+    BgRatioNumeric   = BgHits / BgSetSize
+  ) %>%
+  rename(
+    KEGG_ID = ID,
+    Term  = Description,
+    PValue = pvalue,
+    FDR = p.adjust,
+    QValue = qvalue,
+    Genes = geneID
+  ) %>%
+  select(
+    KEGG_ID, Term, Count,
+    GeneHits, GeneSetSize, GeneRatioNumeric,
+    BgHits, BgSetSize, BgRatioNumeric,
+    PValue, FDR, QValue, Genes
+  )
+write.table(
+  ego_tbl_clean,
+  file = "output/GO/KEGG-downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.tsv",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+###
+
+
 
 
 

@@ -41,6 +41,7 @@ To allow cp/paste between Vitrual machine and computer:
 
 ## Directories
 - BIOINFORMATICS SPACE: Working directory in the cluster is `/scr1/users/roulet` 30TB limit (temporary space, belong to CHOP)-
+- LAB SPACE; where to store data long term: `/mnt/isilon/[LAB NAME]`
 - SPACE TO SEE FILE (folder-like env): `/home/roulet/`
 - LOCAL COMPUTER FILE:\
 **Box**:`/home/roulet/tsclient/roule/Box`\
