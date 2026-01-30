@@ -87,7 +87,8 @@ featureCounts -p -C -O -M --fraction -s 2
 
 --> Full script: `011_CristanchoLab/002_RNAseq_Preeti/scripts/featurecounts_multi.sh`
 
-
+**OUTPUT FILES**:
+- Output of featureCounts: `output/featurecounts_multi/[sample name].txt`
 
 ## Isoform-level quantification
 
@@ -110,7 +111,8 @@ kallisto quant \
 
 --> Full script: `011_CristanchoLab/002_RNAseq_Preeti/scripts/kallisto_count_gtf.sh`
 
-
+**OUTPUT FILES**:
+- Output of kallisto: `output/kallisto/[sample name]_quant/abundance.tsv`
 
 
 ## Transcript abundance estimation (TPM/RPKM)
@@ -122,12 +124,14 @@ The following command was run for each sample:
 Rscript scripts/RPKM_TPM_featurecounts.R <featureCounts_output>.txt <output_prefix>
 ```
 
---> Full script: `011_CristanchoLab/002_RNAseq_Preeti/scripts/scripts/featurecounts_TPM.sh`
+--> Full script: `011_CristanchoLab/002_RNAseq_Preeti/scripts/featurecounts_TPM.sh`
 
+**OUTPUT FILES**:
+- TPM count per sample: `output/tpm_featurecounts_multi/[sample name].txt`
 
 
 ## Coverage track & QC
-
+### Generation of bigwig coverage file
 Genome-wide coverage tracks (.bigWig) were generated from coordinate-sorted BAM files using **bamCoverage** (v3.5.1). Coverage was normalized using BPM (bins per million mapped reads) with single–base resolution.
 
 The following command was run for each sample:
@@ -159,9 +163,44 @@ bedGraphToBigWig \
 
 --> Full script: `011_CristanchoLab/002_RNAseq_Preeti/scripts/bigwigmerge_STAR_TPM_bw.sh`
 
+**OUTPUT FILES**:
+- Bigwig coverage files: `output/bigwig/[ReN or PSC]_[Norm or Hypo]_[median or replicate].bw`
 
+### QC - PCA
 
+BPM-normalized genome-wide coverage tracks (.bigWig) were used for Principal component analysis (PCA) using **multiBigwigSummary** (v3.5.1) which compile a matrix of per-sample coverage values, then vizualized with **plotPCA** (v3.5.1). 
 
+The following command was run for PSC, and ReN samples:
+```bash
+# Compute matrix
+multiBigwigSummary bins \
+    -b output/bigwig/PSC_Norm_Rep1.bw \
+       output/bigwig/PSC_Norm_Rep2.bw \
+       output/bigwig/PSC_Norm_Rep3.bw \
+       output/bigwig/PSC_Norm_Rep4.bw \
+       output/bigwig/PSC_Hypo_Rep1.bw \
+       output/bigwig/PSC_Hypo_Rep2.bw \
+       output/bigwig/PSC_Hypo_Rep3.bw \
+       output/bigwig/PSC_Hypo_Rep4.bw \
+    -o output/bigwig/multiBigwigSummary_TPM_PSC.npz
+
+# Generate PCA plot
+plotPCA \
+    -in output/bigwig/multiBigwigSummary_TPM_PSC.npz \
+    --transpose \
+    --ntop 0 \
+    --labels PSC_Norm_Rep1 PSC_Norm_Rep2 PSC_Norm_Rep3 PSC_Norm_Rep4 \
+             PSC_Hypo_Rep1 PSC_Hypo_Rep2 PSC_Hypo_Rep3 PSC_Hypo_Rep4 \
+    --colors blue blue blue blue red red red red \
+    --markers 's' 'o' '>' 'x' 's' 'o' '>' 'x' \
+    -o output/bigwig/multiBigwigSummary_TPM_PSC_plotPCA.pdf \
+    --plotWidth 6 \
+    --plotHeight 7
+```
+
+**OUTPUT FILES**:
+- PCA plot of PSC samples: `output/bigwig/multiBigwigSummary_TPM_PSC_plotPCA.pdf`
+- PCA plot of ReN samples: `output/bigwig/multiBigwigSummary_ReN_plotPCA.pdf`
 
 
 # Data analysis
@@ -815,8 +854,8 @@ write.table(res_tibble, file = "output/deseq2/resXinclude_ReN_Hypo_vs_Norm-featu
 ## adjusted p-value < 0.05 and |log2FC| > 0.58
 upregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange > 0.58 & res_tibble$padj < 5e-2, ]
 downregulated <- res_tibble[!is.na(res_tibble$log2FoldChange) & !is.na(res_tibble$padj) & res_tibble$log2FoldChange < -0.58 & res_tibble$padj < 5e-2, ]
-write.table(upregulated$geneSymbol, file = "output/deseq2/upregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
-write.table(downregulated$geneSymbol, file = "output/deseq2/downregulatedresXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(upregulated$geneSymbol, file = "output/deseq2/upregulatedXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+write.table(downregulated$geneSymbol, file = "output/deseq2/downregulatedXinclude_q05fc058_ReN_Hypo_vs_Norm-featurecounts_multi.txt", sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 # R session info
 loaded_pkgs <- sessionInfo()$otherPkgs
@@ -841,8 +880,8 @@ write.table(
 - Volcano plot of DEGs *adjusted p-value < 0.05 and |log2FC| > 0.58* : `output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.pdf`
 - Volcano plot of DEGs with hypoxia marker genes labelled: `output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-hypoxia_genes.pdf`
 - Volcano plot of DEGs with ephrin genes labelled: `output/deseq2/plotVolcano_resXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi-Ephrin_CellChat_genes.pdf`
-- List of up regulated genes *adjusted p-value < 0.05 and |log2FC| > 0.58*: `output/deseq2/upregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
-- List of down regulated genes *adjusted p-value < 0.05 and |log2FC| > 0.58*: `output/deseq2/downregulatedresXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- List of up regulated genes *adjusted p-value < 0.05 and |log2FC| > 0.58*: `output/deseq2/upregulatedXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
+- List of down regulated genes *adjusted p-value < 0.05 and |log2FC| > 0.58*: `output/deseq2/downregulatedXinclude_q05fc058_PSC_Hypo_vs_Norm-featurecounts_multi.txt`
 - R packages version: `output/deseq2/RsessionInfo-DESEQ2_DEG.txt`
 
 
