@@ -1782,6 +1782,76 @@ dev.off()
 
 
 
+# IsoformSwitchAnalyzeR for scRNAseq
+
+
+Let's try using IsoformSwitchAnalyzeR for analyzing scRNAseq data. [IsoformSwitchAnalyzeR v2](https://www.biorxiv.org/content/10.64898/2025.12.08.693027v1.full) state it can be used for scRNAseq; simply need to pseudobulk each of our cell types using `AggregateExpression()` and use this count matrix as input for **IsoformSwitchAnalyzeR**.
+
+Issue is that right now the counting was perform on gene, not transcripts: so we need to quantify on transcript! To note that **BD Rhpasody (and 10x) is not design for full transcript coverage (it sequence 3' end), thus it is not perfect; and would be an estimation of splicing!**
+
+
+XXXY HERE below is mess.. Good for aggregation but we need step down and perform transcript level quantification
+
+
+
+
+
+
+Pipeline:
+- Generate new pseudobulk count matrix for each cell type in `SignacV5` conda env
+- Perform classic IsoformSwitchAnalyzeR using pseudobulk amtrix in `IsoformSwitchAnalyzeR` conda env
+
+
+
+```bash
+conda activate SignacV5
+module load hdf5
+```
+
+```R
+
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+
+library("Signac")
+library("Seurat")
+library("tidyverse")
+
+
+set.seed(42)
+
+
+# import seurat object
+
+ATACMultiomewithST_SMK_V2QCv2.sct <- readRDS(file = "output/seurat/ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04-labelV1GeneActivityLinkPeaks.rds")
+
+
+# Create single grouping ID
+ATACMultiomewithST_SMK_V2QCv2.sct$groupID <- paste(
+  ATACMultiomewithST_SMK_V2QCv2.sct$condition,
+  ATACMultiomewithST_SMK_V2QCv2.sct$Sample_Name,
+  ATACMultiomewithST_SMK_V2QCv2.sct$cluster.annot,
+  sep = "||" )
+
+# Aggregate samples
+ATACMultiomewithST_SMK_V2QCv2.pseudo <- AggregateExpression(
+  ATACMultiomewithST_SMK_V2QCv2.sct,
+  assays = "RNA",
+  group.by = "groupID",
+  return.seurat = TRUE
+)
+
+# Recover metadata
+parts <- strsplit(Cells(ATACMultiomewithST_SMK_V2QCv2.pseudo), "\\|\\|")
+ATACMultiomewithST_SMK_V2QCv2.pseudo$condition     <- vapply(parts, `[[`, "", 1)
+ATACMultiomewithST_SMK_V2QCv2.pseudo$Sample_Name   <- vapply(parts, `[[`, "", 2)
+ATACMultiomewithST_SMK_V2QCv2.pseudo$cluster.annot <- vapply(parts, `[[`, "", 3)
+
+
+
+```
+
 
 
 
