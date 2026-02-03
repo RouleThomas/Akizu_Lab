@@ -3359,6 +3359,81 @@ write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_s
 
 
 
+# Line plot Zscore representation ############ 
+# Long z-score table + cluster
+df_long <- as.data.frame(expr_scaled) %>%
+  rownames_to_column("Accession") %>%
+  pivot_longer(cols = -Accession, names_to = "sample", values_to = "z") %>%
+  left_join(sample_order, by = "sample") %>%
+  left_join(cluster_tbl %>% select(Accession, cluster), by = "Accession") %>%
+  filter(!is.na(cluster), !is.na(condition), !is.na(genotype))
+
+# 1) Collapse bio-reps -> ONE value per protein x genotype x condition (median across reps)
+df_median_per_protein <- df_long %>%
+  group_by(cluster, Accession, genotype, condition) %>%
+  summarise(
+    protein_median = median(z, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# 2) For each cluster/genotype/condition: take median across proteins + standard error across proteins
+#    (your "one median line per genotype" with SE bars at each condition)
+df_summary <- df_median_per_protein %>%
+  group_by(cluster, genotype, condition) %>%
+  summarise(
+    median_of_proteins = median(protein_median, na.rm = TRUE),
+    n_proteins = sum(!is.na(protein_median)),
+    se = sd(protein_median, na.rm = TRUE) / sqrt(n_proteins),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    cluster = factor(cluster, levels = sort(unique(cluster))),
+    genotype = factor(genotype, levels = c("Scram","siSNX13","siSNX14")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+
+pdf("output/lineplot-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.pdf", width = 3, height = 10)
+cluster_sizes <- df_median_per_protein %>%
+  distinct(cluster, Accession) %>%
+  count(cluster, name = "n_proteins")
+ggplot(df_summary,
+            aes(x = condition, y = median_of_proteins, group = genotype, color = genotype)) +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 1.4) +
+  geom_errorbar(
+    aes(ymin = median_of_proteins - se, ymax = median_of_proteins + se),
+    width = 0.12, linewidth = 0.5
+  ) +
+  facet_wrap(
+    ~ cluster, ncol = 1, scales = "free_y",
+    labeller = labeller(cluster =  setNames(
+  paste0(
+    "Cluster ", cluster_sizes$cluster,
+    " (n = ", cluster_sizes$n_proteins, ")"
+  ),
+  cluster_sizes$cluster
+))
+  ) +
+  scale_color_manual(values = c(
+  "Scram"   = "black",
+  "siSNX13" = "red3",
+  "siSNX14" = "steelblue3"
+)) +
+  labs(
+    x = NULL,
+    y = "Median z-score (per protein median across bio reps)",
+    title = "Cluster trends across conditions (median ± SE)"
+  ) +
+  theme_bw(base_size = 10) +
+  theme(
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+dev.off()
+
+
+
 # Show top 10 genes per cluster
 
 ## -------------------------------------------------
@@ -3448,7 +3523,82 @@ for (cl in sort(unique(plot_df$cluster))) {
 
 
 
+# Lineplot abundance values
+## Long table (exact imputed log2 abundance)
+prot_long_all <- as.data.frame(log2_expr_imp__Scramble_vs_siSNX13) %>%
+  rownames_to_column("Accession") %>%
+  pivot_longer(
+    cols = -Accession,
+    names_to = "sample",
+    values_to = "log2_abund_imp"
+  ) %>%
+  left_join(sample_order, by = "sample") %>%
+  left_join(cluster_tbl %>% select(Accession, cluster), by = "Accession") %>%
+  filter(!is.na(cluster), !is.na(genotype), !is.na(condition)) %>%
+  mutate(
+    cluster = factor(cluster, levels = sort(unique(cluster)))
+  )
+## Median across bio reps -> ONE value per protein x genotype x condition
+prot_median_per_protein_cond <- prot_long_all %>%
+  group_by(cluster, Accession, genotype, condition) %>%
+  summarise(
+    protein_median = median(log2_abund_imp, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    cluster   = factor(cluster, levels = sort(unique(cluster))),
+    genotype  = factor(genotype,  levels = c("Scram","siSNX13","siSNX14")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+## Per cluster/genotype/condition: median across proteins + SE across proteins
+prot_summary <- prot_median_per_protein_cond %>%
+  group_by(cluster, genotype, condition) %>%
+  summarise(
+    median_of_proteins = median(protein_median, na.rm = TRUE),
+    n_proteins = sum(!is.na(protein_median)),
+    se = sd(protein_median, na.rm = TRUE) / sqrt(n_proteins),
+    .groups = "drop"
+  )
 
+pdf("output/lineplot-IMPUTEDLOG2-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX13-9Cluster-max_abs_interaction3.pdf", width = 3, height = 10)
+cluster_sizes <- prot_median_per_protein_cond %>%
+  distinct(cluster, Accession) %>%
+  count(cluster, name = "n_proteins")
+ggplot(prot_summary,
+       aes(x = condition, y = median_of_proteins, group = genotype, color = genotype)) +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 1.4) +
+  geom_errorbar(
+    aes(ymin = median_of_proteins - se, ymax = median_of_proteins + se),
+    width = 0.12, linewidth = 0.5
+  ) +
+  facet_wrap(
+    ~ cluster, ncol = 1, scales = "free_y",
+    labeller = labeller(cluster =  setNames(
+  paste0(
+    "Cluster ", cluster_sizes$cluster,
+    " (n = ", cluster_sizes$n_proteins, ")"
+  ),
+  cluster_sizes$cluster
+))
+  ) +
+  scale_color_manual(values = c(
+    "Scram"   = "black",
+    "siSNX13" = "red3",
+    "siSNX14" = "steelblue3"
+  )) +
+  labs(
+    x = NULL,
+    y = "Median across bio reps of log2(normalized abundance + 1) (imputed)",
+    title = "Cluster trends across conditions (median ± SE)"
+  )  +
+  theme_bw(base_size = 10) +
+  theme(
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+dev.off()
 
 
 
@@ -3700,6 +3850,83 @@ write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_s
 
 
 
+
+# Line plot Zscore representation ############ 
+# Long z-score table + cluster
+df_long <- as.data.frame(expr_scaled) %>%
+  rownames_to_column("Accession") %>%
+  pivot_longer(cols = -Accession, names_to = "sample", values_to = "z") %>%
+  left_join(sample_order, by = "sample") %>%
+  left_join(cluster_tbl %>% select(Accession, cluster), by = "Accession") %>%
+  filter(!is.na(cluster), !is.na(condition), !is.na(genotype))
+
+# 1) Collapse bio-reps -> ONE value per protein x genotype x condition (median across reps)
+df_median_per_protein <- df_long %>%
+  group_by(cluster, Accession, genotype, condition) %>%
+  summarise(
+    protein_median = median(z, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# 2) For each cluster/genotype/condition: take median across proteins + standard error across proteins
+#    (your "one median line per genotype" with SE bars at each condition)
+df_summary <- df_median_per_protein %>%
+  group_by(cluster, genotype, condition) %>%
+  summarise(
+    median_of_proteins = median(protein_median, na.rm = TRUE),
+    n_proteins = sum(!is.na(protein_median)),
+    se = sd(protein_median, na.rm = TRUE) / sqrt(n_proteins),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    cluster = factor(cluster, levels = sort(unique(cluster))),
+    genotype = factor(genotype, levels = c("Scram","siSNX13","siSNX14")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+
+pdf("output/lineplot-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.pdf", width = 3, height = 10)
+cluster_sizes <- df_median_per_protein %>%
+  distinct(cluster, Accession) %>%
+  count(cluster, name = "n_proteins")
+ggplot(df_summary,
+            aes(x = condition, y = median_of_proteins, group = genotype, color = genotype)) +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 1.4) +
+  geom_errorbar(
+    aes(ymin = median_of_proteins - se, ymax = median_of_proteins + se),
+    width = 0.12, linewidth = 0.5
+  ) +
+  facet_wrap(
+    ~ cluster, ncol = 1, scales = "free_y",
+    labeller = labeller(cluster =  setNames(
+  paste0(
+    "Cluster ", cluster_sizes$cluster,
+    " (n = ", cluster_sizes$n_proteins, ")"
+  ),
+  cluster_sizes$cluster
+))
+  ) +
+  scale_color_manual(values = c(
+  "Scram"   = "black",
+  "siSNX13" = "red3",
+  "siSNX14" = "steelblue3"
+)) +
+  labs(
+    x = NULL,
+    y = "Median z-score (per protein median across bio reps)",
+    title = "Cluster trends across conditions (median ± SE)"
+  ) +
+  theme_bw(base_size = 10) +
+  theme(
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+dev.off()
+
+
+
+
 # Show top 10 genes per cluster
 ## -------------------------------------------------
 ## 1) Build a tidy long table FROM the IMPUTED MATRIX
@@ -3787,6 +4014,85 @@ for (cl in sort(unique(plot_df$cluster))) {
 
 
 
+
+
+
+# Lineplot abundance values
+## Long table (exact imputed log2 abundance)
+prot_long_all <- as.data.frame(log2_expr_imp__Scramble_vs_siSNX14) %>%
+  rownames_to_column("Accession") %>%
+  pivot_longer(
+    cols = -Accession,
+    names_to = "sample",
+    values_to = "log2_abund_imp"
+  ) %>%
+  left_join(sample_order, by = "sample") %>%
+  left_join(cluster_tbl %>% select(Accession, cluster), by = "Accession") %>%
+  filter(!is.na(cluster), !is.na(genotype), !is.na(condition)) %>%
+  mutate(
+    cluster = factor(cluster, levels = sort(unique(cluster)))
+  )
+## Median across bio reps -> ONE value per protein x genotype x condition
+prot_median_per_protein_cond <- prot_long_all %>%
+  group_by(cluster, Accession, genotype, condition) %>%
+  summarise(
+    protein_median = median(log2_abund_imp, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    cluster   = factor(cluster, levels = sort(unique(cluster))),
+    genotype  = factor(genotype,  levels = c("Scram","siSNX13","siSNX14")),
+    condition = factor(condition, levels = c("DMSO","LLOME","RECOVERY"))
+  )
+## Per cluster/genotype/condition: median across proteins + SE across proteins
+prot_summary <- prot_median_per_protein_cond %>%
+  group_by(cluster, genotype, condition) %>%
+  summarise(
+    median_of_proteins = median(protein_median, na.rm = TRUE),
+    n_proteins = sum(!is.na(protein_median)),
+    se = sd(protein_median, na.rm = TRUE) / sqrt(n_proteins),
+    .groups = "drop"
+  )
+
+pdf("output/lineplot-IMPUTEDLOG2-LOGLIMMA-AllNAvaluesFilter-Scramble_vs_siSNX14-10Cluster-max_abs_interaction3.pdf", width = 3, height = 10)
+cluster_sizes <- prot_median_per_protein_cond %>%
+  distinct(cluster, Accession) %>%
+  count(cluster, name = "n_proteins")
+ggplot(prot_summary,
+       aes(x = condition, y = median_of_proteins, group = genotype, color = genotype)) +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 1.4) +
+  geom_errorbar(
+    aes(ymin = median_of_proteins - se, ymax = median_of_proteins + se),
+    width = 0.12, linewidth = 0.5
+  ) +
+  facet_wrap(
+    ~ cluster, ncol = 1, scales = "free_y",
+    labeller = labeller(cluster =  setNames(
+  paste0(
+    "Cluster ", cluster_sizes$cluster,
+    " (n = ", cluster_sizes$n_proteins, ")"
+  ),
+  cluster_sizes$cluster
+))
+  ) +
+  scale_color_manual(values = c(
+    "Scram"   = "black",
+    "siSNX13" = "red3",
+    "siSNX14" = "steelblue3"
+  )) +
+  labs(
+    x = NULL,
+    y = "Median across bio reps of log2(normalized abundance + 1) (imputed)",
+    title = "Cluster trends across conditions (median ± SE)"
+  )  +
+  theme_bw(base_size = 10) +
+  theme(
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+dev.off()
 
 
 
@@ -4050,8 +4356,65 @@ cluster_tbl <- cluster_tbl %>%
 write_tsv(cluster_tbl, "output/GENELIST-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.tsv")
 
 
+# Boxplot Z-score representation ############
+df_long <- as.data.frame(expr_scaled) %>%
+  rownames_to_column("Accession") %>%
+  pivot_longer(
+    cols = -Accession,
+    names_to = "sample",
+    values_to = "z"
+  ) %>%
+  left_join(sample_order, by = "sample") %>%          # adds genotype/replicate/etc
+  left_join(cluster_tbl %>% select(Accession, cluster), by = "Accession") %>%
+  filter(!is.na(cluster))     
 
-
+## Median across biological replicates -> ONE DOT per protein x genotype (in DMSO)
+df_median_per_protein <- df_long %>%
+  group_by(cluster, Accession, genotype) %>%
+  summarise(
+    protein_median = median(z, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    cluster = factor(cluster, levels = sort(unique(cluster))),
+    genotype = factor(genotype, levels = c("Scram","siSNX13","siSNX14"))
+  )
+pdf("output/boxplot-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.pdf", width = 3, height = 5)
+cluster_sizes <- df_median_per_protein %>%
+  distinct(cluster, Accession) %>%
+  count(cluster, name = "n_proteins")
+ggplot(df_median_per_protein, aes(x = genotype, y = protein_median, color = genotype)) +
+  geom_boxplot(width = 0.6, outlier.shape = NA) +                    # boxplot over protein medians
+  geom_point(
+    position = position_jitter(width = 0.18, height = 0),
+    alpha = 0.25, size = 0.6
+  ) +
+  facet_wrap(~ cluster, ncol = 1, scales = "free_y",
+    labeller = labeller(cluster =  setNames(
+  paste0(
+    "Cluster ", cluster_sizes$cluster,
+    " (n = ", cluster_sizes$n_proteins, ")"
+  ),
+  cluster_sizes$cluster
+))
+  ) +
+  scale_color_manual(values = c(
+  "Scram"   = "black",
+  "siSNX13" = "red3",
+  "siSNX14" = "steelblue3"
+)) +
+  labs(
+    x = NULL,
+    y = "Median (across bio reps) of per-protein z-score",
+    title = "Per-cluster distribution of protein medians (DMSO)"
+  ) +
+  theme_bw(base_size = 10) +
+  theme(
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+dev.off()
 
 
 
@@ -4122,6 +4485,75 @@ for (cl in sort(unique(plot_df$cluster))) {
     width = 5, height = 6
   )
 }
+
+
+
+# Boxplot abundance values
+## Long table from exact values
+prot_long_all <- as.data.frame(log2_expr_imp__Scramble_vs_siSNX13_vs_siSNX14_sig_ord) %>%
+  rownames_to_column("Accession") %>%
+  pivot_longer(
+    cols = -Accession,
+    names_to = "sample",
+    values_to = "log2_abund_imp"
+  ) %>%
+  left_join(sample_order, by = "sample") %>%
+  left_join(cluster_tbl %>% select(Accession, cluster), by = "Accession") %>%
+  filter(!is.na(cluster)) %>%
+  mutate(
+    cluster  = factor(cluster, levels = sort(unique(cluster))),
+    genotype = factor(genotype, levels = c("Scram","siSNX13","siSNX14"))
+  )
+## Median across the 3 bio reps -> ONE DOT per protein x genotype
+prot_median_per_protein <- prot_long_all %>%
+  group_by(cluster, Accession, genotype) %>%
+  summarise(
+    protein_median = median(log2_abund_imp, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    cluster  = factor(cluster, levels = sort(unique(cluster))),
+    genotype = factor(genotype, levels = c("Scram","siSNX13","siSNX14"))
+  )
+
+pdf("output/boxplot-IMPUTEDLOG2-LOGLIMMA-AllNAvaluesFilter-DMSO_Scramble_vs_siSNX13_vs_siSNX14-5Cluster-max_abs_interaction3.pdf", width = 3, height = 5)
+cluster_sizes <- prot_median_per_protein %>%
+  distinct(cluster, Accession) %>%
+  count(cluster, name = "n_proteins")
+ggplot(prot_median_per_protein,
+             aes(x = genotype, y = protein_median, color = genotype)) +
+  geom_boxplot(width = 0.6, outlier.shape = NA, alpha = 0.25) +
+  geom_point(position = position_jitter(width = 0.18, height = 0),
+             alpha = 0.35, size = 0.7) +
+  facet_wrap(
+    ~ cluster,
+    ncol = 1,
+    scales = "free_y",
+    labeller = labeller(cluster =  setNames(
+  paste0(
+    "Cluster ", cluster_sizes$cluster,
+    " (n = ", cluster_sizes$n_proteins, ")"
+  ),
+  cluster_sizes$cluster
+))
+  ) +
+  scale_color_manual(values = c(
+  "Scram"   = "black",
+  "siSNX13" = "red3",
+  "siSNX14" = "steelblue3"
+)) +
+  labs(
+    x = NULL,
+    y = "Median across bio reps of log2(normalized abundance + 1) (imputed)",
+    title = "Per-cluster distribution of per-protein medians (DMSO)"
+  ) +
+  theme_bw(base_size = 10) +
+  theme(
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+dev.off()
 
 
 
