@@ -342,6 +342,24 @@ Salmon quantification tool.
 
 
 
+### mamba
+
+Installed in `013*/001*`
+
+
+Only mamba installed; usefull when dealing with software dependencies issues...
+
+
+### normdb_v2
+
+Installed in `013*/001*`
+
+
+bigWigToBedGraph, BedGraphTobigWig, bedtools, MACS2, deepTools
+
+R DESEQ2, volcanoplot, tidyverse
+
+
 # cool random command
 
 

@@ -101,6 +101,7 @@ Let's map with endtoend parameter as for `003__CutRun` (`--phred33 -q --no-unal 
 conda activate bowtie2
 
 sbatch --dependency=afterany:49800144 scripts/bowtie2.sh # 49800169 ok
+
 ```
 
 --> XXX Looks good; overall ~85% uniquely aligned reads
@@ -146,6 +147,10 @@ This is prefered for THOR bam input.
 ```bash
 conda activate bowtie2
 sbatch --dependency=afterany:49800169 scripts/samtools_unique.sh # 49800224 ok
+
+# Regenerate bam files due to pgbam conversion... For WT and KO H3K27me3 and EZH2
+sbatch scripts/samtools_unique__H3K27me3WTKO.sh # 65393208 xxx
+sbatch scripts/samtools_unique__EZH2WTKO.sh # 65393284 xxx
 
 sbatch scripts/samtools_unique_noXchr.sh # 51689174 ok
 
