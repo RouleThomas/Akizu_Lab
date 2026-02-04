@@ -3796,9 +3796,17 @@ dev.off()
 
 
 
-
-
-
-
-
 ```
+
+
+
+# Lipid functional analyses
+
+
+Let's use the [MetaboAlanyst](https://www.metaboanalyst.ca/) web tool to perform lipid functional analysis (ie. like gene ontology/pathway but for lipids). The tool required our component to be in this format: `TAG(30:2)`. All component manually change and output at `output/component_IDs.txt`
+
+
+XXXY 
+
+
+
