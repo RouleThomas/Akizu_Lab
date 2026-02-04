@@ -194,35 +194,31 @@ ESC_KO_EZH2_R1	output/bowtie2/ESC_KO_EZH2_R1.unique.dupmark.sorted.bam	KO	EZH2
 ESC_KO_EZH2_R2	output/bowtie2/ESC_KO_EZH2_R2.unique.dupmark.sorted.bam	KO	EZH2
 ESC_KO_EZH2_R3	output/bowtie2/ESC_KO_EZH2_R3.unique.dupmark.sorted.bam	KO	EZH2
 
-sample_id	bam	condition	target
-ESC_WT_EZH2_R1	output/bowtie2/ESC_WT_EZH2_R1.unique.dupmark.sorted.bam	WT	EZH2
-ESC_KO_EZH2_R1	output/bowtie2/ESC_KO_EZH2_R1.unique.dupmark.sorted.bam	KO	EZH2
 
 
 
 # Run code
+
 scripts/normdb_norm_v1.py normalize \
-  --meta meta/samples_001018__WTKO_EZH2_R1.tsv \
-  --outdir output/normdb_norm__001018__WTKO_EZH2_R1 \
+  --meta meta/samples-001018__WTKO_H3K27me3EZH2.tsv \
+  --outdir output/normdb_norm-001018__WTKO_H3K27me3EZH2 \
   --blacklist meta/hg38-blacklist.v2.bed \
   --chrom-sizes meta/GRCh38_chrom_sizes.tab \
   --threads 7 \
   --mode PE \
   --reference auto
 
+#--> Too long, batch
 
-scripts/normdb_norm_v1.py normalize \
-  --meta meta/samples_001018__WTKO_H3K27me3EZH2.tsv \
-  --outdir output/normdb_norm \
-  --blacklist meta/hg38-blacklist.v2.bed \
-  --chrom-sizes meta/GRCh38_chrom_sizes.tab \
-  --threads 7 \
-  --mode PE \
-  --reference auto
+conda activate normdb_v2
+
+sbatch scripts/normdb_norm_v1-001018__WTKO_H3K27me3EZH2.sh # 65410635 xxx
+
+
 
 ```
 
-
+--> XXXY HERE !! check if work
 
 
 
