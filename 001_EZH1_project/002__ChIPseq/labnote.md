@@ -360,9 +360,15 @@ For ChIPSeqSpikeInFree to work best, we need very high quality reads; let's upgr
 ```bash
 sbatch scripts/samtools_highquality_1.sh # 12345522 ok
 sbatch scripts/samtools_highquality_2.sh # 12345523 ok
+
+# Re-launch pgbam with uniquely aligned reads for ESC and NPC WT and KO only (test 013/001)
+sbatch scripts/samtools_highquality_ESCNPCWTKO.sh # 65660504 xxx
+
 ```
 
 This work but I should also have filter the dupplicates. I did it later in the part **ChIPseqSpikeInFree - High quality reads or uniq mapp**
+
+
 
 
 

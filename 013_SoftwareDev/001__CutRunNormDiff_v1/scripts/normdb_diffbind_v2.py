@@ -9,7 +9,6 @@ from datetime import datetime
 
 import pandas as pd
 
-
 REQUIRED_COLS = ["sample_id", "bam", "condition", "target"]
 
 
@@ -85,15 +84,13 @@ def parse_contrast(s):
 
 def read_computeMatrix_vector(txt_path):
     """
-    Your original read.delim(..., skip=3) suggested the computeMatrix .txt has 3 header lines.
-    With regionBodyLength=100 and binSize=100 => exactly ONE bin per region.
-    After skipping headers, we take the first column as the summed signal per region.
+    computeMatrix .txt has 3 header lines in your setup (skip=3).
+    regionBodyLength=100 and binSize=100 => 1 bin per region.
+    Take the first column as summed signal per region.
     """
     if not os.path.exists(txt_path):
         die(f"computeMatrix matrix file not found: {txt_path}")
 
-    # robust parsing: skip comment lines + potential header
-    # We mimic: read.delim(..., header=FALSE, skip=3)
     df = pd.read_csv(txt_path, sep="\t", header=None, skiprows=3)
     if df.shape[1] < 1:
         die(f"computeMatrix matrix file seems empty/unexpected: {txt_path}")
@@ -104,8 +101,8 @@ def read_computeMatrix_vector(txt_path):
 
 def bed_to_region_ids(bed_path):
     """
-    computeMatrix --outFileSortedRegions produces a BED-like file with a header in some versions.
-    We'll parse the first 3 columns, skipping non-data lines.
+    Parse outFileSortedRegions BED-like file.
+    Returns region_id = chr_start_end in that file order.
     """
     if not os.path.exists(bed_path):
         die(f"computeMatrix sorted regions file not found: {bed_path}")
@@ -117,8 +114,8 @@ def bed_to_region_ids(bed_path):
             if not line or line.startswith("#"):
                 continue
             parts = line.split("\t")
-            # Some outputs have column names like "X.chrom" in first line; detect non-bed
-            if parts[0].lower() in ("chrom", "chr", "x.chrom", "x.chromosome"):
+            # skip header-ish line if present
+            if parts[0].lower() in ("chrom", "x.chrom", "chr"):
                 continue
             if len(parts) < 3:
                 continue
@@ -142,19 +139,23 @@ def bed_to_region_ids(bed_path):
 def main():
     t0 = time.time()
 
-    ap = argparse.ArgumentParser(prog="normdb diffbind", description="Diff binding on user BED regions (computeMatrix-based)")
+    ap = argparse.ArgumentParser(
+        prog="normdb diffbind",
+        description="Diff binding on user BED regions (computeMatrix-based, DESeq2)"
+    )
     ap.add_argument("--meta", required=True, help="samples.tsv with columns: sample_id bam condition target")
     ap.add_argument("--regions", required=True, help="BED file of regions (chr start end)")
     ap.add_argument("--bigwig-dir", required=True, help="Directory containing normalized bigWigs")
     ap.add_argument("--contrast", required=True, help="e.g. condition:KO:WT")
     ap.add_argument("--outdir", required=True, help="Output directory")
-    ap.add_argument("--alpha", type=float, default=0.05, help="Used for plot highlighting only")
-    ap.add_argument("--lfc", type=float, default=0.0, help="Used for plot highlighting only (log2FC threshold)")
-    ap.add_argument("--target", default=None, help="If meta contains multiple targets, specify which one (e.g. H3K27me3)")
+    ap.add_argument("--alpha", type=float, default=0.05, help="Significance threshold for plots + signif tables")
+    ap.add_argument("--lfc", type=float, default=0.0, help="log2FC threshold for plots + signif tables")
+    ap.add_argument("--target", default=None, help="If meta contains multiple targets, specify one (e.g. H3K27me3)")
+    ap.add_argument("--min-counts", type=int, default=100,
+                    help="Filter out regions with low counts: keep rowSums(counts) >= this value (default 100)")
 
     args = ap.parse_args()
 
-    # Required executables
     ensure_exe("computeMatrix")
     ensure_exe("Rscript")
 
@@ -165,7 +166,6 @@ def main():
 
     os.makedirs(args.outdir, exist_ok=True)
 
-    # Subfolders (like your old layout)
     cm_dir = os.path.join(args.outdir, "01_computeMatrix")
     os.makedirs(cm_dir, exist_ok=True)
 
@@ -208,15 +208,11 @@ def main():
 
         # -------------------------
         # Collect bigWigs
-        # Expect: <bigwig-dir>/<sample_id>.norm99.bw
         # -------------------------
         step = time.time()
         log("Collecting bigWig files")
-        bw_paths = []
-        bw_labels = []
-        missing = []
+        bw_paths, bw_labels, missing = [], [], []
 
-        # Preserve metadata order
         for _, r in meta_t.iterrows():
             sid = r["sample_id"]
             bw = os.path.join(args.bigwig_dir, f"{sid}.norm99.bw")
@@ -232,15 +228,13 @@ def main():
         log_done(f"Found {len(bw_paths)} bigWigs", step)
 
         # -------------------------
-        # Step 1: computeMatrix per sample (EXACT settings)
+        # computeMatrix per sample (EXACT settings)
         # -------------------------
         step = time.time()
         log("computeMatrix: counting signal in regions (exact scale-regions method)")
 
-        matrix_txts = {}
-        sorted_beds = {}
+        matrix_txts, sorted_beds = {}, {}
         for sid, bw in zip(bw_labels, bw_paths):
-            # Match your naming vibe (short, consistent)
             base = f"{sid}-{target}"
             out_gz = os.path.join(cm_dir, f"{base}.gz")
             out_txt = os.path.join(cm_dir, f"{base}.txt")
@@ -266,8 +260,7 @@ def main():
         log_done("computeMatrix finished for all samples", step)
 
         # -------------------------
-        # Step 2: build count matrix (one value per region)
-        # Use region order from FIRST sample’s outFileSortedRegions
+        # Build count matrix
         # -------------------------
         step = time.time()
         log("Building region count matrix from computeMatrix outputs")
@@ -277,22 +270,18 @@ def main():
         n_regions = len(region_ids)
 
         counts = pd.DataFrame({"region_id": region_ids})
-
         for sid in bw_labels:
             vec = read_computeMatrix_vector(matrix_txts[sid])
             if len(vec) != n_regions:
                 die(
                     f"Region count mismatch for {sid}: "
-                    f"{len(vec)} values in matrix but {n_regions} regions in sorted BED. "
-                    f"This should not happen; check regions.bed and computeMatrix output."
+                    f"{len(vec)} values in matrix but {n_regions} regions in sorted BED."
                 )
-            # DESeq2 expects integer-ish counts: round
             counts[sid] = pd.Series(vec).round().astype(int)
 
         counts_path = os.path.join(args.outdir, "counts_matrix.tsv")
         counts.to_csv(counts_path, sep="\t", index=False)
 
-        # coldata.tsv
         meta_t = meta_t.set_index("sample_id").loc[bw_labels].reset_index()
         coldata_path = os.path.join(args.outdir, "coldata.tsv")
         meta_t[["sample_id", contrast_var]].to_csv(coldata_path, sep="\t", index=False)
@@ -300,12 +289,14 @@ def main():
         log_done("Count matrix + coldata written", step)
 
         # -------------------------
-        # Step 3: DESeq2 + plots
+        # DESeq2 + plots
         # -------------------------
         step = time.time()
-        log("Running DESeq2 + plots (volcano, MA, sample correlation heatmap)")
+        log("Running DESeq2 + plots")
 
         results_path = os.path.join(args.outdir, "results_all_regions.tsv")
+        gain_path = os.path.join(args.outdir, "results_signif_gain.tsv")
+        loss_path = os.path.join(args.outdir, "results_signif_loss.tsv")
         volcano_pdf = os.path.join(args.outdir, "volcano.pdf")
         ma_pdf = os.path.join(args.outdir, "MA.pdf")
         corr_pdf = os.path.join(args.outdir, "sample_correlation_heatmap.pdf")
@@ -315,16 +306,20 @@ def main():
 suppressPackageStartupMessages({{
   library(DESeq2)
   library(tidyverse)
+  library(ggplot2)
   library(EnhancedVolcano)
 }})
 
 alpha <- {args.alpha}
 lfc_thr <- {args.lfc}
+min_counts <- {args.min_counts}
 
 counts_file <- "{counts_path}"
 coldata_file <- "{coldata_path}"
 
 out_results <- "{results_path}"
+out_gain <- "{gain_path}"
+out_loss <- "{loss_path}"
 out_volcano <- "{volcano_pdf}"
 out_ma <- "{ma_pdf}"
 out_corr <- "{corr_pdf}"
@@ -336,18 +331,13 @@ ref_level <- "{contrast_ref}"
 counts_df <- read.delim(counts_file, check.names=FALSE)
 stopifnot("region_id" %in% colnames(counts_df))
 
-count_mat <- counts_df %>%
-  select(-region_id) %>%
-  as.matrix()
-
+count_mat <- counts_df %>% select(-region_id) %>% as.matrix()
 rownames(count_mat) <- counts_df$region_id
 mode(count_mat) <- "integer"
 
 coldata <- read.delim(coldata_file, check.names=FALSE)
 stopifnot("sample_id" %in% colnames(coldata))
 stopifnot(contrast_var %in% colnames(coldata))
-
-# Ensure sample order matches matrix columns
 stopifnot(all(coldata$sample_id == colnames(count_mat)))
 
 dds <- DESeqDataSetFromMatrix(
@@ -355,6 +345,10 @@ dds <- DESeqDataSetFromMatrix(
   colData = as.data.frame(coldata %>% column_to_rownames("sample_id")),
   design = as.formula(paste0("~ ", contrast_var))
 )
+
+# filter low-signal regions (like your keep <- rowSums(counts(dds)) >= 100)
+keep <- rowSums(counts(dds)) >= min_counts
+dds <- dds[keep,]
 
 dds[[contrast_var]] <- relevel(dds[[contrast_var]], ref = ref_level)
 dds <- DESeq(dds)
@@ -370,35 +364,37 @@ if (use_apeglm) {{
 
 res_df <- as.data.frame(res) %>%
   rownames_to_column("region_id") %>%
-  mutate(
-    chr = sub("_(.*)$", "", region_id),
-    start = as.integer(sub("^.*?_([0-9]+)_.*$", "\\1", region_id)),
-    end   = as.integer(sub("^.*?_[0-9]+_([0-9]+)$", "\\1", region_id))
-  ) %>%
+  # NO REGEX: parse chr/start/end from region_id safely
+  separate(region_id, into=c("chr","start","end"), sep="_", remove=FALSE, convert=TRUE) %>%
   relocate(chr, start, end, region_id)
 
-# Write ALL regions
+# write ALL regions kept after min_counts filter
 write.table(res_df, file=out_results, sep="\\t", quote=FALSE, row.names=FALSE)
 
-# Volcano (highlighting only)
+# signif subsets (alpha + lfc_thr)
+res_sig <- res_df %>%
+  filter(!is.na(padj)) %>%
+  filter(padj < alpha, abs(log2FoldChange) >= lfc_thr) %>%
+  mutate(direction = ifelse(log2FoldChange > 0, "Gain", "Loss"))
+
+write.table(res_sig %>% filter(direction=="Gain"), file=out_gain, sep="\\t", quote=FALSE, row.names=FALSE)
+write.table(res_sig %>% filter(direction=="Loss"), file=out_loss, sep="\\t", quote=FALSE, row.names=FALSE)
+
+# Volcano (EnhancedVolcano; Gain/Loss colors + transparency; clean legend)
 res_plot <- res_df %>%
   mutate(
     padj_plot = ifelse(is.na(padj), 1, padj),
-    sig = (padj_plot < alpha) & (abs(log2FoldChange) >= lfc_thr),
     direction = case_when(
-      sig & log2FoldChange > 0 ~ "Gain",
-      sig & log2FoldChange < 0 ~ "Loss",
+      padj_plot < alpha & log2FoldChange >=  lfc_thr ~ "Gain",
+      padj_plot < alpha & log2FoldChange <= -lfc_thr ~ "Loss",
       TRUE ~ "NS"
     )
   )
 
-keyvals <- ifelse(res_plot$direction == "Gain", "orange",
-           ifelse(res_plot$direction == "Loss", "skyblue", "grey70"))
-names(keyvals)[keyvals == "orange"] <- "Gain"
-names(keyvals)[keyvals == "skyblue"] <- "Loss"
-names(keyvals)[keyvals == "grey70"] <- "NS"
+# named vector mapping category -> color (THIS fixes legend issues)
+col_map <- c("NS"="grey70", "Gain"="orange", "Loss"="skyblue")
 
-pdf(out_volcano, width=4.5, height=4.5)
+pdf(out_volcano, width=4.8, height=4.8)
 EnhancedVolcano(
   res_plot,
   lab = rep("", nrow(res_plot)),
@@ -406,40 +402,59 @@ EnhancedVolcano(
   y = "padj_plot",
   pCutoff = alpha,
   FCcutoff = lfc_thr,
-  colCustom = keyvals,
-  pointSize = 1.0,
+  colCustom = col_map[res_plot$direction],
+  colAlpha = 0.75,
+  pointSize = 1.1,
   labSize = 2.0,
-  title = paste0(test_level, " vs ", ref_level, " (", contrast_var, ")"),
-  subtitle = "computeMatrix scale-regions (sum, 1 bin/region) + DESeq2",
-  legendPosition = "right"
+  title = paste0(test_level, " vs ", ref_level),
+  subtitle = NULL,
+  legendPosition = "right",
+  legendLabSize = 11,
+  legendIconSize = 3.5
 ) + theme_bw()
 dev.off()
 
 # MA plot
-pdf(out_ma, width=4.5, height=4.0)
-plotMA(res, alpha=alpha, main=paste0("MA: ", test_level, " vs ", ref_level))
-abline(h=c(-lfc_thr, lfc_thr), lty=2)
-dev.off()
+ma_df <- as.data.frame(res) %>%
+  rownames_to_column("region_id") %>%
+  mutate(
+    padj_plot = ifelse(is.na(padj), 1, padj),
+    direction = case_when(
+      padj_plot < alpha & log2FoldChange >=  lfc_thr ~ "Gain",
+      padj_plot < alpha & log2FoldChange <= -lfc_thr ~ "Loss",
+      TRUE ~ "NS"
+    )
+  )
+
+col_map <- c("NS"="grey70", "Gain"="orange", "Loss"="skyblue")
+
+p_ma <- ggplot(ma_df, aes(x = baseMean, y = log2FoldChange, color = direction)) +
+  geom_point(size = 1.0, alpha = 0.75) +
+  scale_x_log10() +
+  geom_hline(yintercept = c(-lfc_thr, lfc_thr), linetype = "dashed") +
+  theme_bw() +
+  labs(
+    title = paste0("MA: ", test_level, " vs ", ref_level),
+    x = "Mean of normalized counts (log10)",
+    y = "Log2 fold change"
+  ) +
+  scale_color_manual(values = col_map)
+
+ggsave(out_ma, plot = p_ma, width = 5.0, height = 4.2)
 
 # Sample correlation heatmap (vst)
 vsd <- vst(dds, blind=FALSE)
 mat <- assay(vsd)
 cormat <- cor(mat, method="pearson")
 
-pdf(out_corr, width=5.5, height=5.5)
-heatmap(
-  cormat,
-  symm=TRUE,
-  margins=c(8,8),
-  main="Sample correlation (vst counts)"
-)
+pdf(out_corr, width=8.5, height=8.5)
+heatmap(cormat, symm=TRUE, margins=c(12,12), main="Sample correlation (vst counts)")
 dev.off()
 """
         with open(r_script_path, "w") as f:
             f.write(r_script)
 
         run_cmd(["Rscript", r_script_path], log_fh=log_fh)
-
         log_done("DESeq2 + plots finished", step)
 
     log(f"All done. Total runtime: {(time.time()-t0)/60:.1f} minutes")
