@@ -1840,7 +1840,7 @@ nextflow run -resume ../../Master/software/SCALPEL/main.nf \ #
 SCALPEL needs cellranger output as input; data is multiome but we have to use cellranger on the FASTQ of the RNA assay only.
 
 
-Generate download link from FASTQs data from [SevenBridges](https://igor.sbgenomics.com).
+Generate download link from **FASTQs** data from [SevenBridges](https://igor.sbgenomics.com).
 
 ```bash
 # Generate download link from Seven bridges
@@ -1853,11 +1853,97 @@ aria2c -i urls.txt
 ```
 
 
+**Count RNA FASTQs**
+
+```bash
+
+conda activate scRNAseq
+which cellranger
+
+
+sbatch scripts/cellranger_count_RNA.sh # 65820406 xxx
+```
+
+- *NOTE: I used the AC_WTA_SMK FASTQs files for counting (as Whole Transcriptome Amplification). Then I think L001= Normoxia and L002= Hypoxia*
+
+
+**--> It is not possible to use cellranger on BD Rhapsody as cellranger is design for 10x... (barcode recognition thus fail!)**
+
+
+
+#### Extract cellranger output like files from the seurat object
+
+
+Let's try to extract cellranger like output from seurat object
+
+
+
+```bash
+conda activate SignacV5
+module load hdf5
+```
 
 
 
 
 
+
+
+
+```R
+set.seed(42)
+
+# library
+library("reticulate") # needed to use FindClusters()
+library("metap") # needed to use FindConservedMarkers()
+use_python("~/anaconda3/envs/SignacV5/bin/python") # to specify which python to use... Needed for FindClusters()
+
+library("Signac")
+library("Seurat")
+library("tidyverse")
+
+
+# import seurat object
+ATACMultiomewithST_SMK_V2QCv2.sct <- readRDS(file = "output/seurat/ATACMultiomewithST_SMK_V2QCv2-dim30kparam30res04-labelV1GeneActivityLinkPeaks.rds")
+
+
+# pick RNA assay + counts
+DefaultAssay(ATACMultiomewithST_SMK_V2QCv2.sct) <- "RNA"
+mat <- GetAssayData(ATACMultiomewithST_SMK_V2QCv2.sct, assay = "RNA", slot = "counts")
+
+# make output folder like cellranger
+outdir <- "seurat_cellranger"
+dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+
+# write in 10x format
+Matrix::writeMM(mat, file = file.path(outdir, "matrix.mtx"))
+
+write.table(
+  data.frame(barcode = colnames(mat)),
+  file = file.path(outdir, "barcodes.tsv"),
+  quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE
+)
+
+# 10x v3 "features.tsv" has 3 columns: id, name, feature_type
+features <- data.frame(
+  feature_id = rownames(mat),
+  feature_name = rownames(mat),
+  feature_type = "Gene Expression"
+)
+
+write.table(
+  features,
+  file = file.path(outdir, "features.tsv"),
+  quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE
+)
+
+# gzip like Cell Ranger does (optional but nice)
+system(paste("gzip -f", file.path(outdir, c("matrix.mtx","barcodes.tsv","features.tsv"))))
+
+```
+
+
+--> We need the BAM files.... Ask help from BD rhapsody lets see...
 
 
 

@@ -228,11 +228,12 @@ sbatch scripts/normdb_norm_v2-001018__WTKO_H3K27me3EZH2.sh # 65633087 ok
 
 ## Test2 - 001002 ChIPseq
 
-Let's test ESC WT vs KO for H3K27me3 from `001/002` 3 bio rep WT and 2 bio rep KO
+Let's test ESC and NPC WT vs KO for H3K27me3 from `001/002` 3 bio rep WT and 2 bio rep KO
 
 
 
 ```bash
+# ESC
 # meta file
 sample_id	bam	condition	target
 ESC_WT_H3K27me3_R1	output/bowtie2/ESC_WT_H3K27me3_R1.CHIP.unique.dupmark.sorted.bam	WT	H3K27me3
@@ -244,11 +245,21 @@ ESC_KO_H3K27me3_R2	output/bowtie2/ESC_KO_H3K27me3_R2.CHIP.unique.dupmark.sorted.
 
 conda activate normdb_v2
 
-sbatch scripts/normdb_norm_v2-001002__WTKO_H3K27me3.sh # 65800833 xxx
+sbatch scripts/normdb_norm_v2-001002__WTKO_H3K27me3.sh # 65800833 ok
+
+# NPC
 
 
+sample_id	bam	condition	target
+NPC_WT_H3K27me3_R1	output/bowtie2/NPC_WT_H3K27me3_R1.CHIP.unique.dupmark.sorted.bam	WT	H3K27me3
+NPC_WT_H3K27me3_R2	output/bowtie2/NPC_WT_H3K27me3_R2.CHIP.unique.dupmark.sorted.bam	WT	H3K27me3
+NPC_KO_H3K27me3_R1	output/bowtie2/NPC_KO_H3K27me3_R1.CHIP.unique.dupmark.sorted.bam	KO	H3K27me3
+NPC_KO_H3K27me3_R2	output/bowtie2/NPC_KO_H3K27me3_R2.CHIP.unique.dupmark.sorted.bam	KO	H3K27me3
 
+sbatch scripts/normdb_norm_v2-001002__WTKO_H3K27me3_NPC.sh # 65818617 ok
 ```
+
+--> ESC ran great! Seems to work, sample homogeneous!
 
 
 
@@ -397,5 +408,54 @@ scripts/normdb_diffbind_v2.py \
 
 
 
+## Test2 - 001002 ChIPseq
+
+Use consensus WT/KO peaks generated separately in `001*/002*` for ESC and NPC.
+
+
+
+
+
+```bash
+# meta file
+
+
+
+
+# Run code
+conda activate normdb_v2
+
+## ESC
+scripts/normdb_diffbind_v2.py \
+  --meta meta/samples-001002__WTKO_H3K27me3.tsv \
+  --regions output/macs2/ESC_WTKOOEKO_H3K27me3_pool_peaks.sorted.merge100bp.bed \
+  --bigwig-dir output/normdb_norm-001002__WTKO_H3K27me3/06_normalized_bigwig \
+  --contrast condition:KO:WT \
+  --outdir output/normdb_diff-001002__WTKO_H3K27me3 \
+  --alpha 0.05 \
+  --lfc 0.58 \
+  --target H3K27me3 \
+  --min-counts 100
+
+
+
+
+## NPC
+scripts/normdb_diffbind_v2.py \
+  --meta meta/samples-001018__WTKO_H3K27me3EZH2.tsv \
+  --regions output/macs2/ESC_WTKOOEKO_EZH2_pool_peaks.sorted.merge100bp.bed \
+  --bigwig-dir output/normdb_norm-001018__WTKO_H3K27me3EZH2/06_normalized_bigwig \
+  --contrast condition:KO:WT \
+  --outdir output/normdb_diff-001018__WTKO_EZH2 \
+  --alpha 0.05 \
+  --lfc 0.58 \
+  --target EZH2 \
+  --min-counts 100
+
+
+
+
+
+```
 
 
