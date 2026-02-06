@@ -1790,6 +1790,86 @@ Let's try using IsoformSwitchAnalyzeR for analyzing scRNAseq data. [IsoformSwitc
 Issue is that right now the counting was perform on gene, not transcripts: so we need to quantify on transcript! To note that **BD Rhpasody (and 10x) is not design for full transcript coverage (it sequence 3' end), thus it is not perfect; and would be an estimation of splicing!**
 
 
+
+## Transcript level quantification - SCALPEL
+
+Let's use [SCALPEL](https://github.com/plasslab/SCALPEL) to estimate transcript level quantification from scRNAseq (3'based).
+
+### install SCALPEL
+
+
+```bash
+
+# clone SCALPEL
+cd ../../Master/software
+git clone https://github.com/p-CMRC-LAB/SCALPEL.git
+
+# Create conda env
+conda env create --file SCALPEL/requirements.yml # FAIL
+
+#--> Lets try mamba
+conda run -n mamba mamba env create -f SCALPEL/requirements.yml
+#--> WORKS!
+
+# Install nextflow to run scalepl
+conda activate scalpelEnv
+
+
+conda install bioconda::nextflow
+
+# to run it:
+nextflow run -resume ../../Master/software/SCALPEL/main.nf \ #
+  --sequencing chromium \
+  --samplesheet path/to/samplesheet.csv \
+  --transcriptome path/to/gencode.transcripts.fa \
+  --gtf path/to/gencode.annotation.gtf \
+  --cpus 40 \
+  --ipdb path/to/mm10.polyA.track
+
+```
+
+
+
+
+
+### Run SCALPEL
+
+
+#### Run cellranger on the RNA assay only
+
+SCALPEL needs cellranger output as input; data is multiome but we have to use cellranger on the FASTQ of the RNA assay only.
+
+
+Generate download link from FASTQs data from [SevenBridges](https://igor.sbgenomics.com).
+
+```bash
+# Generate download link from Seven bridges
+nano input/urls.txt # paste download link
+
+cd input
+
+module load aria2
+aria2c -i urls.txt
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 XXXY HERE below is mess.. Good for aggregation but we need step down and perform transcript level quantification
 
 

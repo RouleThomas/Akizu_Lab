@@ -360,6 +360,12 @@ bigWigToBedGraph, BedGraphTobigWig, bedtools, MACS2, deepTools
 R DESEQ2, volcanoplot, tidyverse
 
 
+### scalpelEnv
+
+SCALPEL (for scRNAseq transcript level count), nextflow
+
+
+
 # cool random command
 
 

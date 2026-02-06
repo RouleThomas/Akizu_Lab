@@ -362,7 +362,8 @@ sbatch scripts/samtools_highquality_1.sh # 12345522 ok
 sbatch scripts/samtools_highquality_2.sh # 12345523 ok
 
 # Re-launch pgbam with uniquely aligned reads for ESC and NPC WT and KO only (test 013/001)
-sbatch scripts/samtools_highquality_ESCNPCWTKO.sh # 65660504 xxx
+sbatch scripts/samtools_highquality_ESCNPCWTKO.sh # 65660504 ok; but fail naming at samtools sort 
+sbatch scripts/samtools_highquality_ESCNPCWTKO_corr.sh # 65792238 xxx
 
 ```
 

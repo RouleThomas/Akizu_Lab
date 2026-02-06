@@ -228,8 +228,27 @@ sbatch scripts/normdb_norm_v2-001018__WTKO_H3K27me3EZH2.sh # 65633087 ok
 
 ## Test2 - 001002 ChIPseq
 
+Let's test ESC WT vs KO for H3K27me3 from `001/002` 3 bio rep WT and 2 bio rep KO
 
-XXXY GOGOGO!
+
+
+```bash
+# meta file
+sample_id	bam	condition	target
+ESC_WT_H3K27me3_R1	output/bowtie2/ESC_WT_H3K27me3_R1.CHIP.unique.dupmark.sorted.bam	WT	H3K27me3
+ESC_WT_H3K27me3_R2	output/bowtie2/ESC_WT_H3K27me3_R2.CHIP.unique.dupmark.sorted.bam	WT	H3K27me3
+ESC_WT_H3K27me3_R3	output/bowtie2/ESC_WT_H3K27me3_R3.CHIP.unique.dupmark.sorted.bam	WT	H3K27me3
+ESC_KO_H3K27me3_R1	output/bowtie2/ESC_KO_H3K27me3_R1.CHIP.unique.dupmark.sorted.bam	KO	H3K27me3
+ESC_KO_H3K27me3_R2	output/bowtie2/ESC_KO_H3K27me3_R2.CHIP.unique.dupmark.sorted.bam	KO	H3K27me3
+
+
+conda activate normdb_v2
+
+sbatch scripts/normdb_norm_v2-001002__WTKO_H3K27me3.sh # 65800833 xxx
+
+
+
+```
 
 
 
